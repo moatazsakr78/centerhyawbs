@@ -11,21 +11,28 @@ export default function DashboardLayout({
 }) {
   const { userRole, hasAccess, isLoading } = usePageProtection();
 
+  // Show loading state while checking permissions
+  if (isLoading) {
+    return (
+      <div className="h-screen bg-[#2B3544] flex items-center justify-center">
+        <div className="text-white text-xl">جاري التحميل...</div>
+      </div>
+    );
+  }
+
   // Check if user has admin access (موظف or أدمن رئيسي)
   const hasAdminAccess = userRole === 'موظف' || userRole === 'أدمن رئيسي';
 
   // Show unauthorized page if user is authenticated but doesn't have access
-  // Only show this if we're not loading and the user is clearly unauthorized
-  if (!isLoading && userRole && !hasAdminAccess) {
+  if (userRole && !hasAdminAccess) {
     return (
-      <UnauthorizedAccess 
+      <UnauthorizedAccess
         userRole={userRole}
         message="هذه الصفحة للمشرفين فقط، غير مصرح لك بالدخول"
       />
     );
   }
 
-  // Render children - let individual pages handle their own loading states
-  // This includes the loading state while checking permissions
+  // Render children
   return <>{children}</>;
 }

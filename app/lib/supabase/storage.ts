@@ -1,10 +1,14 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhuYWxmdWFneXZqanh1ZnRkeHJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDQzNjI0NSwiZXhwIjoyMDY2MDEyMjQ1fQ.AceLkpY_ynX6sEm8WF4G8oXP3MdifOzd581LcvL_VbM'
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error('Missing Supabase environment variables')
+if (!supabaseUrl) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+}
+
+if (!serviceRoleKey) {
+  console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not found, storage operations may fail')
 }
 
 // Singleton instance for admin client

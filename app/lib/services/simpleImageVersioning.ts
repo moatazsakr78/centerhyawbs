@@ -47,6 +47,7 @@ export function getStorageBucket(imageType: string): string {
 
 /**
  * Upload versioned image - never overwrites existing files
+ * Uses API route for server-side upload with service_role key
  */
 export async function uploadVersionedProductImage(
   file: File,
@@ -54,42 +55,39 @@ export async function uploadVersionedProductImage(
   imageType: 'main' | 'sub' | 'variant' | 'additional'
 ): Promise<VersionedUploadResult> {
   try {
-    // Generate unique versioned filename
-    const fileName = generateVersionedFileName(productId, imageType, file.name)
-    const storageBucket = getStorageBucket(imageType)
-    
-    // Upload to Supabase storage with unique filename
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from(storageBucket)
-      .upload(fileName, file, {
-        cacheControl: '31536000', // 1 year cache
-        upsert: false // NEVER overwrite - always create new
-      })
+    // Create FormData for API request
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('productId', productId)
+    formData.append('imageType', imageType)
 
-    if (uploadError) {
-      console.error('Versioned upload error:', uploadError)
-      return { 
-        success: false, 
-        error: uploadError.message 
+    // Call upload API route
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData
+    })
+
+    const result = await response.json()
+
+    if (!result.success) {
+      console.error('Versioned upload error:', result.error)
+      return {
+        success: false,
+        error: result.error
       }
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from(storageBucket)
-      .getPublicUrl(fileName)
-
     return {
       success: true,
-      publicUrl,
-      fileName,
+      publicUrl: result.publicUrl,
+      fileName: result.fileName,
       error: undefined
     }
 
   } catch (error) {
     console.error('Upload versioned image error:', error)
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
     }
   }

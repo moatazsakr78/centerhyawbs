@@ -1847,7 +1847,10 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
 
           // Upload images for new product using versioned upload
           console.log('🖼️ Uploading images for new product:', savedProduct.name)
-          
+
+          let uploadedMainImageUrl = null
+          const uploadedAdditionalImageUrls: string[] = []
+
           // Upload main image if exists
           if (mainProductImages.length > 0 && mainProductImages[0].id !== 'main-existing') {
             const mainImageResult = await uploadAndSetMainImage(
@@ -1855,8 +1858,12 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
               savedProduct.id
             )
             console.log('🖼️ Main image upload result:', mainImageResult)
+
+            if (mainImageResult.success && mainImageResult.publicUrl) {
+              uploadedMainImageUrl = mainImageResult.publicUrl
+            }
           }
-          
+
           // Upload additional images if exist
           if (additionalImages.length > 0) {
             for (const imageFile of additionalImages) {
@@ -1866,7 +1873,35 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
                   savedProduct.id
                 )
                 console.log('🖼️ Additional image upload result:', additionalResult)
+
+                if (additionalResult.success && additionalResult.publicUrl) {
+                  uploadedAdditionalImageUrls.push(additionalResult.publicUrl)
+                }
               }
+            }
+          }
+
+          // Update product with uploaded image URLs
+          if (uploadedMainImageUrl || uploadedAdditionalImageUrls.length > 0) {
+            const updateData: any = {}
+
+            if (uploadedMainImageUrl) {
+              updateData.main_image_url = uploadedMainImageUrl
+            }
+
+            if (uploadedAdditionalImageUrls.length > 0) {
+              updateData.video_url = JSON.stringify(uploadedAdditionalImageUrls)
+            }
+
+            const { error: updateError } = await supabase
+              .from('products')
+              .update(updateData)
+              .eq('id', savedProduct.id)
+
+            if (updateError) {
+              console.error('Error updating product with image URLs:', updateError)
+            } else {
+              console.log('✅ Successfully updated product with image URLs:', updateData)
             }
           }
 

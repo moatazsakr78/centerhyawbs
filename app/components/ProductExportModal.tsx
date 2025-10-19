@@ -41,7 +41,6 @@ export default function ProductExportModal({
 
     // البيانات الإضافية
     colors: true,
-    shapes: true,
     inventory: true,
     variants: true,
 
@@ -86,12 +85,11 @@ export default function ProductExportModal({
 
       if (exportOptions.mainImage) data.main_image_url = product.main_image_url
       if (exportOptions.additionalImages) data.additional_images = product.additional_images
-      if (exportOptions.videos) data.videos = product.videos
+      if (exportOptions.videos) data.video_url = product.video_url
 
       if (exportOptions.colors) data.productColors = product.productColors
-      if (exportOptions.shapes) data.shapes = product.shapes
       if (exportOptions.variants) data.variantsData = product.variantsData
-      if (exportOptions.inventory) data.inventory = product.inventory
+      if (exportOptions.inventory) data.inventoryData = product.inventoryData
 
       if (exportOptions.isActive) data.is_active = product.is_active
       if (exportOptions.isFeatured) data.is_featured = product.is_featured
@@ -133,7 +131,6 @@ export default function ProductExportModal({
       additionalImages: value,
       videos: value,
       colors: value,
-      shapes: value,
       inventory: value,
       variants: value,
       isActive: value,
@@ -376,15 +373,6 @@ export default function ProductExportModal({
                     className="w-4 h-4 text-blue-600 rounded"
                   />
                   <span className="text-sm text-gray-700">الألوان</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.shapes}
-                    onChange={(e) => setExportOptions({ ...exportOptions, shapes: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm text-gray-700">الأشكال</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
