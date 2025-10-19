@@ -2,24 +2,24 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useProducts, Product as DatabaseProduct } from '../../app/lib/hooks/useProducts';
+import { useProducts, Product as DatabaseProduct } from '@/app/lib/hooks/useProducts';
 import { UserInfo, Product } from './shared/types';
-import AuthButtons from '../../app/components/auth/AuthButtons';
-import RightSidebar from '../../app/components/layout/RightSidebar';
-import { useRightSidebar } from '../../app/lib/hooks/useRightSidebar';
-import { useUserProfile } from '../../lib/hooks/useUserProfile';
-import { useStoreCategoriesWithProducts } from '../../lib/hooks/useStoreCategories';
-import { useCustomSections } from '../../lib/hooks/useCustomSections';
+import AuthButtons from '@/app/components/auth/AuthButtons';
+import RightSidebar from '@/app/components/layout/RightSidebar';
+import { useRightSidebar } from '@/app/lib/hooks/useRightSidebar';
+import { useUserProfile } from '@/lib/hooks/useUserProfile';
+import { useStoreCategoriesWithProducts } from '@/lib/hooks/useStoreCategories';
+import { useCustomSections } from '@/lib/hooks/useCustomSections';
 import CategoryCarousel from './CategoryCarousel';
 import CustomSectionCarousel from './CustomSectionCarousel';
 import InteractiveProductCard from './InteractiveProductCard';
-import ProductDetailsModal from '../../app/components/ProductDetailsModal';
-import CartModal from '../../app/components/CartModal';
+import ProductDetailsModal from '@/app/components/ProductDetailsModal';
+import CartModal from '@/app/components/CartModal';
 import SearchOverlay from './SearchOverlay';
 import QuantityModal from './QuantityModal';
-import { useCart } from '../../lib/contexts/CartContext';
-import { useCartBadge } from '../../lib/hooks/useCartBadge';
-import { useCompanySettings } from '../../lib/hooks/useCompanySettings';
+import { useCart } from '@/lib/contexts/CartContext';
+import { useCartBadge } from '@/lib/hooks/useCartBadge';
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 
 interface DesktopHomeProps {
   userInfo: UserInfo;
