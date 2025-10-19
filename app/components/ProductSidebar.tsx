@@ -93,6 +93,7 @@ interface ProductSidebarProps {
   updateProduct?: (productId: string, productData: Partial<Product>) => Promise<Product | null>
   categories: Category[]
   editProduct?: Product | null
+  selectedCategory?: Category | null
 }
 
 // Image state interfaces
@@ -110,7 +111,7 @@ interface ImageUploadAreaProps {
   multiple?: boolean
 }
 
-export default function ProductSidebar({ isOpen, onClose, onProductCreated, createProduct, updateProduct, categories, editProduct }: ProductSidebarProps) {
+export default function ProductSidebar({ isOpen, onClose, onProductCreated, createProduct, updateProduct, categories, editProduct, selectedCategory }: ProductSidebarProps) {
   const [activeTab, setActiveTab] = useState('تفاصيل المنتج')
   const [activeShapeColorTab, setActiveShapeColorTab] = useState('شكل وصف')
   const [branches, setBranches] = useState<Branch[]>([])
@@ -435,6 +436,16 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
     } else if (!editProduct && isOpen) {
       // Clear form for new product
       handleClearFields()
+
+      // تعيين المجموعة المختارة تلقائياً عند إضافة منتج جديد
+      if (selectedCategory) {
+        console.log('🗂️ Auto-selecting category:', selectedCategory.name, selectedCategory.id)
+        setFormData(prev => ({
+          ...prev,
+          categoryId: selectedCategory.id
+        }))
+      }
+
       // Reset purchase history for new product
       setPurchaseHistory({
         hasPurchaseHistory: false,
@@ -444,7 +455,7 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editProduct, isOpen, branches, warehouses])
+  }, [editProduct, isOpen, branches, warehouses, selectedCategory])
 
   const tabs = [
     'تفاصيل المنتج',

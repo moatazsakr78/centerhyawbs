@@ -13,6 +13,8 @@ import CategoriesTreeView from '../../components/CategoriesTreeView'
 import ColorAssignmentModal from '../../components/ColorAssignmentModal'
 import ColorChangeModal from '../../components/ColorChangeModal'
 import ColumnsControlModal from '../../components/ColumnsControlModal'
+import ProductExportModal from '../../components/ProductExportModal'
+import ProductImportModal from '../../components/ProductImportModal'
 import { useBranches, Branch, ProductVariant } from '../../lib/hooks/useBranches'
 import { useProducts, Product } from '../../lib/hooks/useProductsOptimized'
 import {
@@ -81,6 +83,11 @@ export default function ProductsPage() {
   const [showBranchesDropdown, setShowBranchesDropdown] = useState(false)
   const [selectedBranches, setSelectedBranches] = useState<{[key: string]: boolean}>({})
   const [tempSelectedBranches, setTempSelectedBranches] = useState<{[key: string]: boolean}>({})
+
+  // Import/Export modals state
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
 
   // Scroll state for hiding/showing toolbar
   const [isToolbarHidden, setIsToolbarHidden] = useState(false)
@@ -859,12 +866,18 @@ export default function ProductsPage() {
               <span className="text-sm">ترتيب</span>
             </button>
 
-            <button className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]"
+            >
               <ArrowDownTrayIcon className="h-5 w-5 mb-1" />
               <span className="text-sm">استيراد</span>
             </button>
 
-            <button className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]"
+            >
               <ArrowUpTrayIcon className="h-5 w-5 mb-1" />
               <span className="text-sm">تصدير</span>
             </button>
@@ -1189,8 +1202,8 @@ export default function ProductsPage() {
       />
 
       {/* Product Sidebar */}
-      <ProductSidebar 
-        isOpen={isProductSidebarOpen} 
+      <ProductSidebar
+        isOpen={isProductSidebarOpen}
         onClose={() => {
           setIsProductSidebarOpen(false)
           setSelectedProduct(null)
@@ -1206,6 +1219,7 @@ export default function ProductsPage() {
         updateProduct={updateProduct}
         categories={categories}
         editProduct={selectedProduct}
+        selectedCategory={selectedCategory}
       />
 
       {/* Delete Confirmation Modal */}
@@ -1651,6 +1665,25 @@ export default function ProductsPage() {
         onClose={() => setShowColumnsModal(false)}
         columns={getAllColumns}
         onColumnsChange={handleColumnsChange}
+      />
+
+      {/* Product Export Modal */}
+      <ProductExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        products={filteredProducts}
+        selectedProductIds={selectedProductIds}
+      />
+
+      {/* Product Import Modal */}
+      <ProductImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        createProduct={createProduct}
+        onImportComplete={() => {
+          fetchProducts()
+          setShowImportModal(false)
+        }}
       />
 
       {/* Mobile/Tablet Branches Modal - Positioned at top level */}

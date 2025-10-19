@@ -293,7 +293,8 @@
       "Bash(git push:*)",
       "Bash(nslookup:*)",
       "Bash(ping:*)",
-      "Bash(cat .next/BUILD_ID)"
+      "Bash(cat .next/BUILD_ID)",
+      "Bash(start http://localhost:3002/auth/login)"
     ],
     "deny": [],
     "additionalDirectories": [
