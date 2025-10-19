@@ -506,10 +506,10 @@ export default function ProductsPage() {
 
   const handleDeleteCategory = async () => {
     if (!selectedCategory) return
-    
-    // Prevent deletion of "منتجات" category
+
+    // Prevent deletion of root "منتجات" category - المجموعة الأم الأساسية
     if (selectedCategory.name === 'منتجات') {
-      alert('لا يمكن حذف المجموعة الرئيسية "منتجات"')
+      alert('لا يمكن حذف المجموعة الرئيسية "منتجات" - هذه هي المجموعة الأم الأساسية')
       return
     }
     

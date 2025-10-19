@@ -138,11 +138,12 @@ export default function CategoriesTreeView({
     if (categories.length > 0) {
       updateGroupsFromCategories(categories)
     } else if (categories.length === 0 && !isLoading) {
-      // Show empty state when no categories and not loading
+      // دائماً إظهار مجموعة "منتجات" الأساسية حتى لو لم تكن هناك مجموعات في قاعدة البيانات
       setGroups({
-        id: 'empty',
-        name: 'لا توجد مجموعات',
-        isExpanded: false,
+        id: 'products-root',
+        name: 'منتجات',
+        isExpanded: true,
+        isDefault: true,
         children: []
       })
     }
