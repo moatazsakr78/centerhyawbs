@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { detectDeviceClient, DeviceInfo } from '../lib/device-detection';
-import DesktopHome from '../components/website/DesktopHome';
-import TabletHome from '../components/website/TabletHome';
-import MobileHome from '../components/website/MobileHome';
-import { useRealCart } from '../lib/useRealCart';
-import { useAuth } from '../lib/useAuth';
-import { UserInfo } from '../components/website/shared/types';
-import { CartProvider } from '../lib/contexts/CartContext';
+import { detectDeviceClient, DeviceInfo } from '@/lib/device-detection';
+import DesktopHome from '@/components/website/DesktopHome';
+import TabletHome from '@/components/website/TabletHome';
+import MobileHome from '@/components/website/MobileHome';
+import { useRealCart } from '@/lib/useRealCart';
+import { useAuth } from '@/lib/useAuth';
+import { UserInfo } from '@/components/website/shared/types';
+import { CartProvider } from '@/lib/contexts/CartContext';
 
 export default function HomePage() {
   const router = useRouter();
