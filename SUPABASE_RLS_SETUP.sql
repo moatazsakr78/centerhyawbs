@@ -2,7 +2,7 @@
 -- SUPABASE RLS POLICIES SETUP FOR POS SYSTEM
 -- ================================================================================================
 -- This script fixes Row Level Security policies for the categories table and related tables
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/hnalfuagyvjjxuftdxrl/sql
+-- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/hecedrbnbknohssgaoso/sql
 -- ================================================================================================
 
 -- STEP 1: Check current RLS status

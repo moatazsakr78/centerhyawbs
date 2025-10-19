@@ -147,7 +147,7 @@ DECLARE
 BEGIN
   -- Generate public URL if not provided
   IF p_public_url IS NULL THEN
-    v_public_url := 'https://hnalfuagyvjjxuftdxrl.supabase.co/storage/v1/object/public/' || p_storage_bucket || '/' || p_file_path;
+    v_public_url := 'https://hecedrbnbknohssgaoso.supabase.co/storage/v1/object/public/' || p_storage_bucket || '/' || p_file_path;
   ELSE
     v_public_url := p_public_url;
   END IF;

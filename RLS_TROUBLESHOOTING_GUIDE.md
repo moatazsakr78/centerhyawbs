@@ -15,7 +15,7 @@ Based on the code analysis, the issue is in the `saveCategoryChanges` function i
 ## Solution Steps
 
 ### Step 1: Run the RLS Setup Script
-1. Open Supabase Dashboard: https://supabase.com/dashboard/project/hnalfuagyvjjxuftdxrl
+1. Open Supabase Dashboard: https://supabase.com/dashboard/project/hecedrbnbknohssgaoso
 2. Go to the SQL Editor
 3. Copy and paste the contents of `SUPABASE_RLS_SETUP.sql`
 4. Execute the script

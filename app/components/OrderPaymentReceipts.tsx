@@ -204,7 +204,10 @@ export default function OrderPaymentReceipts({
                 {isVerified && (
                   <div className="relative verifier-info-container">
                     <button
-                      onClick={() => setShowVerifierInfo(showVerifierInfo === receipt.id ? null : receipt.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowVerifierInfo(showVerifierInfo === receipt.id ? null : receipt.id);
+                      }}
                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
                       style={{ backgroundColor: '#5d1f1f' }}
                       title="عرض معلومات التأكيد"

@@ -290,7 +290,9 @@
       "Bash(git reset:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(nslookup:*)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "additionalDirectories": [

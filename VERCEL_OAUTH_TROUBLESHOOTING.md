@@ -22,8 +22,8 @@ When you click "Sign in with Google" on your production site, check the browser 
 3. Go to **Settings** → **Environment Variables**
 4. Ensure you have:
    ```
-   NEXT_PUBLIC_SITE_URL = https://full-system-20.vercel.app
-   NEXT_PUBLIC_SUPABASE_URL = https://hnalfuagyvjjxuftdxrl.supabase.co
+   NEXT_PUBLIC_SITE_URL = https://centerhyawbs.vercel.app
+   NEXT_PUBLIC_SUPABASE_URL = https://hecedrbnbknohssgaoso.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY = [your-anon-key]
    ```
 
@@ -57,7 +57,7 @@ https://full-system-20.vercel.app
 
 **Authorized redirect URIs (Important!):**
 ```
-https://hnalfuagyvjjxuftdxrl.supabase.co/auth/v1/callback
+https://hecedrbnbknohssgaoso.supabase.co/auth/v1/callback
 ```
 
 ⚠️ **Key Point**: The redirect URI should point to **Supabase**, not your app directly!

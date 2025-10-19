@@ -197,18 +197,19 @@ class PaymentService {
   async recalculateOrderPayment(orderId: string): Promise<void> {
     console.log('💰 Recalculating payment for order:', orderId);
 
-    // Get all receipts for this order (verified and pending, not rejected)
+    // Get ONLY VERIFIED receipts for this order
+    // Pending receipts are NOT counted until they are verified
     const { data: receipts, error: receiptsError } = await (supabase as any)
       .from('payment_receipts')
       .select('detected_amount')
       .eq('order_id', orderId)
-      .neq('payment_status', 'rejected');
+      .eq('payment_status', 'verified');
 
     if (receiptsError) {
       throw new Error(`Failed to fetch receipts: ${receiptsError.message}`);
     }
 
-    console.log('📊 Found receipts:', receipts?.length || 0);
+    console.log('📊 Found verified receipts:', receipts?.length || 0);
 
     // Get order total
     const { data: order, error: orderError } = await (supabase as any)
@@ -221,7 +222,7 @@ class PaymentService {
       throw new Error(`Failed to fetch order: ${orderError.message}`);
     }
 
-    // Calculate total paid from all receipts (except rejected ones)
+    // Calculate total paid from VERIFIED receipts ONLY
     const totalPaid = (receipts || []).reduce((sum: number, receipt: any) => {
       return sum + (parseFloat(receipt.detected_amount) || 0);
     }, 0);
@@ -230,12 +231,12 @@ class PaymentService {
     const paymentProgress = totalAmount > 0 ? Math.round((totalPaid / totalAmount) * 100) : 0;
     const fullyPaid = totalPaid >= totalAmount;
 
-    console.log('💵 Payment calculation:', {
+    console.log('💵 Payment calculation (VERIFIED receipts ONLY):', {
       totalAmount,
       totalPaid,
       paymentProgress: `${paymentProgress}%`,
       fullyPaid,
-      receiptsCount: receipts?.length || 0
+      verifiedReceiptsCount: receipts?.length || 0
     });
 
     // Update order with new totals

@@ -71,7 +71,7 @@ if (process.env.NEXT_PUBLIC_SITE_URL) {
 1. اذهب إلى **APIs & Services** → **Credentials**
 2. أضف هذه URLs في **Authorized redirect URIs**:
    ```
-   https://hnalfuagyvjjxuftdxrl.supabase.co/auth/v1/callback
+   https://hecedrbnbknohssgaoso.supabase.co/auth/v1/callback
    ```
 
 ## الاستخدام في الكود
