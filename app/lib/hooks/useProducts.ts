@@ -341,6 +341,19 @@ export function useProducts() {
             }))
             .sort((a: any, b: any) => b.quantity - a.quantity); // Sort by quantity descending
 
+          // Parse additional_images from sub_image_url for export/import
+          let parsedAdditionalImages: string[] | null = null
+          if (product.sub_image_url) {
+            try {
+              const additionalImages = JSON.parse(product.sub_image_url);
+              if (Array.isArray(additionalImages)) {
+                parsedAdditionalImages = additionalImages;
+              }
+            } catch (parseError) {
+              // sub_image_url is not JSON, keep it as is
+            }
+          }
+
           return {
             ...product,
             description: actualDescription, // Use parsed description text only
@@ -350,6 +363,7 @@ export function useProducts() {
             productColors: productColors, // Add parsed colors
             colors: colorVariants, // Add formatted colors for website
             allImages: uniqueImages, // Add all product images including sub_image
+            additional_images: parsedAdditionalImages, // Add parsed additional images for export
             finalPrice: finalPrice,
             isDiscounted: isDiscountActive,
             discountLabel: discountLabel
@@ -434,11 +448,17 @@ export function useProducts() {
   // Create new product
   const createProduct = useCallback(async (productData: Partial<Product>): Promise<Product | null> => {
     try {
-      // If additional_images is provided as array, store it in video_url as JSON
-      let videoUrlValue = productData.video_url;
+      // If additional_images is provided as array, store it in sub_image_url as JSON
+      let subImageUrlValue = productData.sub_image_url;
       if (productData.additional_images && Array.isArray(productData.additional_images)) {
-        videoUrlValue = JSON.stringify(productData.additional_images);
+        subImageUrlValue = JSON.stringify(productData.additional_images);
       }
+
+      console.log('💾 CreateProduct Debug:')
+      console.log('  - productData.additional_images:', productData.additional_images)
+      console.log('  - Is array?', Array.isArray(productData.additional_images))
+      console.log('  - subImageUrlValue:', subImageUrlValue)
+      console.log('  - productData.video_url:', productData.video_url)
 
       const { data, error } = await supabase
         .from('products')
@@ -451,7 +471,7 @@ export function useProducts() {
           price: productData.price || 0,
           cost_price: productData.cost_price || 0,
           category_id: productData.category_id,
-          video_url: videoUrlValue,
+          video_url: productData.video_url, // Keep actual video URL
           product_code: productData.product_code,
           wholesale_price: productData.wholesale_price || 0,
           price1: productData.price1 || 0,
@@ -459,7 +479,7 @@ export function useProducts() {
           price3: productData.price3 || 0,
           price4: productData.price4 || 0,
           main_image_url: productData.main_image_url,
-          sub_image_url: productData.sub_image_url,
+          sub_image_url: subImageUrlValue, // Store additional_images as JSON here
           barcodes: productData.barcodes || [],
           unit: productData.unit || 'قطعة',
           stock: productData.stock || 0,
@@ -610,18 +630,39 @@ export function useProducts() {
                 actualDescription = newProduct.description || ""
               }
 
+              // Parse additional_images from sub_image_url
+              let parsedAdditionalImages: string[] | null = null
+              if (newProduct.sub_image_url) {
+                try {
+                  const additionalImages = JSON.parse(newProduct.sub_image_url);
+                  if (Array.isArray(additionalImages)) {
+                    parsedAdditionalImages = additionalImages;
+                  }
+                } catch (parseError) {
+                  // sub_image_url is not JSON, keep it as is
+                }
+              }
+
               // Add inventory and variants data
               const enrichedProduct = {
                 ...newProduct,
                 description: actualDescription, // Use parsed description text only
                 productColors: productColors, // Add parsed colors
+                additional_images: parsedAdditionalImages, // Add parsed additional images
                 totalQuantity: 0,
                 inventoryData: {},
                 variantsData: {},
                 allImages: newProduct.main_image_url ? [newProduct.main_image_url] : []
               }
-              
-              setProducts(prev => [enrichedProduct, ...prev])
+
+              // Check if product already exists before adding (prevents duplicates during bulk imports)
+              setProducts(prev => {
+                const exists = prev.some(p => p.id === enrichedProduct.id)
+                if (exists) {
+                  return prev // Don't add duplicate
+                }
+                return [enrichedProduct, ...prev]
+              })
             }
           } else if (payload.eventType === 'UPDATE') {
             // Fetch the updated product with category data
@@ -670,13 +711,27 @@ export function useProducts() {
                 actualDescription = updatedProduct.description || ""
               }
 
-              setProducts(prev => prev.map(product => 
-                product.id === payload.new.id 
-                  ? { 
-                      ...product, 
+              // Parse additional_images from sub_image_url
+              let parsedAdditionalImages: string[] | null = null
+              if (updatedProduct.sub_image_url) {
+                try {
+                  const additionalImages = JSON.parse(updatedProduct.sub_image_url);
+                  if (Array.isArray(additionalImages)) {
+                    parsedAdditionalImages = additionalImages;
+                  }
+                } catch (parseError) {
+                  // sub_image_url is not JSON, keep it as is
+                }
+              }
+
+              setProducts(prev => prev.map(product =>
+                product.id === payload.new.id
+                  ? {
+                      ...product,
                       ...updatedProduct,
                       description: actualDescription, // Use parsed description text only
                       productColors: productColors, // Add parsed colors from updated product
+                      additional_images: parsedAdditionalImages, // Add parsed additional images
                       // Preserve existing inventory and variants data
                       inventoryData: product.inventoryData,
                       variantsData: product.variantsData,

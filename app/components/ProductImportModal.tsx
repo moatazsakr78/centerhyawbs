@@ -73,6 +73,35 @@ export default function ProductImportModal({
             throw new Error('اسم المنتج مطلوب')
           }
 
+          // معالجة الصور الإضافية - التوافق مع الصيغة القديمة والجديدة
+          let additionalImages = productData.additional_images || null
+          let videoUrl = productData.video_url || null
+
+          console.log('🔍 Import Debug for:', productData.name)
+          console.log('  - additional_images:', additionalImages)
+          console.log('  - video_url type:', typeof videoUrl)
+          console.log('  - video_url value:', videoUrl)
+
+          // إذا كان video_url يحتوي على JSON array (الصيغة القديمة)، حوّله لـ additional_images
+          if (!additionalImages && videoUrl) {
+            try {
+              const parsed = typeof videoUrl === 'string' ? JSON.parse(videoUrl) : videoUrl
+              console.log('  - Parsed video_url:', parsed)
+              console.log('  - Is array?', Array.isArray(parsed))
+              if (Array.isArray(parsed)) {
+                additionalImages = parsed
+                videoUrl = null // مسح video_url لأنه كان يحتوي على الصور فقط
+                console.log('  - ✅ Converted to additional_images, count:', additionalImages.length)
+              }
+            } catch (e) {
+              console.log('  - ❌ Parse error:', e)
+              // video_url ليس JSON، احتفظ به كما هو (رابط فيديو فعلي)
+            }
+          }
+
+          console.log('  - Final additional_images:', additionalImages)
+          console.log('  - Final video_url:', videoUrl)
+
           // إنشاء المنتج
           const newProduct = await createProduct({
             name: productData.name,
@@ -88,8 +117,8 @@ export default function ProductImportModal({
             price3: productData.price3 || 0,
             price4: productData.price4 || 0,
             main_image_url: productData.main_image_url || null,
-            additional_images: productData.additional_images || null,
-            video_url: productData.video_url || null,
+            additional_images: additionalImages,
+            video_url: videoUrl,
             is_active: productData.is_active !== undefined ? productData.is_active : true,
             is_featured: productData.is_featured || false,
             display_order: productData.display_order || i
