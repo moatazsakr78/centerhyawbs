@@ -12,7 +12,7 @@ import ColorAssignmentModal from './ColorAssignmentModal'
 import ColorChangeModal from './ColorChangeModal'
 import ColumnsControlModal from './ColumnsControlModal'
 import { useBranches, Branch, ProductVariant } from '../lib/hooks/useBranches'
-import { useProducts, Product } from '../lib/hooks/useProducts'
+import { useProducts, Product } from '../lib/hooks/useProductsOptimized'
 import {
   ArrowPathIcon,
   FolderPlusIcon,

@@ -47,7 +47,7 @@ export function getStorageBucket(imageType: string): string {
 
 /**
  * Upload versioned image - never overwrites existing files
- * Uses API route for server-side upload with service_role key
+ * Direct client-side upload using authenticated user's session
  */
 export async function uploadVersionedProductImage(
   file: File,
@@ -55,32 +55,47 @@ export async function uploadVersionedProductImage(
   imageType: 'main' | 'sub' | 'variant' | 'additional'
 ): Promise<VersionedUploadResult> {
   try {
-    // Create FormData for API request
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('productId', productId)
-    formData.append('imageType', imageType)
+    // Import supabase client dynamically
+    const { supabase } = await import('../supabase/client')
 
-    // Call upload API route
-    const response = await fetch('/api/upload-image', {
-      method: 'POST',
-      body: formData
-    })
+    // Determine bucket based on image type
+    let bucket = 'main-products-pos-images'
+    if (imageType === 'sub') {
+      bucket = 'sub-products-pos-images'
+    } else if (imageType === 'variant') {
+      bucket = 'variant-products-pos-images'
+    } else if (imageType === 'additional') {
+      bucket = 'sub-products-pos-images'
+    }
 
-    const result = await response.json()
+    // Generate versioned filename
+    const fileName = generateVersionedFileName(productId, imageType, file.name)
 
-    if (!result.success) {
-      console.error('Versioned upload error:', result.error)
+    // Upload directly from client using authenticated session
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        cacheControl: '31536000',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Upload error:', error)
       return {
         success: false,
-        error: result.error
+        error: error.message
       }
     }
 
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName)
+
     return {
       success: true,
-      publicUrl: result.publicUrl,
-      fileName: result.fileName,
+      publicUrl,
+      fileName,
       error: undefined
     }
 

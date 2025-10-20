@@ -1,30 +1,30 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 if (!supabaseUrl) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
 }
 
-if (!serviceRoleKey) {
-  console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not found, storage operations may fail')
+if (!supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable')
 }
 
-// Singleton instance for admin client
-let supabaseAdminInstance: SupabaseClient | null = null
+// Singleton instance for storage client
+let supabaseStorageInstance: SupabaseClient | null = null
 
-// Get singleton admin client instance
+// Get singleton storage client instance
 export const getSupabaseAdmin = (): SupabaseClient => {
-  if (!supabaseAdminInstance) {
-    supabaseAdminInstance = createClient(supabaseUrl, serviceRoleKey, {
+  if (!supabaseStorageInstance) {
+    supabaseStorageInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        autoRefreshToken: false,
-        persistSession: false
+        autoRefreshToken: true,
+        persistSession: true
       }
     })
   }
-  return supabaseAdminInstance
+  return supabaseStorageInstance
 }
 
 // Legacy export for backwards compatibility
@@ -153,41 +153,11 @@ export const deleteProductImage = async (
 // ============== VIDEO UPLOAD FUNCTIONS ==============
 
 // Create the product videos bucket if it doesn't exist (manual operation only)
+// NOTE: Buckets are now pre-created in Supabase dashboard, this function is disabled
 export const createProductVideosBucket = async (): Promise<{ data: any | null; error: Error | null }> => {
-  try {
-    // First check if bucket already exists
-    const { data: buckets, error: listError } = await getSupabaseAdmin().storage.listBuckets()
-
-    if (listError) {
-      console.warn('Could not list buckets:', listError)
-    }
-
-    const bucketExists = buckets?.some(bucket => bucket.name === 'product_videos')
-
-    if (bucketExists) {
-      console.log('Product videos bucket already exists')
-      return { data: null, error: null }
-    }
-
-    const { data, error } = await getSupabaseAdmin().storage.createBucket('product_videos', {
-      public: true,
-      allowedMimeTypes: ['video/mp4', 'video/webm', 'video/mov', 'video/avi'],
-      fileSizeLimit: 104857600, // 100MB limit
-    })
-
-    if (error) {
-      console.log('Bucket creation failed or already exists:', error)
-      // Don't throw error if bucket already exists (409 status)
-      if (error.message?.includes('already exists') || error.message?.includes('409')) {
-        return { data: null, error: null }
-      }
-    }
-
-    return { data, error }
-  } catch (error) {
-    console.log('Bucket creation error (non-critical):', error)
-    return { data: null, error: error as Error }
-  }
+  // Buckets are pre-created, just return success
+  console.log('Bucket initialization skipped (buckets are pre-created)')
+  return { data: null, error: null }
 }
 
 // Upload product video to storage bucket

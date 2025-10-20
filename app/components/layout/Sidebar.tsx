@@ -17,7 +17,7 @@ import {
   ClipboardDocumentListIcon,
   CogIcon
 } from '@heroicons/react/24/outline'
-import { useUserProfile } from '@/lib/hooks/useUserProfile'
+import { useUserProfile } from '../../../lib/hooks/useUserProfile'
 
 const sidebarItems = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: HomeIcon },
