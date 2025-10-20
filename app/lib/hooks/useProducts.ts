@@ -434,6 +434,12 @@ export function useProducts() {
   // Create new product
   const createProduct = useCallback(async (productData: Partial<Product>): Promise<Product | null> => {
     try {
+      // If additional_images is provided as array, store it in video_url as JSON
+      let videoUrlValue = productData.video_url;
+      if (productData.additional_images && Array.isArray(productData.additional_images)) {
+        videoUrlValue = JSON.stringify(productData.additional_images);
+      }
+
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -445,7 +451,7 @@ export function useProducts() {
           price: productData.price || 0,
           cost_price: productData.cost_price || 0,
           category_id: productData.category_id,
-          video_url: productData.video_url,
+          video_url: videoUrlValue,
           product_code: productData.product_code,
           wholesale_price: productData.wholesale_price || 0,
           price1: productData.price1 || 0,

@@ -88,6 +88,8 @@ export default function ProductImportModal({
             price3: productData.price3 || 0,
             price4: productData.price4 || 0,
             main_image_url: productData.main_image_url || null,
+            additional_images: productData.additional_images || null,
+            video_url: productData.video_url || null,
             is_active: productData.is_active !== undefined ? productData.is_active : true,
             is_featured: productData.is_featured || false,
             display_order: productData.display_order || i
