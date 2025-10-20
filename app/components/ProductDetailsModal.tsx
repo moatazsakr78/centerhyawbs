@@ -85,7 +85,6 @@ const getProductSubImages = async (productId: string, productName: string = '', 
       try {
         const additionalImages = JSON.parse(videoUrl);
         if (Array.isArray(additionalImages) && additionalImages.length > 0) {
-          console.log(`Loaded ${additionalImages.length} admin sub-images for product ${productName}`);
           return additionalImages;
         }
       } catch (parseError) {
@@ -101,12 +100,10 @@ const getProductSubImages = async (productId: string, productName: string = '', 
       .order('sort_order');
 
     if (!error && productImages && productImages.length > 0) {
-      console.log(`Loaded ${productImages.length} database sub-images for product ${productName}`);
       return productImages.map(img => img.image_url);
     }
 
     // Third priority: Use fallback system
-    console.log(`Using fallback sub-images for product ${productName}`);
     return getProductSubImagesFallback(productId, productName);
   } catch (err) {
     console.error('Error fetching product images:', err);
@@ -192,8 +189,7 @@ const getProductSubImagesFallback = (productId: string, productName: string = ''
     const imageNumber = ((startIndex + i) % totalSubImages) + 1;
     images.push(`/sub-images/${imageNumber}.png`);
   }
-  
-  console.log(`Assigned sub-images for product ${productName} (${productId}):`, images);
+
   return images;
 };
 
@@ -257,7 +253,6 @@ export default function ProductDetailsModal({
       // Changed from 768 to 1024 to include tablets in mobile design
       const isMobileDevice = window.innerWidth < 1024;
       setIsMobile(isMobileDevice);
-      console.log('Device detection:', { width: window.innerWidth, isMobile: isMobileDevice });
     };
     checkDevice();
     window.addEventListener('resize', checkDevice);
@@ -510,7 +505,7 @@ export default function ProductDetailsModal({
             }
           }
         } catch (error) {
-          console.log('Error finding real size products:', error);
+          // Silently handle error
         }
 
         // إذا لم نجد أحجام حقيقية، نبحث عن منتجات مترابطة بناءً على اسم المنتج (النظام القديم)
@@ -551,7 +546,7 @@ export default function ProductDetailsModal({
               }
             }
           } catch (error) {
-            console.log('Error finding related size products:', error);
+            // Silently handle error
           }
         }
 
@@ -812,8 +807,6 @@ export default function ProductDetailsModal({
   };
 
   if (!isOpen) return null;
-
-  console.log('ProductDetailsModal render:', { isOpen, isMobile, windowWidth: typeof window !== 'undefined' ? window.innerWidth : 'SSR' });
 
   if (isLoading) {
     return (
@@ -1731,7 +1724,6 @@ export default function ProductDetailsModal({
                         const suggestedProductId = product.id.toString();
                         // Note: This is a limitation - we need to track UUID properly
                         // For now, this won't work correctly as we've lost the UUID
-                        console.log('Navigate to suggested product:', suggestedProductId);
                       }}
                     >
                       <div className="relative mb-4">

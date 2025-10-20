@@ -88,6 +88,7 @@ export default function ProductsPage() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   // Scroll state for hiding/showing toolbar
   const [isToolbarHidden, setIsToolbarHidden] = useState(false)
@@ -874,13 +875,36 @@ export default function ProductsPage() {
               <span className="text-sm">استيراد</span>
             </button>
 
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]"
-            >
-              <ArrowUpTrayIcon className="h-5 w-5 mb-1" />
-              <span className="text-sm">تصدير</span>
-            </button>
+            {isSelectionMode && selectedProductIds.length > 0 ? (
+              <>
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  className="flex flex-col items-center p-2 text-green-300 hover:text-green-100 cursor-pointer min-w-[80px] animate-pulse"
+                >
+                  <ArrowUpTrayIcon className="h-5 w-5 mb-1" />
+                  <span className="text-sm">تصدير المحددة ({selectedProductIds.length})</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsSelectionMode(false)
+                    setSelectedProductIds([])
+                  }}
+                  className="flex flex-col items-center p-2 text-red-300 hover:text-red-100 cursor-pointer min-w-[80px]"
+                >
+                  <XMarkIcon className="h-5 w-5 mb-1" />
+                  <span className="text-sm">إلغاء التحديد</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]"
+              >
+                <ArrowUpTrayIcon className="h-5 w-5 mb-1" />
+                <span className="text-sm">تصدير</span>
+              </button>
+            )}
 
             <button 
               onClick={() => setShowColumnsModal(true)}
@@ -1057,18 +1081,32 @@ export default function ProductsPage() {
                 // Grid View
                 <div className="h-full overflow-y-auto scrollbar-hide p-4">
                   <div className="grid grid-cols-6 gap-4">
-                    {filteredProducts.map((product, index) => (
-                      <div
+                    {filteredProducts.map((product, index) => {
+                      const isSelected = isSelectionMode
+                        ? selectedProductIds.includes(product.id)
+                        : selectedProduct?.id === product.id
+
+                      return <div
                         key={product.id}
                         onClick={() => {
-                          if (selectedProduct?.id === product.id) {
-                            setSelectedProduct(null)
+                          if (isSelectionMode) {
+                            // Multi-select mode
+                            if (selectedProductIds.includes(product.id)) {
+                              setSelectedProductIds(selectedProductIds.filter(id => id !== product.id))
+                            } else {
+                              setSelectedProductIds([...selectedProductIds, product.id])
+                            }
                           } else {
-                            setSelectedProduct(product as Product)
+                            // Single-select mode
+                            if (selectedProduct?.id === product.id) {
+                              setSelectedProduct(null)
+                            } else {
+                              setSelectedProduct(product as Product)
+                            }
                           }
                         }}
                         className={`bg-[#374151] rounded-lg p-3 cursor-pointer transition-all duration-200 border-2 relative group ${
-                          selectedProduct?.id === product.id
+                          isSelected
                             ? 'border-blue-500 bg-[#434E61]'
                             : 'border-transparent hover:border-gray-500 hover:bg-[#434E61]'
                         }`}
@@ -1170,7 +1208,7 @@ export default function ProductsPage() {
                           })}
                         </div>
                       </div>
-                    ))}
+                    })}
                   </div>
 
                   {/* Spacer div to compensate for hidden toolbar */}
@@ -1673,6 +1711,10 @@ export default function ProductsPage() {
         onClose={() => setShowExportModal(false)}
         products={filteredProducts}
         selectedProductIds={selectedProductIds}
+        onSelectModeRequest={() => {
+          setIsSelectionMode(true)
+          setSelectedProductIds([])
+        }}
       />
 
       {/* Product Import Modal */}

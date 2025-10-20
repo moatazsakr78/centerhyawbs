@@ -42,7 +42,6 @@ export default function HomePage() {
   // Separate effect for cart refresh
   useEffect(() => {
     if (isClient) {
-      console.log('🏠 HomePage: Component mounted, refreshing cart...');
       refreshCart();
     }
   }, [isClient, refreshCart]);
@@ -50,13 +49,11 @@ export default function HomePage() {
   // Add effect to refresh cart when component mounts or becomes visible
   useEffect(() => {
     const handleFocus = () => {
-      console.log('🏠 HomePage: Window focused, refreshing cart...');
       refreshCart();
     };
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('🏠 HomePage: Page became visible, refreshing cart...');
         refreshCart();
       }
     };
@@ -72,7 +69,6 @@ export default function HomePage() {
 
   const handleCartUpdate = (newCart: any[]) => {
     // Real cart is managed by useRealCart hook with Supabase
-    console.log('Cart updated:', newCart);
   };
 
   // Convert Supabase cart data to compatible format
@@ -88,7 +84,6 @@ export default function HomePage() {
 
   // Calculate cart count from real cart data
   const realCartCount = getCartItemsCount();
-  console.log('🏠 HomePage: realCartCount =', realCartCount, 'cart.length =', cart.length);
 
   const updatedUserInfo = {
     ...userInfo,

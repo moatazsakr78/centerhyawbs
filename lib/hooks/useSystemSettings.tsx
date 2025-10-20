@@ -107,10 +107,10 @@ export const SystemSettingsProvider: React.FC<SystemSettingsProviderProps> = ({ 
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (settingsError && settingsError.code !== 'PGRST116') {
-        console.error('Error loading system settings:', settingsError);
+        // Silently handle error and use default settings
         setSettings(DEFAULT_SETTINGS);
       } else if (settingsData?.settings_data) {
         // Merge with defaults to ensure all properties exist

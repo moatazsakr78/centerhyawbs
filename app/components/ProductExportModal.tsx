@@ -9,23 +9,24 @@ interface ProductExportModalProps {
   onClose: () => void
   products: Product[]
   selectedProductIds: string[]
+  onSelectModeRequest?: () => void
 }
 
 export default function ProductExportModal({
   isOpen,
   onClose,
   products,
-  selectedProductIds
+  selectedProductIds,
+  onSelectModeRequest
 }: ProductExportModalProps) {
   const [exportOptions, setExportOptions] = useState({
-    // معلومات أساسية
+    // تفاصيل المنتج
     name: true,
     code: true,
     barcode: true,
-    category: true,
     description: true,
 
-    // الأسعار
+    // السعر
     purchasePrice: true,
     salePrice: true,
     wholesalePrice: true,
@@ -39,15 +40,12 @@ export default function ProductExportModal({
     additionalImages: true,
     videos: true,
 
-    // البيانات الإضافية
+    // الشكل واللون
     colors: true,
-    inventory: true,
     variants: true,
 
-    // حالة المنتج
-    isActive: true,
-    isFeatured: true,
-    displayOrder: true
+    // الإعدادات
+    isActive: true
   })
 
   const [exportMode, setExportMode] = useState<'all' | 'selected'>('all')
@@ -69,12 +67,13 @@ export default function ProductExportModal({
     const exportData = productsToExport.map(product => {
       const data: any = {}
 
+      // تفاصيل المنتج
       if (exportOptions.name) data.name = product.name
       if (exportOptions.code) data.product_code = product.product_code
       if (exportOptions.barcode) data.barcode = product.barcode
-      if (exportOptions.category) data.category_id = product.category_id
       if (exportOptions.description) data.description = product.description
 
+      // السعر
       if (exportOptions.purchasePrice) data.cost_price = product.cost_price
       if (exportOptions.salePrice) data.price = product.price
       if (exportOptions.wholesalePrice) data.wholesale_price = product.wholesale_price
@@ -83,17 +82,17 @@ export default function ProductExportModal({
       if (exportOptions.price3) data.price3 = product.price3
       if (exportOptions.price4) data.price4 = product.price4
 
+      // الصور والفيديوهات
       if (exportOptions.mainImage) data.main_image_url = product.main_image_url
       if (exportOptions.additionalImages) data.additional_images = product.additional_images
       if (exportOptions.videos) data.video_url = product.video_url
 
+      // الشكل واللون (بدون الكميات في المخزون)
       if (exportOptions.colors) data.productColors = product.productColors
       if (exportOptions.variants) data.variantsData = product.variantsData
-      if (exportOptions.inventory) data.inventoryData = product.inventoryData
 
+      // الإعدادات
       if (exportOptions.isActive) data.is_active = product.is_active
-      if (exportOptions.isFeatured) data.is_featured = product.is_featured
-      if (exportOptions.displayOrder) data.display_order = product.display_order
 
       return data
     })
@@ -118,7 +117,6 @@ export default function ProductExportModal({
       name: value,
       code: value,
       barcode: value,
-      category: value,
       description: value,
       purchasePrice: value,
       salePrice: value,
@@ -131,11 +129,8 @@ export default function ProductExportModal({
       additionalImages: value,
       videos: value,
       colors: value,
-      inventory: value,
       variants: value,
-      isActive: value,
-      isFeatured: value,
-      displayOrder: value
+      isActive: value
     })
   }
 
@@ -157,10 +152,10 @@ export default function ProductExportModal({
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)] scrollbar-hide">
           {/* Export Mode Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               نطاق التصدير
             </label>
-            <div className="flex gap-4">
+            <div className="flex gap-4 mb-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -185,6 +180,22 @@ export default function ProductExportModal({
                 </span>
               </label>
             </div>
+
+            {/* زر تحديد المنتجات */}
+            <button
+              onClick={() => {
+                if (onSelectModeRequest) {
+                  onSelectModeRequest()
+                  onClose()
+                }
+              }}
+              className="w-full px-4 py-2.5 bg-blue-50 text-blue-700 border-2 border-blue-300 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 font-medium"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              الانتقال إلى صفحة المنتجات لتحديد المنتجات
+            </button>
           </div>
 
           {/* Quick Actions */}
@@ -205,9 +216,9 @@ export default function ProductExportModal({
 
           {/* Export Options */}
           <div className="space-y-4">
-            {/* معلومات أساسية */}
+            {/* تفاصيل المنتج */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">معلومات أساسية</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">تفاصيل المنتج</h3>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -225,7 +236,7 @@ export default function ProductExportModal({
                     onChange={(e) => setExportOptions({ ...exportOptions, code: e.target.checked })}
                     className="w-4 h-4 text-blue-600 rounded"
                   />
-                  <span className="text-sm text-gray-700">رمز المنتج</span>
+                  <span className="text-sm text-gray-700">الكود / الباركود</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -239,15 +250,6 @@ export default function ProductExportModal({
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={exportOptions.category}
-                    onChange={(e) => setExportOptions({ ...exportOptions, category: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm text-gray-700">المجموعة</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer col-span-2">
-                  <input
-                    type="checkbox"
                     checked={exportOptions.description}
                     onChange={(e) => setExportOptions({ ...exportOptions, description: e.target.checked })}
                     className="w-4 h-4 text-blue-600 rounded"
@@ -257,9 +259,9 @@ export default function ProductExportModal({
               </div>
             </div>
 
-            {/* الأسعار */}
+            {/* السعر */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">الأسعار</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">السعر</h3>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -361,9 +363,9 @@ export default function ProductExportModal({
               </div>
             </div>
 
-            {/* البيانات الإضافية */}
+            {/* الشكل واللون */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">بيانات إضافية</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">الشكل واللون</h3>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -377,27 +379,18 @@ export default function ProductExportModal({
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={exportOptions.inventory}
-                    onChange={(e) => setExportOptions({ ...exportOptions, inventory: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm text-gray-700">المخزون</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
                     checked={exportOptions.variants}
                     onChange={(e) => setExportOptions({ ...exportOptions, variants: e.target.checked })}
                     className="w-4 h-4 text-blue-600 rounded"
                   />
-                  <span className="text-sm text-gray-700">المتغيرات</span>
+                  <span className="text-sm text-gray-700">الأشكال (المتغيرات)</span>
                 </label>
               </div>
             </div>
 
-            {/* حالة المنتج */}
+            {/* الإعدادات */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">حالة المنتج</h3>
+              <h3 className="font-semibold text-gray-800 mb-3">الإعدادات</h3>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -406,25 +399,7 @@ export default function ProductExportModal({
                     onChange={(e) => setExportOptions({ ...exportOptions, isActive: e.target.checked })}
                     className="w-4 h-4 text-blue-600 rounded"
                   />
-                  <span className="text-sm text-gray-700">نشط/غير نشط</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.isFeatured}
-                    onChange={(e) => setExportOptions({ ...exportOptions, isFeatured: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm text-gray-700">منتج مميز</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.displayOrder}
-                    onChange={(e) => setExportOptions({ ...exportOptions, displayOrder: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
-                  />
-                  <span className="text-sm text-gray-700">ترتيب العرض</span>
+                  <span className="text-sm text-gray-700">حالة المنتج (نشط/غير نشط)</span>
                 </label>
               </div>
             </div>

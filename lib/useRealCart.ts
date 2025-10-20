@@ -30,16 +30,13 @@ export function useRealCart(): RealCartHook {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('🔄 Refreshing cart for session:', sessionIdRef.current);
-      
+
       // Clear cache before fetching to ensure fresh data
       const { CartCache } = await import('./cart-utils');
       CartCache.clear(`cart_${sessionIdRef.current}`);
-      
+
       const items = await CartService.getCartItems(sessionIdRef.current);
-      console.log('📦 Cart items loaded:', items.length, 'items');
-      console.log('🔢 Cart count:', items.reduce((count, item) => count + item.quantity, 0));
-      
+
       if (isMountedRef.current) {
         setCart(items);
       }
@@ -63,7 +60,6 @@ export function useRealCart(): RealCartHook {
     subscriptionRef.current = CartService.subscribeToCartChanges(
       sessionIdRef.current,
       (payload) => {
-        console.log('Cart updated via real-time:', payload.eventType);
         // Small delay to prevent race conditions
         setTimeout(() => {
           if (isMountedRef.current) {
@@ -77,9 +73,7 @@ export function useRealCart(): RealCartHook {
   // Initialize session ID
   useEffect(() => {
     sessionIdRef.current = CartSession.getSessionId();
-    console.log('🔍 useRealCart initialized with session ID:', sessionIdRef.current);
-    console.log('📊 Session info:', CartSession.getSessionInfo());
-    
+
     refreshCart();
     setupRealtimeSubscription();
     
@@ -95,7 +89,6 @@ export function useRealCart(): RealCartHook {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && isMountedRef.current) {
-        console.log('🔄 Page became visible, refreshing cart...');
         refreshCart();
         // Re-setup subscription if needed
         if (!subscriptionRef.current) {
@@ -103,10 +96,9 @@ export function useRealCart(): RealCartHook {
         }
       }
     };
-    
+
     const handleFocus = () => {
       if (isMountedRef.current) {
-        console.log('🔄 Window focused, refreshing cart...');
         refreshCart();
       }
     };
@@ -130,22 +122,10 @@ export function useRealCart(): RealCartHook {
   ): Promise<boolean> => {
     try {
       setError(null);
-      
-      console.log('🛒 useRealCart.addToCart called with:', {
-        productId,
-        quantity,
-        price,
-        selectedColor,
-        selectedShape,
-        selectedSize,
-        sessionId: sessionIdRef.current
-      });
-      
+
       // Ensure session ID is available
       if (!sessionIdRef.current) {
-        console.warn('⚠️ Session ID not ready, regenerating...');
         sessionIdRef.current = CartSession.getSessionId();
-        console.log('🆔 New session ID generated:', sessionIdRef.current);
       }
       
       // Optimistic UI update - check if item exists and update accordingly
@@ -192,18 +172,11 @@ export function useRealCart(): RealCartHook {
         selectedShape,
         selectedSize
       );
-      
+
       if (result !== null) {
         // Real-time subscription will update with correct data
-        console.log('✅ Successfully added to cart:', result);
         return true;
       } else {
-        console.error('❌ Failed to add to cart - no result returned for:', {
-          productId,
-          quantity,
-          price,
-          sessionId: sessionIdRef.current
-        });
         // Revert optimistic update
         refreshCart();
         return false;
@@ -308,7 +281,6 @@ export function useRealCart(): RealCartHook {
   
   const getCartItemsCount = useCallback((): number => {
     const count = cart.reduce((count, item) => count + item.quantity, 0);
-    console.log('🔢 getCartItemsCount called, returning:', count, 'from cart:', cart.length, 'items');
     return count;
   }, [cart]);
   

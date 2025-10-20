@@ -48,8 +48,6 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      console.log('🔍 UserProfileContext: Fetching profile for user ID:', userId);
-
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -62,9 +60,6 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         lastFetchedUserId.current = null;
       } else {
-        console.log('✅ User profile fetched:', data);
-        console.log('🔒 Role:', data?.role);
-        console.log('🔒 Is Admin:', data?.is_admin);
         setProfile(data as UserProfile);
         lastFetchedUserId.current = userId;
       }
@@ -82,7 +77,6 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Clear profile immediately when user logs out
     if (!isAuthenticated || !user) {
-      console.log('🚪 User logged out or not authenticated, clearing profile');
       setProfile(null);
       setLoading(false);
       setError(null);
