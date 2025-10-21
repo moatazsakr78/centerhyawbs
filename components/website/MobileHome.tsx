@@ -55,7 +55,7 @@ export default function MobileHome({
   const isAdminOrStaff = profile?.role === 'أدمن رئيسي' || profile?.role === 'موظف';
 
   // Get company settings
-  const { companyName, logoUrl } = useCompanySettings();
+  const { companyName, logoUrl, socialMedia } = useCompanySettings();
 
   // Get cart badge count and cart functions
   const { cartBadgeCount } = useCartBadge();
@@ -830,6 +830,67 @@ export default function MobileHome({
         </section>
       </main>
 
+      {/* Mobile Footer */}
+      <footer className="py-6 mt-0 w-full" style={{backgroundColor: '#4D4D4D', borderTop: '1px solid #666'}}>
+        <div className="px-4">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-6 w-6 object-contain" />
+                <h5 className="font-bold text-base text-white">{companyName}</h5>
+              </div>
+              <p className="text-gray-400 text-sm">متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية</p>
+            </div>
+
+            {/* Social Media Links */}
+            <div>
+              <h6 className="font-semibold mb-2 text-sm text-white">تابعنا علي</h6>
+              <ul className="space-y-1.5 text-gray-400 text-sm">
+                {socialMedia && socialMedia.length > 0 && socialMedia.some(sm => sm.platform && sm.link) ? (
+                  socialMedia
+                    .filter(sm => sm.platform && sm.link)
+                    .map((sm, index) => (
+                      <li key={index}>
+                        <a
+                          href={sm.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="transition-colors hover:text-[#5D1F1F] flex items-center gap-2"
+                        >
+                          {sm.platform}
+                        </a>
+                      </li>
+                    ))
+                ) : (
+                  <li className="text-gray-500 text-xs">لا توجد روابط متاحة</li>
+                )}
+              </ul>
+            </div>
+
+            {/* Customer Service */}
+            <div>
+              <h6 className="font-semibold mb-2 text-sm text-white">خدمة العملاء</h6>
+              <ul className="space-y-1.5 text-gray-400 text-sm">
+                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">المساعدة</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">سياسة الإرجاع</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الشحن والتوصيل</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الدفع</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Us */}
+            <div>
+              <h6 className="font-semibold mb-2 text-sm text-white">تواصل معنا</h6>
+              <div className="space-y-1.5 text-gray-400 text-sm">
+                <p>📞 966+123456789</p>
+                <p>✉️ info@elfarouk-store.com</p>
+                <p>📍 الرياض، المملكة العربية السعودية</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Product Details Modal */}
       <ProductDetailsModal
