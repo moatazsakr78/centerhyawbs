@@ -55,6 +55,7 @@ interface User {
   lastLogin: string | null;
   createdAt: string | null;
   avatar_url: string | null;
+  is_admin: boolean; // قيمة is_admin لتحديد ما إذا كان المستخدم محمي من تغيير الرتبة
 }
 
 interface ActionButton {
@@ -268,10 +269,46 @@ export default function PermissionsPage() {
     try {
       console.log('🔄 محاولة تحديث دور المستخدم:', { userId, newRole });
 
+      // التحقق من أن المستخدم المستهدف لا يملك is_admin=true
+      const targetUser = realUsers.find(u => u.id === userId);
+      if (targetUser?.is_admin) {
+        alert('⛔ لا يمكن تغيير رتبة هذا المستخدم - المستخدم محمي (is_admin=true)');
+        setUpdatingRole(false);
+        return false;
+      }
+
+      // التحقق من صلاحيات المستخدم الحالي
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        alert('⛔ يجب تسجيل الدخول أولاً');
+        setUpdatingRole(false);
+        return false;
+      }
+
+      // جلب بيانات المستخدم الحالي للتحقق من صلاحياته
+      const { data: currentUserData, error: currentUserError } = await supabase
+        .from('user_profiles')
+        .select('role, is_admin')
+        .eq('id', session.user.id)
+        .single();
+
+      if (currentUserError || !currentUserData) {
+        alert('⛔ فشل في التحقق من صلاحياتك');
+        setUpdatingRole(false);
+        return false;
+      }
+
+      // فقط الأدمن الرئيسي الذي يملك is_admin=true يمكنه تغيير الرتب
+      if (currentUserData.role !== 'أدمن رئيسي' || !currentUserData.is_admin) {
+        alert('⛔ ليس لديك صلاحية لتغيير رتب المستخدمين - فقط الأدمن الرئيسي (is_admin=true) يمكنه ذلك');
+        setUpdatingRole(false);
+        return false;
+      }
+
       // تحديث الدور مباشرة - RLS policy ستتولى التحقق من الصلاحيات
       const { data, error } = await supabase
         .from('user_profiles')
-        .update({ 
+        .update({
           role: newRole,
           updated_at: new Date().toISOString()
         })
@@ -377,6 +414,8 @@ export default function PermissionsPage() {
           .select('id, full_name, role, is_admin, created_at, avatar_url, email')
           .order('created_at', { ascending: false });
 
+        console.log('🔍 بيانات المستخدمين مع is_admin:', data);
+
         console.log('📊 البيانات المسترجعة:', data);
         console.log('❌ خطأ في الاستعلام:', error);
         console.log('🔢 عدد المستخدمين:', data?.length || 0);
@@ -398,7 +437,8 @@ export default function PermissionsPage() {
             role: user.role || 'غير محدد',
             lastLogin: 'غير متوفر',
             createdAt: user.created_at ? new Date(user.created_at).toLocaleDateString('ar-EG') : null,
-            avatar_url: user.avatar_url || null
+            avatar_url: user.avatar_url || null,
+            is_admin: user.is_admin || false
           }));
           
           console.log('✅ المستخدمين المنسقين:', formattedUsers);
@@ -630,7 +670,7 @@ export default function PermissionsPage() {
                 className="bg-[#2B3544] border border-gray-600 rounded-md px-2 py-1 text-white text-xs flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={value || 'عميل'}
                 onChange={(e) => updateUserRole(user.id, e.target.value)}
-                disabled={updatingRole}
+                disabled={updatingRole || user.is_admin}
               >
                 {availableRoles.map(role => (
                   <option key={role} value={role}>{role}</option>
@@ -657,9 +697,21 @@ export default function PermissionsPage() {
               }`}>
                 {value || 'غير محدد'}
               </span>
+              {user.is_admin && (
+                <LockClosedIcon
+                  className="h-3 w-3 text-yellow-400"
+                  title="محمي - لا يمكن تغيير رتبته"
+                />
+              )}
               <button
                 onClick={() => setEditingUserId(user.id)}
-                className="text-gray-400 hover:text-blue-400 text-xs"
+                className={`text-xs ${
+                  user.is_admin
+                    ? 'text-gray-600 cursor-not-allowed'
+                    : 'text-gray-400 hover:text-blue-400'
+                }`}
+                disabled={user.is_admin}
+                title={user.is_admin ? 'لا يمكن تغيير رتبة هذا المستخدم - محمي (is_admin=true)' : ''}
               >
                 <PencilIcon className="h-3 w-3" />
               </button>
