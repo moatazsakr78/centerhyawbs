@@ -57,7 +57,7 @@ export default function DesktopHome({
   const { isAdmin } = useUserProfile();
 
   // Get company settings
-  const { companyName, logoUrl } = useCompanySettings();
+  const { companyName, logoUrl, socialMedia } = useCompanySettings();
 
   // Get cart badge count and cart functions
   const { cartBadgeCount } = useCartBadge();
@@ -719,12 +719,26 @@ export default function DesktopHome({
               <p className="text-gray-400">متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية</p>
             </div>
             <div>
-              <h6 className="font-semibold mb-3">روابط سريعة</h6>
+              <h6 className="font-semibold mb-3">تابعنا علي</h6>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الرئيسية</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">المنتجات</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">من نحن</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">اتصل بنا</a></li>
+                {socialMedia && socialMedia.length > 0 && socialMedia.some(sm => sm.platform && sm.link) ? (
+                  socialMedia
+                    .filter(sm => sm.platform && sm.link)
+                    .map((sm, index) => (
+                      <li key={index}>
+                        <a
+                          href={sm.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="transition-colors hover:text-[#5D1F1F] flex items-center gap-2"
+                        >
+                          {sm.platform}
+                        </a>
+                      </li>
+                    ))
+                ) : (
+                  <li className="text-gray-500">لا توجد روابط متاحة</li>
+                )}
               </ul>
             </div>
             <div>
