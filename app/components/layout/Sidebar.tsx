@@ -19,24 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { useUserProfile } from '../../../lib/hooks/useUserProfile'
 
-// قائمة العميل - للمتجر الإلكتروني
-const customerSidebarItems = [
-  { href: '/', label: 'الصفحة الرئيسية', icon: HomeIcon },
-  { href: '/favorites', label: 'المفضلة', icon: ShoppingCartIcon },
-  { href: '/profile', label: 'الملف الشخصي', icon: UserGroupIcon },
-  { href: '/my-orders', label: 'قائمة الطلبات', icon: ClipboardDocumentListIcon },
-]
-
-// قائمة الأدمن الرئيسي - للمتجر الإلكتروني
-const adminWebsiteSidebarItems = [
-  { href: '/customer-orders', label: 'طلبات العملاء', icon: ClipboardDocumentListIcon },
-  { href: '/admin/products', label: 'إدارة المتجر', icon: CubeIcon },
-  { href: '/pos', label: 'الانتقال للنظام', icon: ShoppingCartIcon },
-  { href: '/shipping-settings', label: 'تفاصيل الشحن', icon: TruckIcon },
-]
-
-// قائمة الموظف والأدمن الرئيسي - للنظام
-const staffSidebarItems = [
+const sidebarItems = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: HomeIcon },
   { href: '/pos', label: 'نقطة البيع', icon: ShoppingCartIcon },
   { href: '/products', label: 'المنتجات', icon: CubeIcon },
@@ -50,21 +33,6 @@ const staffSidebarItems = [
   { href: '/settings', label: 'الإعدادات', icon: CogIcon },
 ]
 
-// دالة لتحديد القائمة المناسبة حسب دور المستخدم
-const getSidebarItemsForRole = (role: string | null) => {
-  switch (role) {
-    case 'عميل':
-    case 'جملة':
-      return customerSidebarItems
-    case 'أدمن رئيسي':
-      return adminWebsiteSidebarItems
-    case 'موظف':
-      return staffSidebarItems
-    default:
-      return customerSidebarItems
-  }
-}
-
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
@@ -73,9 +41,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const { profile, loading } = useUserProfile()
-
-  // تحديد القائمة المناسبة حسب دور المستخدم
-  const sidebarItems = getSidebarItemsForRole(profile?.role || null)
 
   // Close sidebar when pressing ESC
   useEffect(() => {

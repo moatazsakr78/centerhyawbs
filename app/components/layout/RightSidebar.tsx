@@ -24,6 +24,9 @@ export default function RightSidebar({ isOpen, onClose }: RightSidebarProps) {
   const { profile, isAdmin, loading } = useUserProfile();
   const { companyName } = useCompanySettings();
 
+  // تحديد ما إذا كان المستخدم أدمن رئيسي أو موظف (يظهر لهم قائمة الإدارة)
+  const isAdminOrStaff = profile?.role === 'أدمن رئيسي' || profile?.role === 'موظف';
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -98,7 +101,7 @@ export default function RightSidebar({ isOpen, onClose }: RightSidebarProps) {
             )}
 
             {/* Admin-specific buttons */}
-            {!loading && isAdmin && (
+            {!loading && isAdminOrStaff && (
               <>
                 {/* Customer Orders (Admin Only) */}
                 <button
@@ -174,7 +177,7 @@ export default function RightSidebar({ isOpen, onClose }: RightSidebarProps) {
             )}
 
             {/* Regular user buttons (hidden for admins) */}
-            {!loading && !isAdmin && (
+            {!loading && !isAdminOrStaff && (
               <>
                 {/* Profile */}
                 <button
