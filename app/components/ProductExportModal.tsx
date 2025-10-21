@@ -84,8 +84,16 @@ export default function ProductExportModal({
 
       // الصور والفيديوهات
       if (exportOptions.mainImage) data.main_image_url = product.main_image_url
-      if (exportOptions.additionalImages) data.additional_images = product.additional_images
-      if (exportOptions.videos) data.video_url = product.video_url
+
+      // تصدير الصور الفرعية (مجمعة من sub_image_url و video_url)
+      if (exportOptions.additionalImages && product.additional_images) {
+        data.additional_images = product.additional_images
+      }
+
+      // تصدير الفيديوهات الفعلية فقط (وليس الصور)
+      if (exportOptions.videos && product.actualVideoUrl) {
+        data.video_url = product.actualVideoUrl
+      }
 
       // الشكل واللون (بدون الكميات في المخزون)
       if (exportOptions.colors) data.productColors = product.productColors

@@ -73,7 +73,16 @@ export default function ProductImportModal({
             throw new Error('اسم المنتج مطلوب')
           }
 
-          // معالجة الصور الإضافية - التوافق مع الصيغة القديمة والجديدة
+          // ============================================
+          // معالجة الصور الإضافية والفيديوهات
+          // ============================================
+          // الصيغة الجديدة:
+          //   - additional_images: مصفوفة من روابط الصور الفرعية
+          //   - video_url: رابط الفيديو الفعلي (نص عادي)
+          // الصيغة القديمة:
+          //   - video_url: قد يحتوي على JSON array من الصور
+          // ============================================
+
           let additionalImages = productData.additional_images || null
           let videoUrl = productData.video_url || null
 
@@ -101,6 +110,9 @@ export default function ProductImportModal({
 
           console.log('  - Final additional_images:', additionalImages)
           console.log('  - Final video_url:', videoUrl)
+
+          // ملاحظة: سيتم تخزين additional_images في حقل sub_image_url كـ JSON في قاعدة البيانات
+          // وسيتم تخزين video_url في حقل video_url كنص عادي
 
           // إنشاء المنتج
           const newProduct = await createProduct({

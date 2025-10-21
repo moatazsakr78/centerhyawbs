@@ -456,7 +456,7 @@ export default function MobileHome({
   }
 
   return (
-    <div className="min-h-screen text-gray-800 bg-custom-gray">
+    <div className="min-h-screen text-gray-800">
       {/* Mobile Header */}
       <header className="border-b border-gray-700 py-2 fixed top-0 left-0 right-0 z-50 h-16" style={{backgroundColor: '#5d1f1f'}}>
         <div className="px-4 flex items-center justify-between w-full">
@@ -745,7 +745,7 @@ export default function MobileHome({
 
       {/* Mobile Main Content */}
       <main
-        className="px-3 py-4 transition-all duration-300"
+        className="px-3 py-4 transition-all duration-300 bg-custom-gray"
         style={{
           paddingTop: isSearchActive ? '140px' : '70px' // Adjust for header + search bar
         }}
