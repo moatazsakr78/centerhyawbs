@@ -49,7 +49,10 @@ export default function MobileHome({
   const [categories, setCategories] = useState<any[]>([]);
   
   // Get user profile to check admin status
-  const { isAdmin } = useUserProfile();
+  const { profile, isAdmin } = useUserProfile();
+
+  // تحديد ما إذا كان المستخدم أدمن رئيسي أو موظف (يظهر لهم قائمة الإدارة)
+  const isAdminOrStaff = profile?.role === 'أدمن رئيسي' || profile?.role === 'موظف';
 
   // Get company settings
   const { companyName, logoUrl } = useCompanySettings();
@@ -538,7 +541,7 @@ export default function MobileHome({
                 <div className="space-y-1">
                   
                   {/* Admin-specific buttons */}
-                  {isAdmin && (
+                  {isAdminOrStaff && (
                     <>
                       {/* Customer Orders (Admin Only) */}
                       <button
@@ -559,29 +562,10 @@ export default function MobileHome({
                         </div>
                       </button>
 
-                      {/* Manage Products */}
-                      <button
-                        onClick={() => {
-                          window.location.href = '/admin/products';
-                          closeMenu();
-                        }}
-                        className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
-                      >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
-                          <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <h3 className="font-semibold text-base text-black">إدارة المنتجات</h3>
-                          <p className="text-xs text-gray-600">إضافة وتعديل وحذف المنتجات</p>
-                        </div>
-                      </button>
-
                       {/* Store Management */}
                       <button
                         onClick={() => {
-                          alert('سيتم إضافة صفحة إدارة المتجر قريباً');
+                          window.location.href = '/admin/products';
                           closeMenu();
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
@@ -593,7 +577,7 @@ export default function MobileHome({
                         </div>
                         <div className="flex-1 text-right">
                           <h3 className="font-semibold text-base text-black">إدارة المتجر</h3>
-                          <p className="text-xs text-gray-600">إعدادات وإدارة المتجر العامة</p>
+                          <p className="text-xs text-gray-600">إدارة المنتجات والفئات وإعدادات المتجر</p>
                         </div>
                       </button>
 
@@ -639,7 +623,7 @@ export default function MobileHome({
                   )}
 
                   {/* Regular user buttons (hidden for admins) */}
-                  {!isAdmin && (
+                  {!isAdminOrStaff && (
                     <>
                       {/* Profile */}
                       <button
