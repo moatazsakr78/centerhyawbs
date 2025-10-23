@@ -161,19 +161,18 @@ export function useProducts() {
     })
 
     // ✨ HIGHEST PRIORITY: Add sub-images from additional_images_urls (new field)
-    if (product.additional_images_urls && Array.isArray(product.additional_images_urls)) {
+    if (product.additional_images_urls && Array.isArray(product.additional_images_urls) && product.additional_images_urls.length > 0) {
       allProductImages.push(...product.additional_images_urls);
-    } else {
-      // FALLBACK: Add sub-images from video_url field (old system)
-      if (product.video_url) {
-        try {
-          const additionalImages = JSON.parse(product.video_url);
-          if (Array.isArray(additionalImages)) {
-            allProductImages.push(...additionalImages);
-          }
-        } catch (parseError) {
-          // video_url is a real video URL, not JSON - ignore
+    }
+    // FALLBACK: Add sub-images from video_url field (old system) - only if additional_images_urls is empty
+    else if (product.video_url) {
+      try {
+        const additionalImages = JSON.parse(product.video_url);
+        if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+          allProductImages.push(...additionalImages);
         }
+      } catch (parseError) {
+        // video_url is a real video URL, not JSON - ignore
       }
     }
 
