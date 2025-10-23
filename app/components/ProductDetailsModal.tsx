@@ -1293,11 +1293,18 @@ export default function ProductDetailsModal({
 
             {/* L-shaped thumbnails layout */}
             {(() => {
+              console.log('📸 Thumbnails Debug:');
+              console.log('   - currentGallery:', currentGallery);
+              console.log('   - currentGallery.length:', currentGallery.length);
+              console.log('   - productVideos.length:', productVideos.length);
+
               // Combine all media (images + videos)
               const allMedia = [
                 ...currentGallery.map((url, idx) => ({ type: 'image', url, imageIndex: idx })),
                 ...productVideos.map(video => ({ type: 'video', url: video.video_url, imageIndex: -1 }))
               ];
+
+              console.log('   - allMedia.length:', allMedia.length);
 
               if (allMedia.length === 0) return null;
 
