@@ -92,12 +92,9 @@ const getProductSubImages = async (
     console.log('   - additionalImagesUrls:', additionalImagesUrls);
 
     // ✨ HIGHEST PRIORITY: Check additional_images_urls (new field)
-    if (additionalImagesUrls) {
-      const images = Array.isArray(additionalImagesUrls) ? additionalImagesUrls : [];
-      if (images.length > 0) {
-        console.log(`✅ Modal: Loaded ${images.length} images from additional_images_urls for ${productName}`);
-        return images;
-      }
+    if (additionalImagesUrls && Array.isArray(additionalImagesUrls) && additionalImagesUrls.length > 0) {
+      console.log(`✅ Modal: Loaded ${additionalImagesUrls.length} images from additional_images_urls for ${productName}`);
+      return additionalImagesUrls;
     }
 
     // Second priority: Check if sub-images are stored in video_url field (old system)
