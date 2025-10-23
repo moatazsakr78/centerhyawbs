@@ -51,6 +51,7 @@ export interface Product {
   suggested_products?: string[] | null
   additional_images?: any[] | null
   actualVideoUrl?: string | null // Actual video URL (not images array)
+  productVideos?: ProductVideo[] // ✨ قائمة الفيديوهات من جدول product_videos
   // Relations
   category?: {
     id: string
@@ -70,6 +71,20 @@ export interface Product {
   isDiscounted?: boolean
   discountLabel?: string
   colors?: ProductColor[] // Color variants
+}
+
+// ✨ Interface للفيديوهات
+export interface ProductVideo {
+  id: string
+  product_id: string
+  video_url: string
+  video_name?: string | null
+  video_size?: number | null
+  duration?: number | null
+  thumbnail_url?: string | null
+  sort_order?: number | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface ProductVariant {
@@ -253,8 +268,8 @@ export function useProducts() {
 
           // OPTIMIZATION: Batch fetch all inventory data in one query
           const productIds = productsData.map(p => p.id)
-          
-          const [inventoryData, variantsData] = await Promise.all([
+
+          const [inventoryData, variantsData, videosData] = await Promise.all([
             // Single query for all inventory data
             supabase
               .from('inventory')
@@ -267,7 +282,7 @@ export function useProducts() {
                 }
                 return data || []
               }),
-            
+
             // Single query for all variants data
             supabase
               .from('product_variants')
@@ -279,12 +294,27 @@ export function useProducts() {
                   return []
                 }
                 return data || []
+              }),
+
+            // ✨ Single query for all videos data
+            (supabase as any)
+              .from('product_videos')
+              .select('*')
+              .in('product_id', productIds)
+              .order('sort_order', { ascending: true })
+              .then(({ data, error }: any) => {
+                if (error) {
+                  console.warn('Unable to fetch videos data:', error)
+                  return []
+                }
+                return data || []
               })
           ])
 
-          // OPTIMIZATION: Group inventory and variants by product_id for O(1) lookup
+          // OPTIMIZATION: Group inventory, variants, and videos by product_id for O(1) lookup
           const inventoryByProduct = new Map<string, any[]>()
           const variantsByProduct = new Map<string, any[]>()
+          const videosByProduct = new Map<string, ProductVideo[]>()
 
           inventoryData.forEach((inv: any) => {
             const productId = inv.product_id
@@ -300,6 +330,15 @@ export function useProducts() {
               variantsByProduct.set(productId, [])
             }
             variantsByProduct.get(productId)!.push(variant)
+          })
+
+          // ✨ Group videos by product_id
+          videosData.forEach((video: any) => {
+            const productId = video.product_id
+            if (!videosByProduct.has(productId)) {
+              videosByProduct.set(productId, [])
+            }
+            videosByProduct.get(productId)!.push(video)
           })
 
           // OPTIMIZATION: Process all products in parallel with optimized logic
@@ -443,6 +482,9 @@ export function useProducts() {
               }))
               .sort((a: any, b: any) => b.quantity - a.quantity);
 
+            // Get videos for this product
+            const productVideos = videosByProduct.get(product.id) || []
+
             return {
               ...product,
               description: actualDescription,
@@ -454,6 +496,7 @@ export function useProducts() {
               allImages: uniqueImages,
               additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
               actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
+              productVideos: productVideos, // ✨ قائمة الفيديوهات من جدول product_videos
               finalPrice: finalPrice,
               isDiscounted: isDiscountActive,
               discountLabel: discountLabel

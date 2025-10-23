@@ -52,7 +52,73 @@ export default function ProductExportModal({
 
   if (!isOpen) return null
 
-  const handleExport = () => {
+  // ✨ تحويل URL إلى base64 (مع دعم الفيديوهات الكبيرة)
+  const urlToBase64 = async (url: string): Promise<{ data: string; name: string; size: number } | null> => {
+    try {
+      console.log('🔄 Fetching:', url)
+
+      // إضافة timeout أطول للفيديوهات
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minutes timeout
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        mode: 'cors', // تأكد من دعم CORS
+        cache: 'no-cache' // تجنب مشاكل الكاش
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        console.error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
+        return null
+      }
+
+      console.log(`✅ Fetched ${url}, converting to blob...`)
+      const blob = await response.blob()
+      console.log(`📦 Blob size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`)
+
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64 = reader.result as string
+          const fileName = url.split('/').pop() || 'file'
+          console.log(`✅ Converted to base64: ${fileName}`)
+          resolve({
+            data: base64,
+            name: fileName,
+            size: blob.size
+          })
+        }
+        reader.onerror = (error) => {
+          console.error('FileReader error:', error)
+          resolve(null)
+        }
+        reader.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const progress = Math.round((e.loaded / e.total) * 100)
+            if (progress % 25 === 0) { // Log every 25%
+              console.log(`  Progress: ${progress}%`)
+            }
+          }
+        }
+        reader.readAsDataURL(blob)
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.error('Request timeout for:', url)
+        } else {
+          console.error('Error converting URL to base64:', error.message)
+        }
+      } else {
+        console.error('Unknown error converting URL to base64:', error)
+      }
+      return null
+    }
+  }
+
+  const handleExport = async () => {
     // تحديد المنتجات المراد تصديرها
     const productsToExport = exportMode === 'all'
       ? products
@@ -63,13 +129,16 @@ export default function ProductExportModal({
       return
     }
 
+    console.log('🚀 Starting export process...')
+    console.log(`📦 Exporting ${productsToExport.length} products`)
+
     // تصفية البيانات حسب الخيارات المحددة
-    const exportData = productsToExport.map(product => {
+    const exportData = await Promise.all(productsToExport.map(async (product) => {
       // Debug log لكل منتج
       console.log('📤 Exporting product:', product.name)
       console.log('  - main_image_url:', product.main_image_url)
       console.log('  - additional_images:', product.additional_images?.length || 0, 'images')
-      console.log('  - actualVideoUrl:', product.actualVideoUrl || 'none')
+      console.log('  - productVideos:', product.productVideos?.length || 0, 'videos')
 
       const data: any = {}
 
@@ -88,17 +157,70 @@ export default function ProductExportModal({
       if (exportOptions.price3) data.price3 = product.price3
       if (exportOptions.price4) data.price4 = product.price4
 
-      // الصور والفيديوهات
-      if (exportOptions.mainImage) data.main_image_url = product.main_image_url
-
-      // ✨ تصدير الصور الإضافية من الحقل الجديد
-      if (exportOptions.additionalImages && product.additional_images && product.additional_images.length > 0) {
-        data.additional_images = product.additional_images
+      // ✨ تصدير الصورة الرئيسية كـ base64
+      if (exportOptions.mainImage && product.main_image_url) {
+        const imageData = await urlToBase64(product.main_image_url)
+        if (imageData) {
+          data.main_image = imageData
+        }
       }
 
-      // ✨ تصدير رابط الفيديو الفعلي فقط
-      if (exportOptions.videos && product.actualVideoUrl) {
-        data.video_url = product.actualVideoUrl
+      // ✨ تصدير الصور الإضافية كـ base64
+      if (exportOptions.additionalImages && product.additional_images && product.additional_images.length > 0) {
+        data.additional_images = await Promise.all(
+          product.additional_images.map(async (imageUrl: string) => {
+            const imageData = await urlToBase64(imageUrl)
+            return imageData
+          })
+        )
+        // إزالة القيم null
+        data.additional_images = data.additional_images.filter((img: any) => img !== null)
+      }
+
+      // ✨ تصدير قائمة الفيديوهات كـ base64
+      if (exportOptions.videos && product.productVideos && product.productVideos.length > 0) {
+        console.log(`📹 Exporting ${product.productVideos.length} videos for product:`, product.name)
+
+        const videosPromises = product.productVideos.map(async (video, index) => {
+          try {
+            console.log(`  - Processing video ${index + 1}:`, video.video_url)
+            const videoData = await urlToBase64(video.video_url)
+
+            if (!videoData) {
+              console.warn(`  ⚠️ Failed to convert video ${index + 1} to base64`)
+              return null
+            }
+
+            console.log(`  ✅ Video ${index + 1} converted successfully (${(videoData.size / 1024 / 1024).toFixed(2)} MB)`)
+
+            let thumbnailData = null
+            if (video.thumbnail_url) {
+              console.log(`  - Processing thumbnail for video ${index + 1}`)
+              thumbnailData = await urlToBase64(video.thumbnail_url)
+              if (thumbnailData) {
+                console.log(`  ✅ Thumbnail converted successfully`)
+              }
+            }
+
+            return {
+              video_data: videoData,
+              thumbnail_data: thumbnailData,
+              video_name: video.video_name,
+              video_size: video.video_size,
+              duration: video.duration,
+              sort_order: video.sort_order
+            }
+          } catch (error) {
+            console.error(`  ❌ Error processing video ${index + 1}:`, error)
+            return null
+          }
+        })
+
+        const videosResults = await Promise.all(videosPromises)
+        // إزالة القيم null (الفيديوهات التي فشل تحميلها)
+        data.product_videos = videosResults.filter(v => v !== null)
+
+        console.log(`  📊 Successfully exported ${data.product_videos.length} out of ${product.productVideos.length} videos`)
       }
 
       // الشكل واللون (بدون الكميات في المخزون)
@@ -109,7 +231,7 @@ export default function ProductExportModal({
       if (exportOptions.isActive) data.is_active = product.is_active
 
       return data
-    })
+    }))
 
     // Debug: طباعة البيانات النهائية
     console.log('📦 Final export data:', exportData)
@@ -132,7 +254,7 @@ export default function ProductExportModal({
 
     exportData.forEach(p => {
       // عد الصور الرئيسية
-      if (p.main_image_url) {
+      if (p.main_image) {
         totalMainImages++
       }
 
@@ -141,9 +263,9 @@ export default function ProductExportModal({
         totalAdditionalImages += p.additional_images.length
       }
 
-      // عد الفيديوهات
-      if (p.video_url) {
-        totalVideos++
+      // عد الفيديوهات من المصفوفة
+      if (p.product_videos && Array.isArray(p.product_videos)) {
+        totalVideos += p.product_videos.length
       }
     })
 
@@ -157,7 +279,8 @@ export default function ProductExportModal({
       `📊 الإحصائيات:\n` +
       `• عدد الصور الرئيسية التي تم تصديرها: ${totalMainImages}\n` +
       `• عدد الصور الفرعية التي تم تصديرها: ${totalAdditionalImages}\n` +
-      `• عدد الفيديوهات التي تم تصديرها: ${totalVideos}`
+      `• عدد الفيديوهات التي تم تصديرها: ${totalVideos}\n\n` +
+      `✅ جميع الملفات تم تضمينها في ملف JSON`
     )
     onClose()
   }

@@ -49,6 +49,7 @@ export interface Product {
   suggested_products?: string[] | null
   additional_images?: any[] | null
   actualVideoUrl?: string | null // Actual video URL (not images array)
+  productVideos?: ProductVideo[] // ✨ قائمة الفيديوهات من جدول product_videos
   // Relations
   category?: {
     id: string
@@ -68,6 +69,20 @@ export interface Product {
   isDiscounted?: boolean
   discountLabel?: string
   colors?: ProductColor[] // Color variants
+}
+
+// ✨ Interface للفيديوهات
+export interface ProductVideo {
+  id: string
+  product_id: string
+  video_url: string
+  video_name?: string | null
+  video_size?: number | null
+  duration?: number | null
+  thumbnail_url?: string | null
+  sort_order?: number | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface ProductVariant {

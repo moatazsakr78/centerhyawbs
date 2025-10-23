@@ -4,6 +4,13 @@ import { useState, useRef } from 'react'
 import { XMarkIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline'
 import { Product } from '../lib/hooks/useProducts'
 import { supabase } from '../lib/supabase/client'
+import {
+  uploadProductImage,
+  uploadProductVideo,
+  getProductImageUrl,
+  getProductVideoUrl,
+  PRODUCT_STORAGE_BUCKETS
+} from '../lib/supabase/storage'
 
 interface ProductImportModalProps {
   isOpen: boolean
@@ -41,6 +48,27 @@ export default function ProductImportModal({
     }
   }
 
+  // ✨ تحويل base64 إلى File object
+  const base64ToFile = (base64Data: string, fileName: string): File | null => {
+    try {
+      // استخراج نوع الملف من base64
+      const arr = base64Data.split(',')
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'application/octet-stream'
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const u8arr = new Uint8Array(n)
+
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n)
+      }
+
+      return new File([u8arr], fileName, { type: mime })
+    } catch (error) {
+      console.error('Error converting base64 to file:', error)
+      return null
+    }
+  }
+
   const handleImport = async () => {
     if (!selectedFile) {
       alert('الرجاء اختيار ملف أولاً')
@@ -73,46 +101,45 @@ export default function ProductImportModal({
             throw new Error('اسم المنتج مطلوب')
           }
 
-          // ============================================
-          // معالجة الصور الإضافية والفيديوهات
-          // ============================================
-          // الصيغة الجديدة:
-          //   - additional_images: مصفوفة من روابط الصور الفرعية
-          //   - video_url: رابط الفيديو الفعلي (نص عادي)
-          // الصيغة القديمة:
-          //   - video_url: قد يحتوي على JSON array من الصور
-          // ============================================
-
-          let additionalImages = productData.additional_images || null
-          let videoUrl = productData.video_url || null
-
           console.log('🔍 Import Debug for:', productData.name)
-          console.log('  - additional_images:', additionalImages)
-          console.log('  - video_url type:', typeof videoUrl)
-          console.log('  - video_url value:', videoUrl)
 
-          // إذا كان video_url يحتوي على JSON array (الصيغة القديمة)، حوّله لـ additional_images
-          if (!additionalImages && videoUrl) {
-            try {
-              const parsed = typeof videoUrl === 'string' ? JSON.parse(videoUrl) : videoUrl
-              console.log('  - Parsed video_url:', parsed)
-              console.log('  - Is array?', Array.isArray(parsed))
-              if (Array.isArray(parsed)) {
-                additionalImages = parsed
-                videoUrl = null // مسح video_url لأنه كان يحتوي على الصور فقط
-                console.log('  - ✅ Converted to additional_images, count:', additionalImages.length)
+          // ✨ رفع الصورة الرئيسية إلى Bucket
+          let mainImageUrl = null
+          if (productData.main_image && productData.main_image.data) {
+            console.log('📸 Uploading main image...')
+            const imageFile = base64ToFile(productData.main_image.data, productData.main_image.name)
+            if (imageFile) {
+              const { data, error } = await uploadProductImage(imageFile, 'MAIN_PRODUCTS')
+              if (!error && data) {
+                mainImageUrl = getProductImageUrl('MAIN_PRODUCTS', data.path)
+                console.log('✅ Main image uploaded:', mainImageUrl)
+              } else {
+                console.error('❌ Error uploading main image:', error)
+                errors.push(`تحذير: فشل رفع الصورة الرئيسية للمنتج: ${productData.name}`)
               }
-            } catch (e) {
-              console.log('  - ❌ Parse error:', e)
-              // video_url ليس JSON، احتفظ به كما هو (رابط فيديو فعلي)
             }
           }
 
-          console.log('  - Final additional_images:', additionalImages)
-          console.log('  - Final video_url:', videoUrl)
-
-          // ملاحظة: سيتم تخزين additional_images في حقل sub_image_url كـ JSON في قاعدة البيانات
-          // وسيتم تخزين video_url في حقل video_url كنص عادي
+          // ✨ رفع الصور الإضافية إلى Bucket
+          let additionalImagesUrls: string[] = []
+          if (productData.additional_images && Array.isArray(productData.additional_images)) {
+            console.log(`📸 Uploading ${productData.additional_images.length} additional images...`)
+            for (const imageData of productData.additional_images) {
+              if (imageData && imageData.data) {
+                const imageFile = base64ToFile(imageData.data, imageData.name)
+                if (imageFile) {
+                  const { data, error } = await uploadProductImage(imageFile, 'SUB_PRODUCTS')
+                  if (!error && data) {
+                    const imageUrl = getProductImageUrl('SUB_PRODUCTS', data.path)
+                    additionalImagesUrls.push(imageUrl)
+                    console.log('✅ Sub image uploaded:', imageUrl)
+                  } else {
+                    console.error('❌ Error uploading sub image:', error)
+                  }
+                }
+              }
+            }
+          }
 
           // إنشاء المنتج
           const newProduct = await createProduct({
@@ -128,9 +155,8 @@ export default function ProductImportModal({
             price2: productData.price2 || 0,
             price3: productData.price3 || 0,
             price4: productData.price4 || 0,
-            main_image_url: productData.main_image_url || null,
-            additional_images: additionalImages,
-            video_url: videoUrl,
+            main_image_url: mainImageUrl,
+            additional_images: additionalImagesUrls.length > 0 ? additionalImagesUrls : null,
             is_active: productData.is_active !== undefined ? productData.is_active : true,
             is_featured: productData.is_featured || false,
             display_order: productData.display_order || i
@@ -138,6 +164,69 @@ export default function ProductImportModal({
 
           if (newProduct) {
             successCount++
+
+            // ✨ رفع الفيديوهات إلى Bucket
+            if (productData.product_videos && Array.isArray(productData.product_videos) && productData.product_videos.length > 0) {
+              console.log(`📹 Uploading ${productData.product_videos.length} videos for product: ${newProduct.name}`)
+
+              try {
+                const videosToInsert = []
+
+                for (const videoData of productData.product_videos) {
+                  if (videoData && videoData.video_data && videoData.video_data.data) {
+                    // رفع الفيديو إلى Bucket
+                    const videoFile = base64ToFile(videoData.video_data.data, videoData.video_data.name)
+                    if (videoFile) {
+                      const { data, error } = await uploadProductVideo(videoFile, newProduct.id)
+                      if (!error && data) {
+                        console.log('✅ Video uploaded:', data.publicUrl)
+
+                        // رفع thumbnail إذا كان موجود
+                        let thumbnailUrl = null
+                        if (videoData.thumbnail_data && videoData.thumbnail_data.data) {
+                          const thumbnailFile = base64ToFile(videoData.thumbnail_data.data, videoData.thumbnail_data.name)
+                          if (thumbnailFile) {
+                            const thumbResult = await uploadProductImage(thumbnailFile, 'SUB_PRODUCTS')
+                            if (!thumbResult.error && thumbResult.data) {
+                              thumbnailUrl = getProductImageUrl('SUB_PRODUCTS', thumbResult.data.path)
+                            }
+                          }
+                        }
+
+                        videosToInsert.push({
+                          product_id: newProduct.id,
+                          video_url: data.publicUrl,
+                          video_name: videoData.video_name || null,
+                          video_size: videoData.video_size || null,
+                          duration: videoData.duration || null,
+                          thumbnail_url: thumbnailUrl,
+                          sort_order: videoData.sort_order !== undefined ? videoData.sort_order : videosToInsert.length
+                        })
+                      } else {
+                        console.error('❌ Error uploading video:', error)
+                      }
+                    }
+                  }
+                }
+
+                // إدراج بيانات الفيديوهات في الجدول
+                if (videosToInsert.length > 0) {
+                  const { error: videosError } = await (supabase as any)
+                    .from('product_videos')
+                    .insert(videosToInsert)
+
+                  if (videosError) {
+                    console.error('Error inserting videos to DB:', videosError)
+                    errors.push(`تحذير: فشل حفظ بيانات الفيديوهات للمنتج: ${newProduct.name}`)
+                  } else {
+                    console.log(`✅ Successfully imported ${videosToInsert.length} videos for product: ${newProduct.name}`)
+                  }
+                }
+              } catch (videoError) {
+                console.error('Error processing videos:', videoError)
+                errors.push(`تحذير: خطأ في معالجة الفيديوهات للمنتج: ${newProduct.name}`)
+              }
+            }
           } else {
             failedCount++
             errors.push(`فشل إنشاء المنتج: ${productData.name}`)
