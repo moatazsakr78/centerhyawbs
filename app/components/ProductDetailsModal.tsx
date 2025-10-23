@@ -438,7 +438,7 @@ export default function ProductDetailsModal({
         setIsLoading(true);
         setError(null);
 
-        const { data: product, error: productError } = await supabase
+        const { data: rawProduct, error: productError } = await supabase
           .from('products')
           .select(`
             *,
@@ -455,6 +455,9 @@ export default function ProductDetailsModal({
           .single();
 
         if (productError) throw productError;
+
+        // Cast to DatabaseProduct with additional_images_urls
+        const product = rawProduct as unknown as DatabaseProduct;
 
         if (!product) {
           setError('المنتج غير موجود');
@@ -747,10 +750,10 @@ export default function ProductDetailsModal({
         }
 
         // Fetch suggested products if available
-        if ((product as any).suggested_products && Array.isArray((product as any).suggested_products) && (product as any).suggested_products.length > 0) {
-          const suggestedIds = (product as any).suggested_products;
-          
-          const { data: suggestedData, error: suggestedError } = await supabase
+        if (product.suggested_products && Array.isArray(product.suggested_products) && product.suggested_products.length > 0) {
+          const suggestedIds = product.suggested_products;
+
+          const { data: rawSuggestedData, error: suggestedError } = await supabase
             .from('products')
             .select(`
               *,
@@ -764,6 +767,8 @@ export default function ProductDetailsModal({
             .in('id', suggestedIds)
             .eq('is_active', true)
             .eq('is_hidden', false);
+
+          const suggestedData = rawSuggestedData as unknown as DatabaseProduct[];
 
           if (!suggestedError && suggestedData) {
             const convertedSuggestedProducts: Product[] = suggestedData.map((suggestedProduct: any) => {
