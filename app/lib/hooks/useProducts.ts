@@ -634,8 +634,9 @@ export function useProducts() {
               }
 
               // ✨ استخدام الحقل الجديد المبسط
-              const parsedAdditionalImages = newProduct.additional_images_urls || []
-              const actualVideoUrl = newProduct.video_url || null
+              const product = newProduct as any // Cast for new field
+              const parsedAdditionalImages = product.additional_images_urls || []
+              const actualVideoUrl = product.video_url || null
 
               // Add inventory and variants data
               const enrichedProduct = {
@@ -707,8 +708,9 @@ export function useProducts() {
               }
 
               // ✨ استخدام الحقل الجديد المبسط
-              const parsedAdditionalImages = updatedProduct.additional_images_urls || []
-              const actualVideoUrl = updatedProduct.video_url || null
+              const product = updatedProduct as any // Cast for new field
+              const parsedAdditionalImages = product.additional_images_urls || []
+              const actualVideoUrl = product.video_url || null
 
               setProducts(prev => prev.map(product =>
                 product.id === payload.new.id
