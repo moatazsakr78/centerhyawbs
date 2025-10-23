@@ -75,22 +75,36 @@ interface ProductDetail extends Omit<Product, 'sizes'> {
 }
 
 // Function to get sub-images for a product from database or fallback
-const getProductSubImages = async (productId: string, productName: string = '', videoUrl: string | null = null): Promise<string[]> => {
+const getProductSubImages = async (
+  productId: string,
+  productName: string = '',
+  videoUrl: string | null = null,
+  additionalImagesUrls: any = null
+): Promise<string[]> => {
   try {
-    // First priority: Check if sub-images are stored in video_url field (admin system)
+    // ✨ HIGHEST PRIORITY: Check additional_images_urls (new field)
+    if (additionalImagesUrls) {
+      const images = Array.isArray(additionalImagesUrls) ? additionalImagesUrls : [];
+      if (images.length > 0) {
+        console.log(`✅ Loaded ${images.length} images from additional_images_urls for ${productName}`);
+        return images;
+      }
+    }
+
+    // Second priority: Check if sub-images are stored in video_url field (old system)
     if (videoUrl) {
       try {
         const additionalImages = JSON.parse(videoUrl);
         if (Array.isArray(additionalImages) && additionalImages.length > 0) {
-          console.log(`Loaded ${additionalImages.length} admin sub-images for product ${productName}`);
+          console.log(`Loaded ${additionalImages.length} admin sub-images from video_url for ${productName}`);
           return additionalImages;
         }
       } catch (parseError) {
-        console.error('Error parsing video_url for sub-images:', parseError);
+        // video_url is not JSON, it's a video link
       }
     }
 
-    // Second priority: Check product_images table
+    // Third priority: Check product_images table
     const { data: productImages, error } = await supabase
       .from('product_images')
       .select('image_url')
@@ -102,8 +116,8 @@ const getProductSubImages = async (productId: string, productName: string = '', 
       return productImages.map(img => img.image_url);
     }
 
-    // Third priority: Use fallback system
-    console.log(`Using fallback sub-images for product ${productName}`);
+    // Fourth priority: Use fallback system (generates placeholder images)
+    console.log(`⚠️ No images found, using fallback for product ${productName}`);
     return getProductSubImagesFallback(productId, productName);
   } catch (err) {
     console.error('Error fetching product images:', err);
@@ -436,7 +450,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         }
 
         // Get sub-images for this product
-        const subImages = await getProductSubImages(product.id, product.name, product.video_url);
+        const subImages = await getProductSubImages(
+          product.id,
+          product.name,
+          product.video_url,
+          (product as any).additional_images_urls // ✨ تمرير الحقل الجديد
+        );
 
         // Get product videos from product_videos table using any type workaround
         try {

@@ -343,16 +343,41 @@ export function useProducts() {
             }))
             .sort((a: any, b: any) => b.quantity - a.quantity); // Sort by quantity descending
 
-          // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
-          // additional_images_urls يحتوي على جميع الصور الإضافية بشكل مباشر
-          const parsedAdditionalImages = product.additional_images_urls || []
+          // ✨ استخدام الحقل الجديد مع fallback للصيغة القديمة
+          let parsedAdditionalImages = product.additional_images_urls || []
+          let actualVideoUrl = product.video_url || null
 
-          // video_url الآن للفيديوهات فقط (string أو null)
-          const actualVideoUrl = product.video_url || null
+          // 🔄 FALLBACK: إذا لم تكن هناك صور في الحقل الجديد، حاول القراءة من الحقول القديمة
+          if (parsedAdditionalImages.length === 0) {
+            // محاولة قراءة من sub_image_url
+            if (product.sub_image_url) {
+              try {
+                const parsed = JSON.parse(product.sub_image_url)
+                if (Array.isArray(parsed)) {
+                  parsedAdditionalImages = parsed
+                }
+              } catch (e) {
+                // Ignore
+              }
+            }
+
+            // محاولة قراءة من video_url إذا كان يحتوي على صور
+            if (parsedAdditionalImages.length === 0 && product.video_url) {
+              try {
+                const parsed = JSON.parse(product.video_url)
+                if (Array.isArray(parsed)) {
+                  parsedAdditionalImages = parsed
+                  actualVideoUrl = null // video_url كان يحتوي على صور، وليس فيديو
+                }
+              } catch (e) {
+                // video_url هو رابط فيديو فعلي
+              }
+            }
+          }
 
           console.log(`🔍 Processing product: ${product.name}`)
-          console.log('  - additional_images_urls:', parsedAdditionalImages.length, 'images')
-          console.log('  - video_url:', actualVideoUrl ? 'Video found' : 'No video')
+          console.log('  - additional_images:', parsedAdditionalImages.length, 'images')
+          console.log('  - actualVideoUrl:', actualVideoUrl ? 'Has video' : 'No video')
 
           return {
             ...product,

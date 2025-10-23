@@ -371,9 +371,37 @@ export function useProducts() {
             // FIXED: Use consistent image processing helper
             const uniqueImages = processProductImages(product, productVariantsData)
 
-            // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
-            const parsedAdditionalImages = product.additional_images_urls || []
-            const actualVideoUrl = product.video_url || null
+            // ✨ استخدام الحقل الجديد مع fallback للصيغة القديمة
+            let parsedAdditionalImages = product.additional_images_urls || []
+            let actualVideoUrl = product.video_url || null
+
+            // 🔄 FALLBACK: إذا لم تكن هناك صور في الحقل الجديد، حاول القراءة من الحقول القديمة
+            if (parsedAdditionalImages.length === 0) {
+              // محاولة قراءة من sub_image_url
+              if (product.sub_image_url) {
+                try {
+                  const parsed = JSON.parse(product.sub_image_url)
+                  if (Array.isArray(parsed)) {
+                    parsedAdditionalImages = parsed
+                  }
+                } catch (e) {
+                  // Ignore
+                }
+              }
+
+              // محاولة قراءة من video_url إذا كان يحتوي على صور
+              if (parsedAdditionalImages.length === 0 && product.video_url) {
+                try {
+                  const parsed = JSON.parse(product.video_url)
+                  if (Array.isArray(parsed)) {
+                    parsedAdditionalImages = parsed
+                    actualVideoUrl = null // video_url كان يحتوي على صور، وليس فيديو
+                  }
+                } catch (e) {
+                  // video_url هو رابط فيديو فعلي
+                }
+              }
+            }
 
             // Calculate discount information
             const now = new Date()

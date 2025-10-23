@@ -125,15 +125,40 @@ export default function ProductExportModal({
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
 
-    // إحصائيات التصدير
-    const productsWithImages = exportData.filter(p => p.additional_images && p.additional_images.length > 0).length
-    const productsWithVideos = exportData.filter(p => p.video_url).length
+    // 📊 إحصائيات التصدير - عدد الصور والفيديوهات الفعلية
+    let totalMainImages = 0
+    let totalAdditionalImages = 0
+    let totalVideos = 0
+
+    exportData.forEach(p => {
+      // عد الصور الرئيسية
+      if (p.main_image_url) {
+        totalMainImages++
+      }
+
+      // عد الصور الفرعية
+      if (p.additional_images && Array.isArray(p.additional_images)) {
+        totalAdditionalImages += p.additional_images.length
+      }
+
+      // عد الفيديوهات
+      if (p.video_url) {
+        totalVideos++
+      }
+    })
 
     console.log(`✅ تم تصدير ${exportData.length} منتج`)
-    console.log(`   - ${productsWithImages} منتج لديه صور فرعية`)
-    console.log(`   - ${productsWithVideos} منتج لديه فيديوهات`)
+    console.log(`   📸 الصور الرئيسية: ${totalMainImages}`)
+    console.log(`   🖼️  الصور الفرعية: ${totalAdditionalImages}`)
+    console.log(`   🎬 الفيديوهات: ${totalVideos}`)
 
-    alert(`تم تصدير ${exportData.length} منتج بنجاح!\n• ${productsWithImages} منتج لديه صور فرعية\n• ${productsWithVideos} منتج لديه فيديوهات`)
+    alert(
+      `تم تصدير ${exportData.length} منتج بنجاح!\n\n` +
+      `📊 الإحصائيات:\n` +
+      `• عدد الصور الرئيسية التي تم تصديرها: ${totalMainImages}\n` +
+      `• عدد الصور الفرعية التي تم تصديرها: ${totalAdditionalImages}\n` +
+      `• عدد الفيديوهات التي تم تصديرها: ${totalVideos}`
+    )
     onClose()
   }
 
