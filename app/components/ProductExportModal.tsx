@@ -65,6 +65,12 @@ export default function ProductExportModal({
 
     // تصفية البيانات حسب الخيارات المحددة
     const exportData = productsToExport.map(product => {
+      // Debug log لكل منتج
+      console.log('📤 Exporting product:', product.name)
+      console.log('  - main_image_url:', product.main_image_url)
+      console.log('  - additional_images:', product.additional_images?.length || 0, 'images')
+      console.log('  - actualVideoUrl:', product.actualVideoUrl || 'none')
+
       const data: any = {}
 
       // تفاصيل المنتج
@@ -85,12 +91,12 @@ export default function ProductExportModal({
       // الصور والفيديوهات
       if (exportOptions.mainImage) data.main_image_url = product.main_image_url
 
-      // تصدير الصور الفرعية (مجمعة من sub_image_url و video_url)
-      if (exportOptions.additionalImages && product.additional_images) {
+      // ✨ تصدير الصور الإضافية من الحقل الجديد
+      if (exportOptions.additionalImages && product.additional_images && product.additional_images.length > 0) {
         data.additional_images = product.additional_images
       }
 
-      // تصدير الفيديوهات الفعلية فقط (وليس الصور)
+      // ✨ تصدير رابط الفيديو الفعلي فقط
       if (exportOptions.videos && product.actualVideoUrl) {
         data.video_url = product.actualVideoUrl
       }
@@ -105,6 +111,9 @@ export default function ProductExportModal({
       return data
     })
 
+    // Debug: طباعة البيانات النهائية
+    console.log('📦 Final export data:', exportData)
+
     // إنشاء ملف JSON وتنزيله
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -116,7 +125,15 @@ export default function ProductExportModal({
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
 
-    alert(`تم تصدير ${exportData.length} منتج بنجاح!`)
+    // إحصائيات التصدير
+    const productsWithImages = exportData.filter(p => p.additional_images && p.additional_images.length > 0).length
+    const productsWithVideos = exportData.filter(p => p.video_url).length
+
+    console.log(`✅ تم تصدير ${exportData.length} منتج`)
+    console.log(`   - ${productsWithImages} منتج لديه صور فرعية`)
+    console.log(`   - ${productsWithVideos} منتج لديه فيديوهات`)
+
+    alert(`تم تصدير ${exportData.length} منتج بنجاح!\n• ${productsWithImages} منتج لديه صور فرعية\n• ${productsWithVideos} منتج لديه فيديوهات`)
     onClose()
   }
 

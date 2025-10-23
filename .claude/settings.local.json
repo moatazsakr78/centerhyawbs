@@ -294,7 +294,8 @@
       "Bash(nslookup:*)",
       "Bash(ping:*)",
       "Bash(cat .next/BUILD_ID)",
-      "Bash(start http://localhost:3002/auth/login)"
+      "Bash(start http://localhost:3002/auth/login)",
+      "Read(//c/Users/pc/Downloads/**)"
     ],
     "deny": [],
     "additionalDirectories": [

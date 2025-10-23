@@ -24,6 +24,7 @@ export interface Product {
   price4?: number | null
   main_image_url?: string | null
   sub_image_url?: string | null
+  additional_images_urls?: string[] | null // الحقل الجديد للصور الإضافية
   barcodes?: string[] | null
   unit?: string | null
   stock?: number | null
@@ -342,42 +343,16 @@ export function useProducts() {
             }))
             .sort((a: any, b: any) => b.quantity - a.quantity); // Sort by quantity descending
 
-          // Parse additional_images from both sub_image_url AND video_url for export/import
-          let parsedAdditionalImages: string[] = []
-          let actualVideoUrl: string | null = null
+          // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+          // additional_images_urls يحتوي على جميع الصور الإضافية بشكل مباشر
+          const parsedAdditionalImages = product.additional_images_urls || []
 
-          // جمع الصور من sub_image_url
-          if (product.sub_image_url) {
-            try {
-              const imagesFromSubUrl = JSON.parse(product.sub_image_url);
-              if (Array.isArray(imagesFromSubUrl)) {
-                parsedAdditionalImages.push(...imagesFromSubUrl);
-              }
-            } catch (parseError) {
-              // sub_image_url is not JSON, keep it as is
-            }
-          }
+          // video_url الآن للفيديوهات فقط (string أو null)
+          const actualVideoUrl = product.video_url || null
 
-          // التحقق من video_url: هل يحتوي على صور أم فيديو فعلي؟
-          if (product.video_url) {
-            try {
-              const parsedVideoUrl = JSON.parse(product.video_url);
-              if (Array.isArray(parsedVideoUrl)) {
-                // video_url يحتوي على مصفوفة صور، أضفها للصور الفرعية
-                parsedAdditionalImages.push(...parsedVideoUrl);
-              } else {
-                // video_url يحتوي على كائن، ليس صور
-                actualVideoUrl = product.video_url;
-              }
-            } catch (parseError) {
-              // video_url ليس JSON، إذاً هو رابط فيديو فعلي
-              actualVideoUrl = product.video_url;
-            }
-          }
-
-          // إزالة الصور المكررة
-          const uniqueAdditionalImages = Array.from(new Set(parsedAdditionalImages.filter(img => img && img.trim() !== '')))
-          const finalAdditionalImages = uniqueAdditionalImages.length > 0 ? uniqueAdditionalImages : null
+          console.log(`🔍 Processing product: ${product.name}`)
+          console.log('  - additional_images_urls:', parsedAdditionalImages.length, 'images')
+          console.log('  - video_url:', actualVideoUrl ? 'Video found' : 'No video')
 
           return {
             ...product,
@@ -388,8 +363,8 @@ export function useProducts() {
             productColors: productColors, // Add parsed colors
             colors: colorVariants, // Add formatted colors for website
             allImages: uniqueImages, // Add all product images including sub_image
-            additional_images: finalAdditionalImages, // Add parsed additional images for export (from both sources)
-            actualVideoUrl: actualVideoUrl, // Add actual video URL (not images)
+            additional_images: parsedAdditionalImages, // ✨ الصور الإضافية من الحقل الجديد
+            actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو الفعلي فقط
             finalPrice: finalPrice,
             isDiscounted: isDiscountActive,
             discountLabel: discountLabel
@@ -409,6 +384,10 @@ export function useProducts() {
   // Update existing product
   const updateProduct = useCallback(async (productId: string, productData: Partial<Product>): Promise<Product | null> => {
     try {
+      // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+      const additionalImagesValue = productData.additional_images || productData.additional_images_urls
+      const videoUrlValue = productData.actualVideoUrl !== undefined ? productData.actualVideoUrl : productData.video_url
+
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -428,7 +407,8 @@ export function useProducts() {
           product_code: productData.product_code,
           main_image_url: productData.main_image_url,
           sub_image_url: productData.sub_image_url,
-          video_url: productData.video_url, // MISSING: This stores additional images
+          additional_images_urls: additionalImagesValue, // ✨ الحقل الجديد للصور الإضافية
+          video_url: videoUrlValue, // ✨ فقط للفيديوهات
           barcodes: productData.barcodes || [],
           unit: productData.unit || 'قطعة',
           stock: productData.stock,
@@ -474,17 +454,13 @@ export function useProducts() {
   // Create new product
   const createProduct = useCallback(async (productData: Partial<Product>): Promise<Product | null> => {
     try {
-      // If additional_images is provided as array, store it in sub_image_url as JSON
-      let subImageUrlValue = productData.sub_image_url;
-      if (productData.additional_images && Array.isArray(productData.additional_images)) {
-        subImageUrlValue = JSON.stringify(productData.additional_images);
-      }
+      // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+      const additionalImagesValue = productData.additional_images || productData.additional_images_urls || []
+      const videoUrlValue = productData.actualVideoUrl || productData.video_url || null
 
       console.log('💾 CreateProduct Debug:')
-      console.log('  - productData.additional_images:', productData.additional_images)
-      console.log('  - Is array?', Array.isArray(productData.additional_images))
-      console.log('  - subImageUrlValue:', subImageUrlValue)
-      console.log('  - productData.video_url:', productData.video_url)
+      console.log('  - additional_images:', additionalImagesValue.length, 'images')
+      console.log('  - video_url:', videoUrlValue)
 
       const { data, error } = await supabase
         .from('products')
@@ -497,7 +473,7 @@ export function useProducts() {
           price: productData.price || 0,
           cost_price: productData.cost_price || 0,
           category_id: productData.category_id,
-          video_url: productData.video_url, // Keep actual video URL
+          video_url: videoUrlValue, // ✨ فقط للفيديوهات
           product_code: productData.product_code,
           wholesale_price: productData.wholesale_price || 0,
           price1: productData.price1 || 0,
@@ -505,7 +481,8 @@ export function useProducts() {
           price3: productData.price3 || 0,
           price4: productData.price4 || 0,
           main_image_url: productData.main_image_url,
-          sub_image_url: subImageUrlValue, // Store additional_images as JSON here
+          sub_image_url: productData.sub_image_url,
+          additional_images_urls: additionalImagesValue, // ✨ الحقل الجديد للصور الإضافية
           barcodes: productData.barcodes || [],
           unit: productData.unit || 'قطعة',
           stock: productData.stock || 0,
@@ -656,46 +633,17 @@ export function useProducts() {
                 actualDescription = newProduct.description || ""
               }
 
-              // Parse additional_images from both sub_image_url AND video_url
-              let parsedAdditionalImages: string[] = []
-              let actualVideoUrl: string | null = null
-
-              // جمع الصور من sub_image_url
-              if (newProduct.sub_image_url) {
-                try {
-                  const imagesFromSubUrl = JSON.parse(newProduct.sub_image_url);
-                  if (Array.isArray(imagesFromSubUrl)) {
-                    parsedAdditionalImages.push(...imagesFromSubUrl);
-                  }
-                } catch (parseError) {
-                  // sub_image_url is not JSON
-                }
-              }
-
-              // التحقق من video_url
-              if (newProduct.video_url) {
-                try {
-                  const parsedVideoUrl = JSON.parse(newProduct.video_url);
-                  if (Array.isArray(parsedVideoUrl)) {
-                    parsedAdditionalImages.push(...parsedVideoUrl);
-                  } else {
-                    actualVideoUrl = newProduct.video_url;
-                  }
-                } catch (parseError) {
-                  actualVideoUrl = newProduct.video_url;
-                }
-              }
-
-              const uniqueAdditionalImages = Array.from(new Set(parsedAdditionalImages.filter(img => img && img.trim() !== '')))
-              const finalAdditionalImages = uniqueAdditionalImages.length > 0 ? uniqueAdditionalImages : null
+              // ✨ استخدام الحقل الجديد المبسط
+              const parsedAdditionalImages = newProduct.additional_images_urls || []
+              const actualVideoUrl = newProduct.video_url || null
 
               // Add inventory and variants data
               const enrichedProduct = {
                 ...newProduct,
                 description: actualDescription, // Use parsed description text only
                 productColors: productColors, // Add parsed colors
-                additional_images: finalAdditionalImages, // Add parsed additional images
-                actualVideoUrl: actualVideoUrl, // Add actual video URL
+                additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+                actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
                 totalQuantity: 0,
                 inventoryData: {},
                 variantsData: {},
@@ -758,38 +706,9 @@ export function useProducts() {
                 actualDescription = updatedProduct.description || ""
               }
 
-              // Parse additional_images from both sub_image_url AND video_url
-              let parsedAdditionalImages: string[] = []
-              let actualVideoUrl: string | null = null
-
-              // جمع الصور من sub_image_url
-              if (updatedProduct.sub_image_url) {
-                try {
-                  const imagesFromSubUrl = JSON.parse(updatedProduct.sub_image_url);
-                  if (Array.isArray(imagesFromSubUrl)) {
-                    parsedAdditionalImages.push(...imagesFromSubUrl);
-                  }
-                } catch (parseError) {
-                  // sub_image_url is not JSON
-                }
-              }
-
-              // التحقق من video_url
-              if (updatedProduct.video_url) {
-                try {
-                  const parsedVideoUrl = JSON.parse(updatedProduct.video_url);
-                  if (Array.isArray(parsedVideoUrl)) {
-                    parsedAdditionalImages.push(...parsedVideoUrl);
-                  } else {
-                    actualVideoUrl = updatedProduct.video_url;
-                  }
-                } catch (parseError) {
-                  actualVideoUrl = updatedProduct.video_url;
-                }
-              }
-
-              const uniqueAdditionalImages = Array.from(new Set(parsedAdditionalImages.filter(img => img && img.trim() !== '')))
-              const finalAdditionalImages = uniqueAdditionalImages.length > 0 ? uniqueAdditionalImages : null
+              // ✨ استخدام الحقل الجديد المبسط
+              const parsedAdditionalImages = updatedProduct.additional_images_urls || []
+              const actualVideoUrl = updatedProduct.video_url || null
 
               setProducts(prev => prev.map(product =>
                 product.id === payload.new.id
@@ -798,8 +717,8 @@ export function useProducts() {
                       ...updatedProduct,
                       description: actualDescription, // Use parsed description text only
                       productColors: productColors, // Add parsed colors from updated product
-                      additional_images: finalAdditionalImages, // Add parsed additional images
-                      actualVideoUrl: actualVideoUrl, // Add actual video URL
+                      additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+                      actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
                       // Preserve existing inventory and variants data
                       inventoryData: product.inventoryData,
                       variantsData: product.variantsData,

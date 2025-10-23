@@ -25,6 +25,7 @@ export interface Product {
   price4?: number | null
   main_image_url?: string | null
   sub_image_url?: string | null
+  additional_images_urls?: string[] | null // الحقل الجديد للصور الإضافية
   barcodes?: string[] | null
   unit?: string | null
   stock?: number | null
@@ -48,6 +49,8 @@ export interface Product {
   is_featured?: boolean | null
   display_order?: number | null
   suggested_products?: string[] | null
+  additional_images?: any[] | null
+  actualVideoUrl?: string | null // Actual video URL (not images array)
   // Relations
   category?: {
     id: string
@@ -367,7 +370,10 @@ export function useProducts() {
             
             // FIXED: Use consistent image processing helper
             const uniqueImages = processProductImages(product, productVariantsData)
-            
+
+            // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+            const parsedAdditionalImages = product.additional_images_urls || []
+            const actualVideoUrl = product.video_url || null
 
             // Calculate discount information
             const now = new Date()
@@ -414,6 +420,8 @@ export function useProducts() {
               productColors: productColors,
               colors: colorVariants,
               allImages: uniqueImages,
+              additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+              actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
               finalPrice: finalPrice,
               isDiscounted: isDiscountActive,
               discountLabel: discountLabel
@@ -435,6 +443,10 @@ export function useProducts() {
   // Update existing product
   const updateProduct = useCallback(async (productId: string, productData: Partial<Product>): Promise<Product | null> => {
     try {
+      // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+      const additionalImagesValue = productData.additional_images || productData.additional_images_urls
+      const videoUrlValue = productData.actualVideoUrl !== undefined ? productData.actualVideoUrl : productData.video_url
+
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -454,7 +466,8 @@ export function useProducts() {
           product_code: productData.product_code,
           main_image_url: productData.main_image_url,
           sub_image_url: productData.sub_image_url,
-          video_url: productData.video_url,
+          additional_images_urls: additionalImagesValue, // ✨ الحقل الجديد للصور الإضافية
+          video_url: videoUrlValue, // ✨ فقط للفيديوهات
           barcodes: productData.barcodes || [],
           unit: productData.unit || 'قطعة',
           stock: productData.stock,
@@ -504,6 +517,14 @@ export function useProducts() {
   // Create new product
   const createProduct = useCallback(async (productData: Partial<Product>): Promise<Product | null> => {
     try {
+      // ✨ استخدام الحقل الجديد المبسط للصور الإضافية
+      const additionalImagesValue = productData.additional_images || productData.additional_images_urls || []
+      const videoUrlValue = productData.actualVideoUrl || productData.video_url || null
+
+      console.log('💾 CreateProduct Debug:')
+      console.log('  - additional_images:', additionalImagesValue.length, 'images')
+      console.log('  - video_url:', videoUrlValue)
+
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -515,7 +536,7 @@ export function useProducts() {
           price: productData.price || 0,
           cost_price: productData.cost_price || 0,
           category_id: productData.category_id,
-          video_url: productData.video_url,
+          video_url: videoUrlValue, // ✨ فقط للفيديوهات
           product_code: productData.product_code,
           wholesale_price: productData.wholesale_price || 0,
           price1: productData.price1 || 0,
@@ -524,6 +545,7 @@ export function useProducts() {
           price4: productData.price4 || 0,
           main_image_url: productData.main_image_url,
           sub_image_url: productData.sub_image_url,
+          additional_images_urls: additionalImagesValue, // ✨ الحقل الجديد للصور الإضافية
           barcodes: productData.barcodes || [],
           unit: productData.unit || 'قطعة',
           stock: productData.stock || 0,
