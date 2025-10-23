@@ -147,39 +147,44 @@ export function useProducts() {
   // HELPER: Process product images (extracted for consistency)
   const processProductImages = useCallback((product: any, variants: any[] = []): string[] => {
     const allProductImages: string[] = []
-    
+
     // Add main image if exists
     if (product.main_image_url) {
       allProductImages.push(product.main_image_url)
     }
-    
+
     // Extract images from variants
     variants.forEach((variant: any) => {
       if (variant.image_url) {
         allProductImages.push(variant.image_url)
       }
     })
-    
-    // Add sub-images from video_url field (admin uploaded sub-images)
-    if (product.video_url) {
-      try {
-        const additionalImages = JSON.parse(product.video_url);
-        if (Array.isArray(additionalImages)) {
-          allProductImages.push(...additionalImages);
+
+    // ✨ HIGHEST PRIORITY: Add sub-images from additional_images_urls (new field)
+    if (product.additional_images_urls && Array.isArray(product.additional_images_urls)) {
+      allProductImages.push(...product.additional_images_urls);
+    } else {
+      // FALLBACK: Add sub-images from video_url field (old system)
+      if (product.video_url) {
+        try {
+          const additionalImages = JSON.parse(product.video_url);
+          if (Array.isArray(additionalImages)) {
+            allProductImages.push(...additionalImages);
+          }
+        } catch (parseError) {
+          // video_url is a real video URL, not JSON - ignore
         }
-      } catch (parseError) {
-        // Ignore parsing errors - don't break the app
       }
     }
 
     // Remove duplicates from images
     const uniqueImages = Array.from(new Set(allProductImages.filter(img => img && img.trim() !== '')))
-    
+
     // Add sub_image_url to images if it exists and is not already included
     if (product.sub_image_url && !uniqueImages.includes(product.sub_image_url)) {
       uniqueImages.push(product.sub_image_url)
     }
-    
+
     return uniqueImages
   }, [])
 

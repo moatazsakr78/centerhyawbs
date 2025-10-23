@@ -33,6 +33,7 @@ interface DatabaseProduct {
   price4?: number | null;
   main_image_url?: string | null;
   sub_image_url?: string | null;
+  additional_images_urls?: string[] | null; // ✨ الحقل الجديد للصور الإضافية
   barcodes?: string[] | null;
   unit?: string | null;
   stock?: number | null;
@@ -78,21 +79,41 @@ interface ProductDetail extends Omit<Product, 'sizes'> {
 }
 
 // Function to get sub-images for a product from database or fallback
-const getProductSubImages = async (productId: string, productName: string = '', videoUrl: string | null = null): Promise<string[]> => {
+const getProductSubImages = async (
+  productId: string,
+  productName: string = '',
+  videoUrl: string | null = null,
+  additionalImagesUrls: any = null // ✨ معامل جديد
+): Promise<string[]> => {
   try {
-    // First priority: Check if sub-images are stored in video_url field (admin system)
+    console.log('🚀 getProductSubImages CALLED for:', productName);
+    console.log('   - productId:', productId);
+    console.log('   - videoUrl:', videoUrl);
+    console.log('   - additionalImagesUrls:', additionalImagesUrls);
+
+    // ✨ HIGHEST PRIORITY: Check additional_images_urls (new field)
+    if (additionalImagesUrls) {
+      const images = Array.isArray(additionalImagesUrls) ? additionalImagesUrls : [];
+      if (images.length > 0) {
+        console.log(`✅ Modal: Loaded ${images.length} images from additional_images_urls for ${productName}`);
+        return images;
+      }
+    }
+
+    // Second priority: Check if sub-images are stored in video_url field (old system)
     if (videoUrl) {
       try {
         const additionalImages = JSON.parse(videoUrl);
         if (Array.isArray(additionalImages) && additionalImages.length > 0) {
+          console.log(`✅ Modal: Loaded ${additionalImages.length} images from video_url for ${productName}`);
           return additionalImages;
         }
       } catch (parseError) {
-        console.error('Error parsing video_url for sub-images:', parseError);
+        // video_url is not JSON, it's a video link
       }
     }
 
-    // Second priority: Check product_images table
+    // Third priority: Check product_images table
     const { data: productImages, error } = await supabase
       .from('product_images')
       .select('image_url')
@@ -100,10 +121,12 @@ const getProductSubImages = async (productId: string, productName: string = '', 
       .order('sort_order');
 
     if (!error && productImages && productImages.length > 0) {
+      console.log(`✅ Modal: Loaded ${productImages.length} images from product_images table for ${productName}`);
       return productImages.map(img => img.image_url);
     }
 
-    // Third priority: Use fallback system
+    // Fourth priority: Use fallback system (generates placeholder images)
+    console.log(`⚠️ Modal: No images found, using fallback for product ${productName}`);
     return getProductSubImagesFallback(productId, productName);
   } catch (err) {
     console.error('Error fetching product images:', err);
@@ -419,6 +442,7 @@ export default function ProductDetailsModal({
           .from('products')
           .select(`
             *,
+            additional_images_urls,
             category:categories(
               id,
               name,
@@ -563,7 +587,12 @@ export default function ProductDetailsModal({
         }
 
         // Get sub-images for this product
-        const subImages = await getProductSubImages(product.id, product.name, product.video_url);
+        const subImages = await getProductSubImages(
+          product.id,
+          product.name,
+          product.video_url,
+          product.additional_images_urls // ✨ تمرير الحقل الجديد
+        );
 
         // Get product videos from product_videos table using any type workaround
         try {
@@ -585,19 +614,28 @@ export default function ProductDetailsModal({
         
         // Build gallery array
         const gallery: string[] = [];
-        
+
+        console.log('🖼️ Gallery Debug for:', product.name);
+        console.log('  - main_image_url:', product.main_image_url);
+        console.log('  - subImages count:', subImages.length);
+        console.log('  - subImages:', subImages);
+        console.log('  - additional_images_urls from DB:', product.additional_images_urls);
+
         // Add main image first
         if (product.main_image_url) {
           gallery.push(product.main_image_url);
         }
-        
+
         // Add sub-images
         gallery.push(...subImages);
-        
+
         // Add sub_image_url if it exists and is different from main
-        if ((product as any).sub_image_url && (product as any).sub_image_url !== product.main_image_url) {
-          gallery.push((product as any).sub_image_url);
+        if (product.sub_image_url && product.sub_image_url !== product.main_image_url) {
+          gallery.push(product.sub_image_url);
         }
+
+        console.log('  - Final gallery count:', gallery.length);
+        console.log('  - Final gallery:', gallery);
 
         // Calculate discount information
         const now = new Date();
@@ -716,6 +754,7 @@ export default function ProductDetailsModal({
             .from('products')
             .select(`
               *,
+              additional_images_urls,
               category:categories(
                 id,
                 name,

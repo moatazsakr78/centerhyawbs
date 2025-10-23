@@ -1594,7 +1594,7 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
         category_id: formData.categoryId || undefined,
         product_code: formData.code.trim() || undefined,
         main_image_url: mainImageUrl || undefined,
-        video_url: additionalImagesJson || undefined, // Store additional images as JSON
+        additional_images: additionalImagesJson ? JSON.parse(additionalImagesJson) : undefined, // ✨ Store in new field
         is_active: formData.isActive,
         unit: 'قطعة'
       }
@@ -1890,7 +1890,7 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
             }
 
             if (uploadedAdditionalImageUrls.length > 0) {
-              updateData.video_url = JSON.stringify(uploadedAdditionalImageUrls)
+              updateData.additional_images_urls = uploadedAdditionalImageUrls // ✨ Store in new field
             }
 
             const { error: updateError } = await supabase

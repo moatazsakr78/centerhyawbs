@@ -295,7 +295,9 @@
       "Bash(ping:*)",
       "Bash(cat .next/BUILD_ID)",
       "Bash(start http://localhost:3002/auth/login)",
-      "Read(//c/Users/pc/Downloads/**)"
+      "Read(//c/Users/pc/Downloads/**)",
+      "Bash(git log:*)",
+      "Bash(start http://localhost:3000/product/e851396a-34fe-48ac-8fb0-894117ed496a)"
     ],
     "deny": [],
     "additionalDirectories": [

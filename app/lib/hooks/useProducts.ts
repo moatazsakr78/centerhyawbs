@@ -287,15 +287,20 @@ export function useProducts() {
             }
           })
           
-          // Add sub-images from video_url field (admin uploaded sub-images)
-          if (product.video_url) {
-            try {
-              const additionalImages = JSON.parse(product.video_url);
-              if (Array.isArray(additionalImages)) {
-                allProductImages.push(...additionalImages);
+          // ✨ HIGHEST PRIORITY: Add sub-images from additional_images_urls (new field)
+          if (product.additional_images_urls && Array.isArray(product.additional_images_urls)) {
+            allProductImages.push(...product.additional_images_urls);
+          } else {
+            // FALLBACK: Add sub-images from video_url field (old system)
+            if (product.video_url) {
+              try {
+                const additionalImages = JSON.parse(product.video_url);
+                if (Array.isArray(additionalImages)) {
+                  allProductImages.push(...additionalImages);
+                }
+              } catch (parseError) {
+                // video_url is a real video URL, not JSON - ignore
               }
-            } catch (parseError) {
-              console.error('Error parsing video_url for sub-images in useProducts:', parseError);
             }
           }
 
@@ -663,6 +668,16 @@ export function useProducts() {
               const parsedAdditionalImages = product.additional_images_urls || []
               const actualVideoUrl = product.video_url || null
 
+              // Build allImages array with main image and sub-images
+              const allImages: string[] = []
+              if (newProduct.main_image_url) {
+                allImages.push(newProduct.main_image_url)
+              }
+              // Add sub-images from additional_images_urls
+              if (parsedAdditionalImages && Array.isArray(parsedAdditionalImages)) {
+                allImages.push(...parsedAdditionalImages)
+              }
+
               // Add inventory and variants data
               const enrichedProduct = {
                 ...newProduct,
@@ -673,7 +688,7 @@ export function useProducts() {
                 totalQuantity: 0,
                 inventoryData: {},
                 variantsData: {},
-                allImages: newProduct.main_image_url ? [newProduct.main_image_url] : []
+                allImages: allImages // ✨ Now includes sub-images
               }
 
               // Check if product already exists before adding (prevents duplicates during bulk imports)
@@ -737,6 +752,16 @@ export function useProducts() {
               const parsedAdditionalImages = product.additional_images_urls || []
               const actualVideoUrl = product.video_url || null
 
+              // Build allImages array with main image and sub-images
+              const updatedAllImages: string[] = []
+              if (updatedProduct.main_image_url) {
+                updatedAllImages.push(updatedProduct.main_image_url)
+              }
+              // Add sub-images from additional_images_urls
+              if (parsedAdditionalImages && Array.isArray(parsedAdditionalImages)) {
+                updatedAllImages.push(...parsedAdditionalImages)
+              }
+
               setProducts(prev => prev.map(product =>
                 product.id === payload.new.id
                   ? {
@@ -746,6 +771,7 @@ export function useProducts() {
                       productColors: productColors, // Add parsed colors from updated product
                       additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
                       actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
+                      allImages: updatedAllImages, // ✨ Now includes sub-images
                       // Preserve existing inventory and variants data
                       inventoryData: product.inventoryData,
                       variantsData: product.variantsData,

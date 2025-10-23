@@ -357,6 +357,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           .from('products')
           .select(`
             *,
+            additional_images_urls,
             category:categories(
               id,
               name,
@@ -477,19 +478,28 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         
         // Build gallery array
         const gallery: string[] = [];
-        
+
+        console.log('🖼️ Gallery Debug for:', product.name);
+        console.log('  - main_image_url:', product.main_image_url);
+        console.log('  - subImages count:', subImages.length);
+        console.log('  - subImages:', subImages);
+        console.log('  - additional_images_urls from DB:', (product as any).additional_images_urls);
+
         // Add main image first
         if (product.main_image_url) {
           gallery.push(product.main_image_url);
         }
-        
+
         // Add sub-images
         gallery.push(...subImages);
-        
+
         // Add sub_image_url if it exists and is different from main
         if ((product as any).sub_image_url && (product as any).sub_image_url !== product.main_image_url) {
           gallery.push((product as any).sub_image_url);
         }
+
+        console.log('  - Final gallery count:', gallery.length);
+        console.log('  - Final gallery:', gallery);
 
         // Calculate discount information
         const now = new Date();
