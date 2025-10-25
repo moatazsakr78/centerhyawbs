@@ -15,6 +15,7 @@ import ColorChangeModal from '../../components/ColorChangeModal'
 import ColumnsControlModal from '../../components/ColumnsControlModal'
 import ProductExportModal from '../../components/ProductExportModal'
 import ProductImportModal from '../../components/ProductImportModal'
+import BarcodePrintModal from '../../components/BarcodePrintModal'
 import { useBranches, Branch, ProductVariant } from '../../lib/hooks/useBranches'
 import { useProducts, Product } from '../../lib/hooks/useProductsOptimized'
 import {
@@ -89,6 +90,9 @@ export default function ProductsPage() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
   const [isSelectionMode, setIsSelectionMode] = useState(false)
+
+  // Barcode print modal state
+  const [showBarcodePrintModal, setShowBarcodePrintModal] = useState(false)
 
   // Scroll state for hiding/showing toolbar
   const [isToolbarHidden, setIsToolbarHidden] = useState(false)
@@ -857,7 +861,10 @@ export default function ProductsPage() {
               <span className="text-sm">حفظ كـ PDF</span>
             </button>
 
-            <button className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]">
+            <button
+              onClick={() => setShowBarcodePrintModal(true)}
+              className="flex flex-col items-center p-2 text-gray-300 hover:text-white cursor-pointer min-w-[80px]"
+            >
               <TagIcon className="h-5 w-5 mb-1" />
               <span className="text-sm">بطاقات الأسعار</span>
             </button>
@@ -1726,6 +1733,14 @@ export default function ProductsPage() {
           fetchProducts()
           setShowImportModal(false)
         }}
+      />
+
+      {/* Barcode Print Modal */}
+      <BarcodePrintModal
+        isOpen={showBarcodePrintModal}
+        onClose={() => setShowBarcodePrintModal(false)}
+        products={filteredProducts}
+        branches={branches}
       />
 
       {/* Mobile/Tablet Branches Modal - Positioned at top level */}
