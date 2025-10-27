@@ -16,6 +16,7 @@ import QuantityModal from './QuantityModal';
 import { useCart } from '@/lib/contexts/CartContext';
 import { useCartBadge } from '@/lib/hooks/useCartBadge';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
+import { useProductDisplaySettings } from '@/lib/hooks/useProductDisplaySettings';
 
 interface MobileHomeProps {
   userInfo: UserInfo;
@@ -56,6 +57,9 @@ export default function MobileHome({
 
   // Get company settings
   const { companyName, logoUrl, socialMedia } = useCompanySettings();
+
+  // Get product display settings
+  const { settings: displaySettings } = useProductDisplaySettings();
 
   // Get cart badge count and cart functions
   const { cartBadgeCount } = useCartBadge();
@@ -164,10 +168,25 @@ export default function MobileHome({
           });
 
           const convertedProducts: Product[] = databaseProducts
-            .filter((dbProduct: DatabaseProduct) =>
-              !dbProduct.is_hidden && // Hide hidden products
-              !hiddenProductIds.has(dbProduct.id) // Hide duplicate products in size groups
-            )
+            .filter((dbProduct: DatabaseProduct) => {
+              // Always hide hidden products and duplicate products in size groups
+              if (dbProduct.is_hidden || hiddenProductIds.has(dbProduct.id)) {
+                return false;
+              }
+
+              // Apply display mode filter
+              if (displaySettings.display_mode === 'show_with_stock') {
+                // Only show products with stock > 0
+                const totalStock = (dbProduct as any).totalQuantity || dbProduct.stock || 0;
+                return totalStock > 0;
+              } else if (displaySettings.display_mode === 'show_with_stock_and_vote') {
+                // Show all products (voting feature to be implemented later)
+                return true;
+              }
+
+              // Default: show all products
+              return true;
+            })
             .map((dbProduct: DatabaseProduct) => {
               // Calculate if product has discount
               const hasDiscount = dbProduct.discount_percentage && dbProduct.discount_percentage > 0;
@@ -211,6 +230,7 @@ export default function MobileHome({
                 category: dbProduct.category?.name || 'عام',
                 brand: companyName,
                 stock: dbProduct.stock || 0,
+                totalQuantity: (dbProduct as any).totalQuantity || dbProduct.stock || 0,
                 rating: Number(dbProduct.rating) || 0,
                 reviews: dbProduct.rating_count || 0,
                 isOnSale: hasDiscount || false,

@@ -239,6 +239,10 @@ export default function SettingsPage() {
   // Ratings settings using hook
   const { showRatings, updateRatingSettings, isLoading: isRatingsLoading } = useRatingsDisplay();
 
+  // Product display settings state
+  const [productDisplayMode, setProductDisplayMode] = useState<'show_all' | 'show_with_stock' | 'show_with_stock_and_vote'>('show_all');
+  const [isLoadingDisplayMode, setIsLoadingDisplayMode] = useState(true);
+
   // Company Settings using hook
   const {
     companyName: dbCompanyName,
@@ -296,6 +300,34 @@ export default function SettingsPage() {
     };
 
     loadBranches();
+  }, []);
+
+  // Load product display mode from database
+  useEffect(() => {
+    const loadProductDisplayMode = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('product_display_settings')
+          .select('display_mode')
+          .single();
+
+        if (error) {
+          console.error('Error loading product display mode:', error);
+          setIsLoadingDisplayMode(false);
+          return;
+        }
+
+        if (data?.display_mode) {
+          setProductDisplayMode(data.display_mode);
+        }
+        setIsLoadingDisplayMode(false);
+      } catch (err) {
+        console.error('Error loading product display mode:', err);
+        setIsLoadingDisplayMode(false);
+      }
+    };
+
+    loadProductDisplayMode();
   }, []);
 
   // Use dynamic currency list from database
@@ -556,6 +588,43 @@ export default function SettingsPage() {
         // Update currency settings in database
         await updateDbCurrencySettings(newCurrencySettings);
 
+        // Save product display mode
+        // First, try to get existing record
+        const { data: existingData } = await supabase
+          .from('product_display_settings')
+          .select('id')
+          .single();
+
+        if (existingData?.id) {
+          // Update existing record
+          const { error: displayModeError } = await supabase
+            .from('product_display_settings')
+            .update({
+              display_mode: productDisplayMode,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingData.id);
+
+          if (displayModeError) {
+            console.error('Error saving product display mode:', displayModeError);
+            throw displayModeError;
+          }
+        } else {
+          // Insert new record
+          const { error: displayModeError } = await supabase
+            .from('product_display_settings')
+            .insert({
+              display_mode: productDisplayMode,
+              selected_warehouses: [],
+              selected_branches: []
+            });
+
+          if (displayModeError) {
+            console.error('Error saving product display mode:', displayModeError);
+            throw displayModeError;
+          }
+        }
+
         // Reset custom currency states
         setIsCustomSystemCurrency(false);
         setIsCustomWebsiteCurrency(false);
@@ -744,6 +813,92 @@ export default function SettingsPage() {
                 />
                 <div className={`w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600 ${isRatingsLoading ? 'opacity-50 cursor-not-allowed' : ''}`}></div>
               </label>
+            </div>
+          </div>
+
+          {/* Product Display Settings */}
+          <div className="space-y-4 mt-6 p-4 bg-[#374151] rounded-lg border border-gray-600">
+            <h3 className="text-white font-medium text-lg">إعدادات ظهور المنتجات في المتجر</h3>
+            <p className="text-sm text-gray-400">طريقة عرض المنتجات</p>
+
+            <div className="space-y-3">
+              {/* Option 1: Show All */}
+              <div className="p-4 bg-[#2B3544] rounded-lg border border-gray-600 hover:border-blue-500 transition-colors cursor-pointer">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="productDisplayMode"
+                    value="show_all"
+                    checked={productDisplayMode === 'show_all'}
+                    onChange={(e) => setProductDisplayMode(e.target.value as any)}
+                    disabled={isLoadingDisplayMode}
+                    className="mt-1 w-5 h-5 text-blue-600 bg-[#2B3544] border-gray-600 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <span className="text-white font-medium">ظهور كلي</span>
+                    <p className="text-xs text-gray-400 mt-1">
+                      تظهر جميع المنتجات في المتجر حتى إن كانت كميتها في المخزون تساوي صفر
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Option 2: Show In Stock */}
+              <div className="p-4 bg-[#2B3544] rounded-lg border border-gray-600 hover:border-blue-500 transition-colors cursor-pointer">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="productDisplayMode"
+                    value="show_with_stock"
+                    checked={productDisplayMode === 'show_with_stock'}
+                    onChange={(e) => setProductDisplayMode(e.target.value as any)}
+                    disabled={isLoadingDisplayMode}
+                    className="mt-1 w-5 h-5 text-blue-600 bg-[#2B3544] border-gray-600 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <span className="text-white font-medium">ظهور بالمخزون</span>
+                    <p className="text-xs text-gray-400 mt-1">
+                      تظهر فقط المنتجات المتوفرة في المخزون. المنتجات المنتهية لن تظهر
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Option 3: Show In Stock with Voting */}
+              <div className="p-4 bg-[#2B3544] rounded-lg border border-gray-600 hover:border-blue-500 transition-colors cursor-pointer">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="productDisplayMode"
+                    value="show_with_stock_and_vote"
+                    checked={productDisplayMode === 'show_with_stock_and_vote'}
+                    onChange={(e) => setProductDisplayMode(e.target.value as any)}
+                    disabled={isLoadingDisplayMode}
+                    className="mt-1 w-5 h-5 text-blue-600 bg-[#2B3544] border-gray-600 focus:ring-blue-500 focus:ring-2"
+                  />
+                  <div className="flex-1">
+                    <span className="text-white font-medium">ظهور بالمخزون مع التصويت</span>
+                    <p className="text-xs text-gray-400 mt-1">
+                      المنتجات المتوفرة تظهر عادي، والمنتجات المنتهية تظهر مع إمكانية التصويت لإعادة توفيرها (قريباً)
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Store and Product Integration */}
+            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-blue-300 text-xs font-medium">إتمام المخازن والفروع لحساب المخزون</p>
+                  <p className="text-blue-200/70 text-xs mt-1">
+                    حدد المخازن/الفروع المطلوب احتساب جميع المنتجات التي تم الانتهاء منها لتحديد ما سيتم إظهاره في المتجر
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

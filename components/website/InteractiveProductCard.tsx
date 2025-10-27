@@ -473,9 +473,21 @@ export default function InteractiveProductCard({
                 {getDisplayPrice()} {websiteCurrency}
               </span>
             </div>
-            {profile?.role === 'جملة' && currentProduct.wholesale_price && (
-              <span className="text-xs text-blue-600 font-medium">سعر الجملة</span>
-            )}
+            <div className="flex items-center gap-2">
+              {profile?.role === 'جملة' && currentProduct.wholesale_price && (
+                <span className="text-xs text-blue-600 font-medium">سعر الجملة</span>
+              )}
+              {/* Display total quantity */}
+              {(product.totalQuantity !== undefined || product.stock !== undefined) && (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  (product.totalQuantity || product.stock || 0) > 0
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  الكمية: {product.totalQuantity || product.stock || 0}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {/* Ratings Section - Only show if enabled in settings */}
