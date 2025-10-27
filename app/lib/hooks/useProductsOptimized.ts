@@ -380,9 +380,20 @@ export function useProducts() {
             const productVariantsData = variantsByProduct.get(product.id) || []
 
             // Group inventory by branch/warehouse with O(n) complexity - INCLUDE AUDIT STATUS
+            // Initialize with all branches (default values: quantity=0, min_stock=0, audit_status='غير مجرود')
             const inventoryByBranch: Record<string, { quantity: number, min_stock: number, audit_status: string }> = {}
             let totalQuantity = 0
 
+            // First, initialize all branches with default values (zero quantity)
+            branchesData.forEach((branch: Branch) => {
+              inventoryByBranch[branch.id] = {
+                quantity: 0,
+                min_stock: 0,
+                audit_status: 'غير مجرود'
+              }
+            })
+
+            // Then, update with actual inventory data
             productInventoryData.forEach((inv: any) => {
               const locationId = inv.branch_id
               if (locationId) {
