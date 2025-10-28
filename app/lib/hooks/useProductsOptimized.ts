@@ -158,6 +158,7 @@ export function useProducts() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedBranchesForStock, setSelectedBranchesForStock] = useState<string[]>([])
 
   // HELPER: Process product images (extracted for consistency)
   const processProductImages = useCallback((product: any, variants: any[] = []): string[] => {
@@ -207,7 +208,15 @@ export function useProducts() {
     try {
       setIsLoading(true)
       setError(null)
-      
+
+      // Load selected branches for stock calculation
+      const { data: displaySettings } = await supabase
+        .from('product_display_settings')
+        .select('selected_branches')
+        .single()
+
+      const selectedBranchIds = displaySettings?.selected_branches || []
+      setSelectedBranchesForStock(selectedBranchIds)
 
       // Try to get from cache first
       const cachedProducts = cache.get<Product[]>(CacheKeys.productsWithData())
@@ -242,289 +251,304 @@ export function useProducts() {
       setBranches(branchesData)
 
       // OPTIMIZATION: Single optimized query with all related data
-      const enrichedProducts = await cache.getOrSet(
-        CacheKeys.productsWithData(),
-        async () => {
-          // Fetch base products with categories
-          const { data: productsData, error: productsError } = await supabase
-            .from('products')
-            .select(`
-              *,
-              category:categories(
-                id,
-                name,
-                name_en
-              )
-            `)
-            .eq('is_active', true)
-            .order('display_order', { ascending: true })
-            .order('name', { ascending: true })
+      // Don't cache products if we have selected branches (to allow real-time recalculation)
+      const shouldCache = selectedBranchIds.length === 0
 
-          if (productsError) throw productsError
-
-          if (!productsData || productsData.length === 0) {
-            return []
-          }
-
-          // OPTIMIZATION: Batch fetch all inventory data in one query
-          const productIds = productsData.map(p => p.id)
-
-          const [inventoryData, variantsData, videosData] = await Promise.all([
-            // Single query for all inventory data
-            supabase
-              .from('inventory')
-              .select('product_id, branch_id, quantity, min_stock, audit_status')
-              .in('product_id', productIds)
-              .then(({ data, error }) => {
-                if (error) {
-                  console.warn('Unable to fetch inventory data:', error)
-                  return []
-                }
-                return data || []
-              }),
-
-            // Single query for all variants data
-            supabase
-              .from('product_variants')
-              .select('*')
-              .in('product_id', productIds)
-              .then(({ data, error }) => {
-                if (error) {
-                  console.warn('Unable to fetch variants data:', error)
-                  return []
-                }
-                return data || []
-              }),
-
-            // ✨ Single query for all videos data
-            (supabase as any)
-              .from('product_videos')
-              .select('*')
-              .in('product_id', productIds)
-              .order('sort_order', { ascending: true })
-              .then(({ data, error }: any) => {
-                if (error) {
-                  console.warn('Unable to fetch videos data:', error)
-                  return []
-                }
-                return data || []
-              })
-          ])
-
-          // OPTIMIZATION: Group inventory, variants, and videos by product_id for O(1) lookup
-          const inventoryByProduct = new Map<string, any[]>()
-          const variantsByProduct = new Map<string, any[]>()
-          const videosByProduct = new Map<string, ProductVideo[]>()
-
-          inventoryData.forEach((inv: any) => {
-            const productId = inv.product_id
-            if (!inventoryByProduct.has(productId)) {
-              inventoryByProduct.set(productId, [])
-            }
-            inventoryByProduct.get(productId)!.push(inv)
-          })
-
-          variantsData.forEach((variant: any) => {
-            const productId = variant.product_id
-            if (!variantsByProduct.has(productId)) {
-              variantsByProduct.set(productId, [])
-            }
-            variantsByProduct.get(productId)!.push(variant)
-          })
-
-          // ✨ Group videos by product_id
-          videosData.forEach((video: any) => {
-            const productId = video.product_id
-            if (!videosByProduct.has(productId)) {
-              videosByProduct.set(productId, [])
-            }
-            videosByProduct.get(productId)!.push(video)
-          })
-
-          // OPTIMIZATION: Process all products in parallel with optimized logic
-          return productsData.map(rawProduct => {
-            const product = rawProduct as any
-            
-            // Parse product colors and description (cached computation)
-            let productColors: any[] = []
-            let actualDescription: string = product.description || ""
-            
-            try {
-              if (product.description && product.description.startsWith('{')) {
-                const descriptionData = JSON.parse(product.description)
-                productColors = descriptionData.colors || []
-                actualDescription = descriptionData.text || ""
-                
-                // Try to assign images from video_url to colors
-                if (productColors.length > 0 && product.video_url) {
-                  try {
-                    const additionalImages = JSON.parse(product.video_url)
-                    if (Array.isArray(additionalImages)) {
-                      productColors = productColors.map((color: any, index: number) => ({
-                        ...color,
-                        image: color.image || (additionalImages[index] || undefined)
-                      }))
-                    }
-                  } catch (imageParseError) {
-                    // Ignore image parsing errors
-                  }
-                }
-              }
-            } catch (e) {
-              productColors = []
-              actualDescription = product.description || ""
-            }
-
-            // OPTIMIZATION: Use pre-grouped data instead of filtering arrays
-            const productInventoryData = inventoryByProduct.get(product.id) || []
-            const productVariantsData = variantsByProduct.get(product.id) || []
-
-            // Group inventory by branch/warehouse with O(n) complexity - INCLUDE AUDIT STATUS
-            // Initialize with all branches (default values: quantity=0, min_stock=0, audit_status='غير مجرود')
-            const inventoryByBranch: Record<string, { quantity: number, min_stock: number, audit_status: string }> = {}
-            let totalQuantity = 0
-
-            // First, initialize all branches with default values (zero quantity)
-            branchesData.forEach((branch: Branch) => {
-              inventoryByBranch[branch.id] = {
-                quantity: 0,
-                min_stock: 0,
-                audit_status: 'غير مجرود'
-              }
-            })
-
-            // Then, update with actual inventory data
-            productInventoryData.forEach((inv: any) => {
-              const locationId = inv.branch_id
-              if (locationId) {
-                inventoryByBranch[locationId] = {
-                  quantity: inv.quantity || 0,
-                  min_stock: inv.min_stock || 0,
-                  audit_status: inv.audit_status || 'غير مجرود'
-                }
-                totalQuantity += inv.quantity || 0
-              }
-            })
-
-            // Group variants by location and process images
-            const variantsByLocation: Record<string, ProductVariant[]> = {}
-            
-            productVariantsData.forEach((variant: any) => {
-              const locationId = variant.branch_id
-              if (locationId) {
-                if (!variantsByLocation[locationId]) {
-                  variantsByLocation[locationId] = []
-                }
-                variantsByLocation[locationId].push({
-                  ...variant,
-                  variant_type: variant.variant_type as 'color' | 'shape'
-                })
-              }
-            })
-            
-            // FIXED: Use consistent image processing helper
-            const uniqueImages = processProductImages(product, productVariantsData)
-
-            // ✨ استخدام الحقل الجديد مع fallback للصيغة القديمة
-            let parsedAdditionalImages = product.additional_images_urls || []
-            let actualVideoUrl = product.video_url || null
-
-            // 🔄 FALLBACK: إذا لم تكن هناك صور في الحقل الجديد، حاول القراءة من الحقول القديمة
-            if (parsedAdditionalImages.length === 0) {
-              // محاولة قراءة من sub_image_url
-              if (product.sub_image_url) {
-                try {
-                  const parsed = JSON.parse(product.sub_image_url)
-                  if (Array.isArray(parsed)) {
-                    parsedAdditionalImages = parsed
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-
-              // محاولة قراءة من video_url إذا كان يحتوي على صور
-              if (parsedAdditionalImages.length === 0 && product.video_url) {
-                try {
-                  const parsed = JSON.parse(product.video_url)
-                  if (Array.isArray(parsed)) {
-                    parsedAdditionalImages = parsed
-                    actualVideoUrl = null // video_url كان يحتوي على صور، وليس فيديو
-                  }
-                } catch (e) {
-                  // video_url هو رابط فيديو فعلي
-                }
-              }
-            }
-
-            // Calculate discount information
-            const now = new Date()
-            const discountStart = product.discount_start_date ? new Date(product.discount_start_date) : null
-            const discountEnd = product.discount_end_date ? new Date(product.discount_end_date) : null
-            
-            const isDiscountActive = (
-              (product.discount_percentage > 0 || product.discount_amount > 0) &&
-              (!discountStart || now >= discountStart) &&
-              (!discountEnd || now <= discountEnd)
-            )
-            
-            let finalPrice = product.price
-            let discountLabel = ''
-            
-            if (isDiscountActive) {
-              if (product.discount_percentage > 0) {
-                finalPrice = product.price * (1 - (product.discount_percentage / 100))
-                discountLabel = `-${product.discount_percentage}%`
-              } else if (product.discount_amount > 0) {
-                finalPrice = Math.max(0, product.price - product.discount_amount)
-                discountLabel = `-${product.discount_amount}`
-              }
-            }
-
-            // Extract color variants for website format and sort by quantity (highest first)
-            const colorVariants = productVariantsData
-              .filter((variant: any) => variant.variant_type === 'color' && variant.color_hex && variant.color_name)
-              .map((variant: any) => ({
-                id: variant.id,
-                name: variant.color_name,
-                hex: variant.color_hex,
-                image_url: variant.image_url,
-                quantity: variant.quantity || 0
-              }))
-              .sort((a: any, b: any) => b.quantity - a.quantity);
-
-            // Get videos for this product
-            const productVideos = videosByProduct.get(product.id) || []
-
-            return {
-              ...product,
-              description: actualDescription,
-              totalQuantity,
-              inventoryData: inventoryByBranch,
-              variantsData: variantsByLocation,
-              productColors: productColors,
-              colors: colorVariants,
-              allImages: uniqueImages,
-              additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
-              actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
-              productVideos: productVideos, // ✨ قائمة الفيديوهات من جدول product_videos
-              finalPrice: finalPrice,
-              isDiscounted: isDiscountActive,
-              discountLabel: discountLabel
-            }
-          })
-        },
-        CacheTTL.products
-      )
+      const enrichedProducts = shouldCache
+        ? await cache.getOrSet(
+            CacheKeys.productsWithData(),
+            async () => await fetchAndProcessProducts(selectedBranchIds, branchesData),
+            CacheTTL.products
+          )
+        : await fetchAndProcessProducts(selectedBranchIds, branchesData)
 
       setProducts(enrichedProducts)
+      setIsLoading(false)
     } catch (err) {
       console.error('Error fetching products:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch products')
-    } finally {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      setProducts([])
       setIsLoading(false)
+      throw err
     }
   }, [])
+
+  // Helper function to fetch and process products
+  const fetchAndProcessProducts = async (selectedBranchIds: string[], branchesData: Branch[]) => {
+    // Fetch base products with categories
+    const { data: productsData, error: productsError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        category:categories(
+          id,
+          name,
+          name_en
+        )
+      `)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true })
+
+    if (productsError) throw productsError
+
+    if (!productsData || productsData.length === 0) {
+      return []
+    }
+
+    // OPTIMIZATION: Batch fetch all inventory data in one query
+    const productIds = productsData.map(p => p.id)
+
+    const [inventoryData, variantsData, videosData] = await Promise.all([
+      // Single query for all inventory data
+      supabase
+        .from('inventory')
+        .select('product_id, branch_id, quantity, min_stock, audit_status')
+        .in('product_id', productIds)
+        .then(({ data, error }) => {
+          if (error) {
+            console.warn('Unable to fetch inventory data:', error)
+            return []
+          }
+          return data || []
+        }),
+
+      // Single query for all variants data
+      supabase
+        .from('product_variants')
+        .select('*')
+        .in('product_id', productIds)
+        .then(({ data, error }) => {
+          if (error) {
+            console.warn('Unable to fetch variants data:', error)
+            return []
+          }
+          return data || []
+        }),
+
+      // ✨ Single query for all videos data
+      (supabase as any)
+        .from('product_videos')
+        .select('*')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true })
+        .then(({ data, error }: any) => {
+          if (error) {
+            console.warn('Unable to fetch videos data:', error)
+            return []
+          }
+          return data || []
+        })
+    ])
+
+    // OPTIMIZATION: Group inventory, variants, and videos by product_id for O(1) lookup
+    const inventoryByProduct = new Map<string, any[]>()
+    const variantsByProduct = new Map<string, any[]>()
+    const videosByProduct = new Map<string, ProductVideo[]>()
+
+    inventoryData.forEach((inv: any) => {
+      const productId = inv.product_id
+      if (!inventoryByProduct.has(productId)) {
+        inventoryByProduct.set(productId, [])
+      }
+      inventoryByProduct.get(productId)!.push(inv)
+    })
+
+    variantsData.forEach((variant: any) => {
+      const productId = variant.product_id
+      if (!variantsByProduct.has(productId)) {
+        variantsByProduct.set(productId, [])
+      }
+      variantsByProduct.get(productId)!.push(variant)
+    })
+
+    // ✨ Group videos by product_id
+    videosData.forEach((video: any) => {
+      const productId = video.product_id
+      if (!videosByProduct.has(productId)) {
+        videosByProduct.set(productId, [])
+      }
+      videosByProduct.get(productId)!.push(video)
+    })
+
+    // OPTIMIZATION: Process all products in parallel with optimized logic
+    return productsData.map(rawProduct => {
+      const product = rawProduct as any
+
+      // Parse product colors and description (cached computation)
+      let productColors: any[] = []
+      let actualDescription: string = product.description || ""
+
+      try {
+        if (product.description && product.description.startsWith('{')) {
+          const descriptionData = JSON.parse(product.description)
+          productColors = descriptionData.colors || []
+          actualDescription = descriptionData.text || ""
+
+          // Try to assign images from video_url to colors
+          if (productColors.length > 0 && product.video_url) {
+            try {
+              const additionalImages = JSON.parse(product.video_url)
+              if (Array.isArray(additionalImages)) {
+                productColors = productColors.map((color: any, index: number) => ({
+                  ...color,
+                  image: color.image || (additionalImages[index] || undefined)
+                }))
+              }
+            } catch (imageParseError) {
+              // Ignore image parsing errors
+            }
+          }
+        }
+      } catch (e) {
+        productColors = []
+        actualDescription = product.description || ""
+      }
+
+      // OPTIMIZATION: Use pre-grouped data instead of filtering arrays
+      const productInventoryData = inventoryByProduct.get(product.id) || []
+      const productVariantsData = variantsByProduct.get(product.id) || []
+
+      // Group inventory by branch/warehouse with O(n) complexity - INCLUDE AUDIT STATUS
+      // Initialize with all branches (default values: quantity=0, min_stock=0, audit_status='غير مجرود')
+      const inventoryByBranch: Record<string, { quantity: number, min_stock: number, audit_status: string }> = {}
+      let totalQuantity = 0
+
+      // First, initialize all branches with default values (zero quantity)
+      branchesData.forEach((branch: Branch) => {
+        inventoryByBranch[branch.id] = {
+          quantity: 0,
+          min_stock: 0,
+          audit_status: 'غير مجرود'
+        }
+      })
+
+      // Then, update with actual inventory data
+      productInventoryData.forEach((inv: any) => {
+        const locationId = inv.branch_id
+        if (locationId) {
+          inventoryByBranch[locationId] = {
+            quantity: inv.quantity || 0,
+            min_stock: inv.min_stock || 0,
+            audit_status: inv.audit_status || 'غير مجرود'
+          }
+
+          // Only count quantity from selected branches (if any are selected)
+          // If no branches selected, count from all branches
+          if (selectedBranchIds.length === 0 || selectedBranchIds.includes(locationId)) {
+            totalQuantity += inv.quantity || 0
+          }
+        }
+      })
+
+      // Group variants by location and process images
+      const variantsByLocation: Record<string, ProductVariant[]> = {}
+
+      productVariantsData.forEach((variant: any) => {
+        const locationId = variant.branch_id
+        if (locationId) {
+          if (!variantsByLocation[locationId]) {
+            variantsByLocation[locationId] = []
+          }
+          variantsByLocation[locationId].push({
+            ...variant,
+            variant_type: variant.variant_type as 'color' | 'shape'
+          })
+        }
+      })
+
+      // FIXED: Use consistent image processing helper
+      const uniqueImages = processProductImages(product, productVariantsData)
+
+      // ✨ استخدام الحقل الجديد مع fallback للصيغة القديمة
+      let parsedAdditionalImages = product.additional_images_urls || []
+      let actualVideoUrl = product.video_url || null
+
+      // 🔄 FALLBACK: إذا لم تكن هناك صور في الحقل الجديد، حاول القراءة من الحقول القديمة
+      if (parsedAdditionalImages.length === 0) {
+        // محاولة قراءة من sub_image_url
+        if (product.sub_image_url) {
+          try {
+            const parsed = JSON.parse(product.sub_image_url)
+            if (Array.isArray(parsed)) {
+              parsedAdditionalImages = parsed
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
+
+        // محاولة قراءة من video_url إذا كان يحتوي على صور
+        if (parsedAdditionalImages.length === 0 && product.video_url) {
+          try {
+            const parsed = JSON.parse(product.video_url)
+            if (Array.isArray(parsed)) {
+              parsedAdditionalImages = parsed
+              actualVideoUrl = null // video_url كان يحتوي على صور، وليس فيديو
+            }
+          } catch (e) {
+            // video_url هو رابط فيديو فعلي
+          }
+        }
+      }
+
+      // Calculate discount information
+      const now = new Date()
+      const discountStart = product.discount_start_date ? new Date(product.discount_start_date) : null
+      const discountEnd = product.discount_end_date ? new Date(product.discount_end_date) : null
+
+      const isDiscountActive = (
+        (product.discount_percentage > 0 || product.discount_amount > 0) &&
+        (!discountStart || now >= discountStart) &&
+        (!discountEnd || now <= discountEnd)
+      )
+
+      let finalPrice = product.price
+      let discountLabel = ''
+
+      if (isDiscountActive) {
+        if (product.discount_percentage > 0) {
+          finalPrice = product.price * (1 - (product.discount_percentage / 100))
+          discountLabel = `-${product.discount_percentage}%`
+        } else if (product.discount_amount > 0) {
+          finalPrice = Math.max(0, product.price - product.discount_amount)
+          discountLabel = `-${product.discount_amount}`
+        }
+      }
+
+      // Extract color variants for website format and sort by quantity (highest first)
+      const colorVariants = productVariantsData
+        .filter((variant: any) => variant.variant_type === 'color' && variant.color_hex && variant.color_name)
+        .map((variant: any) => ({
+          id: variant.id,
+          name: variant.color_name,
+          hex: variant.color_hex,
+          image_url: variant.image_url,
+          quantity: variant.quantity || 0
+        }))
+        .sort((a: any, b: any) => b.quantity - a.quantity);
+
+      // Get videos for this product
+      const productVideos = videosByProduct.get(product.id) || []
+
+      return {
+        ...product,
+        description: actualDescription,
+        totalQuantity,
+        inventoryData: inventoryByBranch,
+        variantsData: variantsByLocation,
+        productColors: productColors,
+        colors: colorVariants,
+        allImages: uniqueImages,
+        additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+        actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
+        productVideos: productVideos, // ✨ قائمة الفيديوهات من جدول product_videos
+        finalPrice: finalPrice,
+        isDiscounted: isDiscountActive,
+        discountLabel: discountLabel
+      }
+    })
+  }
 
   // Update existing product
   const updateProduct = useCallback(async (productId: string, productData: Partial<Product>): Promise<Product | null> => {
@@ -879,10 +903,25 @@ export function useProducts() {
       )
       .subscribe()
 
+    // Subscribe to product display settings changes
+    const displaySettingsChannel = supabase
+      .channel('product_display_settings_changes')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'product_display_settings' },
+        (payload: any) => {
+          if (payload.new?.selected_branches) {
+            // Reload products to recalculate with new branch selection
+            fetchProductsOptimized()
+          }
+        }
+      )
+      .subscribe()
+
     return () => {
       productsChannel.unsubscribe()
       inventoryChannel.unsubscribe()
       variantsChannel.unsubscribe()
+      displaySettingsChannel.unsubscribe()
     }
   }, [fetchProductsOptimized])
 

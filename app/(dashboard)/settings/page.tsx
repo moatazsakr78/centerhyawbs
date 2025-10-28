@@ -242,6 +242,8 @@ export default function SettingsPage() {
   // Product display settings state
   const [productDisplayMode, setProductDisplayMode] = useState<'show_all' | 'show_with_stock' | 'show_with_stock_and_vote'>('show_all');
   const [isLoadingDisplayMode, setIsLoadingDisplayMode] = useState(true);
+  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
+  const [availableBranches, setAvailableBranches] = useState<any[]>([]);
 
   // Company Settings using hook
   const {
@@ -302,32 +304,44 @@ export default function SettingsPage() {
     loadBranches();
   }, []);
 
-  // Load product display mode from database
+  // Load product display mode and branches from database
   useEffect(() => {
-    const loadProductDisplayMode = async () => {
+    const loadProductDisplaySettings = async () => {
       try {
+        // Load display settings
         const { data, error } = await supabase
           .from('product_display_settings')
-          .select('display_mode')
+          .select('display_mode, selected_branches')
           .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error loading product display mode:', error);
-          setIsLoadingDisplayMode(false);
-          return;
+        } else if (data) {
+          setProductDisplayMode((data.display_mode || 'show_all') as 'show_all' | 'show_with_stock' | 'show_with_stock_and_vote');
+          setSelectedBranches(data.selected_branches || []);
         }
 
-        if (data?.display_mode) {
-          setProductDisplayMode(data.display_mode);
+        // Load available branches
+        const { data: branchesData, error: branchesError } = await supabase
+          .from('branches')
+          .select('id, name')
+          .eq('is_active', true)
+          .order('name', { ascending: true });
+
+        if (branchesError) {
+          console.error('Error loading branches:', branchesError);
+        } else {
+          setAvailableBranches(branchesData || []);
         }
+
         setIsLoadingDisplayMode(false);
       } catch (err) {
-        console.error('Error loading product display mode:', err);
+        console.error('Error loading product display settings:', err);
         setIsLoadingDisplayMode(false);
       }
     };
 
-    loadProductDisplayMode();
+    loadProductDisplaySettings();
   }, []);
 
   // Use dynamic currency list from database
@@ -601,6 +615,7 @@ export default function SettingsPage() {
             .from('product_display_settings')
             .update({
               display_mode: productDisplayMode,
+              selected_branches: selectedBranches,
               updated_at: new Date().toISOString()
             })
             .eq('id', existingData.id);
@@ -616,7 +631,7 @@ export default function SettingsPage() {
             .insert({
               display_mode: productDisplayMode,
               selected_warehouses: [],
-              selected_branches: []
+              selected_branches: selectedBranches
             });
 
           if (displayModeError) {
@@ -886,20 +901,71 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Store and Product Integration */}
-            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-600/30 rounded-lg">
-              <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <p className="text-blue-300 text-xs font-medium">إتمام المخازن والفروع لحساب المخزون</p>
-                  <p className="text-blue-200/70 text-xs mt-1">
-                    حدد المخازن/الفروع المطلوب احتساب جميع المنتجات التي تم الانتهاء منها لتحديد ما سيتم إظهاره في المتجر
-                  </p>
+            {/* Branches Selection - Only show when "show_with_stock" is selected */}
+            {productDisplayMode === 'show_with_stock' && (
+              <div className="mt-4 p-4 bg-[#2B3544] rounded-lg border border-gray-600">
+                <div className="flex items-start gap-2 mb-3">
+                  <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-blue-300 text-sm font-medium">إتمام المخازن والفروع لحساب المخزون</p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      حدد الفروع/المخازن المطلوب احتساب الكمية الكلية منها لتحديد ما سيتم إظهاره في المتجر
+                    </p>
+                  </div>
+                </div>
+
+                {/* Branches Checkboxes */}
+                <div className="space-y-2 mt-4">
+                  <p className="text-white text-sm font-medium mb-2">الفروع</p>
+                  {availableBranches.length === 0 ? (
+                    <p className="text-gray-400 text-xs">لا توجد فروع متاحة</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {availableBranches.map((branch) => (
+                        <label
+                          key={branch.id}
+                          className="flex items-center gap-2 p-3 bg-[#374151] rounded-lg hover:bg-gray-600 transition-colors cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedBranches.includes(branch.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedBranches([...selectedBranches, branch.id]);
+                              } else {
+                                setSelectedBranches(selectedBranches.filter(id => id !== branch.id));
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 bg-[#2B3544] border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                          <span className="text-white text-sm">{branch.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Select All / Deselect All buttons */}
+                  {availableBranches.length > 0 && (
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => setSelectedBranches(availableBranches.map(b => b.id))}
+                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                      >
+                        تحديد الكل
+                      </button>
+                      <button
+                        onClick={() => setSelectedBranches([])}
+                        className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+                      >
+                        إلغاء التحديد
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
         </div>

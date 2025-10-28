@@ -826,6 +826,33 @@ export type Database = {
           },
         ]
       }
+      product_display_settings: {
+        Row: {
+          created_at: string | null
+          display_mode: string
+          id: string
+          selected_branches: string[] | null
+          selected_warehouses: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_mode?: string
+          id?: string
+          selected_branches?: string[] | null
+          selected_warehouses?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_mode?: string
+          id?: string
+          selected_branches?: string[] | null
+          selected_warehouses?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           alt_text: string | null

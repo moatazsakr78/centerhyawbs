@@ -299,7 +299,8 @@
       "Bash(git log:*)",
       "Bash(start http://localhost:3000/product/e851396a-34fe-48ac-8fb0-894117ed496a)",
       "Bash(npx supabase:*)",
-      "Read(//c/Users/pc/Pictures/**)"
+      "Read(//c/Users/pc/Pictures/**)",
+      "Bash(start http://localhost:3003/settings)"
     ],
     "deny": [],
     "additionalDirectories": [

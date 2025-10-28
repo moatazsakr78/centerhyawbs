@@ -72,6 +72,7 @@ export interface Product {
   category?: string;
   brand?: string;
   stock?: number;
+  totalQuantity?: number;
   rating?: number;
   reviews?: number;
   isOnSale?: boolean;
