@@ -105,7 +105,7 @@ export default function CategoryCarousel({
                 </div>
                 {/* منطقة صغيرة للنص في الأسفل */}
                 <div className="bg-white p-3 text-center border-t border-gray-100">
-                  <h4 className="font-bold text-base text-gray-800 transition-colors group-hover:text-[#5D1F1F] truncate">
+                  <h4 className="font-bold text-base text-gray-800 transition-colors group-hover:text-[var(--primary-color)] truncate">
                     {category.name}
                   </h4>
                 </div>
@@ -150,7 +150,7 @@ export default function CategoryCarousel({
                   : 'hover:bg-gray-400'
               }`}
               style={{
-                backgroundColor: index === currentIndex ? '#5D1F1F' : '#D1D5DB'
+                backgroundColor: index === currentIndex ? 'var(--primary-color)' : '#D1D5DB'
               }}
             />
           ))}

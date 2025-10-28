@@ -108,6 +108,12 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+
+  /* Store Theme Colors - Default values (will be overridden by ThemeProvider) */
+  --primary-color: #5d1f1f;
+  --primary-hover-color: #4A1616;
+  --button-color: #5d1f1f;
+  --button-hover-color: #4A1616;
 }
 
 @media (prefers-color-scheme: dark) {

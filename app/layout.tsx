@@ -6,6 +6,7 @@ import { CurrencyProvider } from '@/lib/hooks/useCurrency'
 import { SystemSettingsProvider } from '@/lib/hooks/useSystemSettings'
 import { CartProvider } from '@/lib/contexts/CartContext'
 import { UserProfileProvider } from '@/lib/contexts/UserProfileContext'
+import { ThemeProvider } from '@/lib/contexts/ThemeContext'
 
 export const metadata: Metadata = {
   title: 'El Farouk Group Store',
@@ -50,16 +51,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-arabic bg-[#1F2937] text-gray-800">
-        <SystemSettingsProvider>
-          <CurrencyProvider>
-            <UserProfileProvider>
-              <CartProvider>
-                <TopHeader />
-                {children}
-              </CartProvider>
-            </UserProfileProvider>
-          </CurrencyProvider>
-        </SystemSettingsProvider>
+        <ThemeProvider>
+          <SystemSettingsProvider>
+            <CurrencyProvider>
+              <UserProfileProvider>
+                <CartProvider>
+                  <TopHeader />
+                  {children}
+                </CartProvider>
+              </UserProfileProvider>
+            </CurrencyProvider>
+          </SystemSettingsProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

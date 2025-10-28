@@ -127,7 +127,7 @@ export default function FeaturedProductsCarousel({
                 </div>
               </div>
               <div onClick={() => router.push(`/product/${product.id}`)}>
-                <h4 className="font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[#5D1F1F]">{product.name}</h4>
+                <h4 className="font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]">{product.name}</h4>
                 <div className="h-10 mb-3">
                   <p className="text-gray-600 text-sm overflow-hidden" style={{
                     display: '-webkit-box',
@@ -145,7 +145,7 @@ export default function FeaturedProductsCarousel({
                       {product.originalPrice && (
                         <span className="text-sm text-gray-500 line-through">{product.originalPrice} {websiteCurrency}</span>
                       )}
-                      <span className="text-lg font-bold" style={{color: '#5D1F1F'}}>{getDisplayPrice(product)} {websiteCurrency}</span>
+                      <span className="text-lg font-bold" style={{color: 'var(--primary-color)'}}>{getDisplayPrice(product)} {websiteCurrency}</span>
                     </div>
                     {profile?.role === 'جملة' && product.wholesale_price && (
                       <span className="text-xs text-blue-600 font-medium">سعر الجملة</span>
@@ -172,13 +172,13 @@ export default function FeaturedProductsCarousel({
                   await onAddToCart(productToAdd);
                 }}
                 className="w-full mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 text-white transform hover:scale-105 active:scale-95"
-                style={{backgroundColor: '#5D1F1F'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                   (e.target as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(93, 31, 31, 0.3)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                   (e.target as HTMLButtonElement).style.boxShadow = 'none';
                 }}
               >
@@ -224,7 +224,7 @@ export default function FeaturedProductsCarousel({
                   : 'hover:bg-gray-400'
               }`}
               style={{
-                backgroundColor: index === currentIndex ? '#5D1F1F' : '#D1D5DB'
+                backgroundColor: index === currentIndex ? 'var(--primary-color)' : '#D1D5DB'
               }}
             />
           ))}

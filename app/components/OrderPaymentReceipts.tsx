@@ -209,7 +209,7 @@ export default function OrderPaymentReceipts({
                         setShowVerifierInfo(showVerifierInfo === receipt.id ? null : receipt.id);
                       }}
                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
-                      style={{ backgroundColor: '#5d1f1f' }}
+                      style={{ backgroundColor: 'var(--primary-color)' }}
                       title="عرض معلومات التأكيد"
                     >
                       <svg
@@ -276,16 +276,16 @@ export default function OrderPaymentReceipts({
             disabled={verifying}
             className="w-full py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-2"
             style={{
-              backgroundColor: '#5d1f1f',
+              backgroundColor: 'var(--primary-color)',
               color: 'white'
             }}
             onMouseEnter={(e) => {
               if (!verifying) {
-                (e.target as HTMLButtonElement).style.backgroundColor = '#4a1616';
+                (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
               }
             }}
             onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#5d1f1f';
+              (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
             }}
           >
             {verifying ? (

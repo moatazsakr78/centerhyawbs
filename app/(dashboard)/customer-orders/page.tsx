@@ -1258,7 +1258,7 @@ export default function CustomerOrdersPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: '#5D1F1F'}}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: 'var(--primary-color)'}}></div>
           <p className="text-gray-600">جاري تحميل طلبات العملاء...</p>
         </div>
       </div>
@@ -1269,7 +1269,7 @@ export default function CustomerOrdersPage() {
     <div className="min-h-screen text-gray-800" style={{backgroundColor: '#c0c0c0'}}>
 
       {/* Store Header (Red) */}
-      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="relative flex items-center min-h-[60px] md:min-h-[80px]">
           <div className="max-w-[95%] md:max-w-[95%] lg:max-w-[80%] mx-auto px-2 md:px-3 lg:px-4 flex items-center justify-between min-h-[60px] md:min-h-[80px] w-full">
             
@@ -1311,7 +1311,7 @@ export default function CustomerOrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'all' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'all' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             الكل
@@ -1324,7 +1324,7 @@ export default function CustomerOrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'preparation' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'preparation' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             التحضير
@@ -1337,7 +1337,7 @@ export default function CustomerOrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'followup' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'followup' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             المتابعة
@@ -1350,7 +1350,7 @@ export default function CustomerOrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'completed' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'completed' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             المنفذ
@@ -1363,7 +1363,7 @@ export default function CustomerOrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'issues' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'issues' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             مشكله
@@ -1381,7 +1381,7 @@ export default function CustomerOrdersPage() {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="px-2 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm md:text-base"
-                style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
               />
             </div>
             <div className="flex flex-col flex-1 min-w-[140px]">
@@ -1391,7 +1391,7 @@ export default function CustomerOrdersPage() {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="px-2 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm md:text-base"
-                style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
               />
             </div>
             <div className="flex items-end w-full md:w-auto mt-2 md:mt-0">
@@ -2009,7 +2009,7 @@ export default function CustomerOrdersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200" style={{ backgroundColor: '#5d1f1f' }}>
+            <div className="p-6 border-b border-gray-200" style={{ backgroundColor: 'var(--primary-color)' }}>
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-white">تعديل الطلب: {selectedOrderForEdit.id}</h3>
                 <button
@@ -2144,12 +2144,12 @@ export default function CustomerOrdersPage() {
                 <button
                   onClick={saveOrderChanges}
                   className="px-6 py-2 text-white rounded-lg transition-colors"
-                  style={{ backgroundColor: '#5d1f1f' }}
+                  style={{ backgroundColor: 'var(--primary-color)' }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#4a1919';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#5d1f1f';
+                    e.currentTarget.style.backgroundColor = 'var(--primary-color)';
                   }}
                 >
                   حفظ التغييرات
@@ -2223,7 +2223,7 @@ export default function CustomerOrdersPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200" style={{ backgroundColor: '#5d1f1f' }}>
+            <div className="p-6 border-b border-gray-200" style={{ backgroundColor: 'var(--primary-color)' }}>
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-white">إنشاء فاتورة للطلب: {selectedOrderForInvoice.id}</h3>
                 <button

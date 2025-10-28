@@ -295,19 +295,19 @@ export default function InteractiveProductCard({
         return {
           containerClass: 'bg-custom-gray rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-72 object-cover rounded-lg scale-105',
-          titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[#5D1F1F]'
+          titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
       case 'tablet':
         return {
           containerClass: 'bg-custom-gray rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-64 object-cover rounded-lg scale-105',
-          titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[#5D1F1F]'
+          titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
       case 'mobile':
         return {
           containerClass: 'bg-custom-gray rounded-lg p-3 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-40 object-cover rounded-lg scale-105',
-          titleClass: 'font-semibold mb-2 text-sm text-gray-800 truncate transition-colors group-hover:text-[#5D1F1F]'
+          titleClass: 'font-semibold mb-2 text-sm text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
     }
   };
@@ -491,7 +491,7 @@ export default function InteractiveProductCard({
                   {currentProduct.originalPrice} {websiteCurrency}
                 </span>
               )}
-              <span className="text-lg font-bold" style={{color: '#5D1F1F'}}>
+              <span className="text-lg font-bold" style={{color: 'var(--primary-color)'}}>
                 {getDisplayPrice()} {websiteCurrency}
               </span>
             </div>
@@ -562,12 +562,12 @@ export default function InteractiveProductCard({
                 await onAddToCart(productToAdd);
               }}
               className={`w-full mt-3 rounded-lg font-medium transition-colors text-white px-4 py-2 text-sm`}
-              style={{backgroundColor: '#5D1F1F'}}
+              style={{backgroundColor: 'var(--primary-color)'}}
               onMouseEnter={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
               }}
               onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
               }}
             >
               أضف للسلة
@@ -614,12 +614,12 @@ export default function InteractiveProductCard({
                   await onAddToCart(productToAdd);
                 }}
                 className="flex-[4] rounded-lg font-medium transition-colors text-white p-1.5 text-xs"
-                style={{backgroundColor: '#5D1F1F'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }}
               >
                 إضافة
@@ -687,12 +687,12 @@ export default function InteractiveProductCard({
                   setNote('');
                 }}
                 className="flex-1 py-3 text-white rounded-lg font-medium transition-colors"
-                style={{backgroundColor: '#5D1F1F'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }}
               >
                 حفظ

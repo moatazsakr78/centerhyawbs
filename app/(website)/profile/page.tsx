@@ -319,7 +319,7 @@ export default function ProfilePage() {
   return (
     <div className="h-screen overflow-hidden bg-white flex flex-col" dir="rtl">
       {/* Store Header (Red) */}
-      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="relative flex items-center min-h-[60px] md:min-h-[80px]">
           <div className="max-w-[95%] md:max-w-[95%] lg:max-w-[80%] mx-auto px-2 md:px-3 lg:px-4 flex items-center justify-between min-h-[60px] md:min-h-[80px] w-full">
 

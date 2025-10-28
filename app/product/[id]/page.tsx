@@ -725,7 +725,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     return (
       <div className="min-h-screen text-gray-800 flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: '#5D1F1F'}}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: 'var(--primary-color)'}}></div>
           <p className="text-lg">جاري تحميل المنتج...</p>
         </div>
       </div>
@@ -743,12 +743,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           <button 
             onClick={() => router.back()}
             className="text-white px-6 py-2 rounded-lg transition-colors"
-            style={{backgroundColor: '#5D1F1F'}}
+            style={{backgroundColor: 'var(--primary-color)'}}
             onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+              (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
             }}
             onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+              (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
             }}
           >
             العودة
@@ -856,9 +856,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <button
               onClick={() => setShowCartModal(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-white"
-              style={{backgroundColor: '#5D1F1F'}}
-              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616'; }}
-              onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F'; }}
+              style={{backgroundColor: 'var(--primary-color)'}}
+              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)'; }}
+              onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)'; }}
             >
               <span>السلة ({cartItems?.length || 0})</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -873,7 +873,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       <main className="ml-0 px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <button onClick={() => router.push('/')} className="transition-colors hover:text-[#5D1F1F]">الرئيسية</button>
+          <button onClick={() => router.push('/')} className="transition-colors hover:text-[var(--primary-color)]">الرئيسية</button>
           <span>›</span>
           <span className="text-gray-800">{productDetails.category}</span>
           <span>›</span>
@@ -1089,12 +1089,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
             {/* Price */}
             <div className="flex items-center gap-4">
-              <span className="text-3xl font-bold" style={{color: '#5D1F1F'}}>{productDetails.price} ريال</span>
+              <span className="text-3xl font-bold" style={{color: 'var(--primary-color)'}}>{productDetails.price} ريال</span>
               {productDetails.originalPrice && (
                 <span className="text-xl text-gray-500 line-through">{productDetails.originalPrice} ريال</span>
               )}
               {productDetails.isOnSale && (
-                <span className="px-3 py-1 rounded-full text-sm font-bold" style={{backgroundColor: '#F5F1F1', color: '#5D1F1F'}}>
+                <span className="px-3 py-1 rounded-full text-sm font-bold" style={{backgroundColor: '#F5F1F1', color: 'var(--primary-color)'}}>
                   خصم {productDetails.discount}%
                 </span>
               )}
@@ -1273,12 +1273,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               <button
                 onClick={handleAddToCart}
                 className="flex-1 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                style={{backgroundColor: '#5D1F1F'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1286,7 +1286,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 </svg>
                 أضف إلى السلة
               </button>
-              <button className="px-6 py-3 border rounded-lg font-semibold transition-colors flex items-center justify-center" style={{borderColor: '#5D1F1F', color: '#5D1F1F'}} onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#F5F1F1'; }} onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
+              <button className="px-6 py-3 border rounded-lg font-semibold transition-colors flex items-center justify-center" style={{borderColor: 'var(--primary-color)', color: 'var(--primary-color)'}} onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#F5F1F1'; }} onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = 'transparent'; }}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
@@ -1300,7 +1300,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         {suggestedProductsList.length > 0 && (
           <section>
             <div className="mx-16">
-              <h3 className="text-2xl font-bold mb-6" style={{color: '#5D1F1F'}}>منتجات مقترحة</h3>
+              <h3 className="text-2xl font-bold mb-6" style={{color: 'var(--primary-color)'}}>منتجات مقترحة</h3>
             </div>
             <div className="relative">
               {/* Navigation Arrows - Only show if there are more than 4 products */}
@@ -1349,14 +1349,14 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                           </span>
                         )}
                       </div>
-                      <h4 className="font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[#5D1F1F]">{product.name}</h4>
+                      <h4 className="font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]">{product.name}</h4>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           {product.originalPrice && (
                             <span className="text-sm text-gray-500 line-through">{product.originalPrice} ريال</span>
                           )}
-                          <span className="text-lg font-bold" style={{color: '#5D1F1F'}}>{product.price} ريال</span>
+                          <span className="text-lg font-bold" style={{color: 'var(--primary-color)'}}>{product.price} ريال</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -1378,12 +1378,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                             }
                           }}
                           className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white"
-                          style={{backgroundColor: '#5D1F1F'}}
+                          style={{backgroundColor: 'var(--primary-color)'}}
                           onMouseEnter={(e) => {
-                            (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                            (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                           }}
                           onMouseLeave={(e) => {
-                            (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                            (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                           }}
                         >
                           أضف للسلة

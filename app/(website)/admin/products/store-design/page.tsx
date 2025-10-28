@@ -244,7 +244,7 @@ export default function StoreDesignPage() {
   return (
     <div className="h-screen flex flex-col text-gray-800" style={{ backgroundColor: '#c0c0c0' }}>
       {/* Header - Fixed */}
-      <header className="flex-shrink-0 border-b border-gray-700 py-1" style={{ backgroundColor: '#5d1f1f' }}>
+      <header className="flex-shrink-0 border-b border-gray-700 py-1" style={{ backgroundColor: 'var(--primary-color)' }}>
         <div className="w-full px-6 flex items-center justify-between">
           {/* Right side - Title and Action buttons */}
           <div className="flex items-center gap-1">
@@ -401,13 +401,13 @@ export default function StoreDesignPage() {
                   disabled={isSaving}
                   className="px-6 py-2 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
                   style={{
-                    backgroundColor: '#5D1F1F'
+                    backgroundColor: 'var(--primary-color)'
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSaving) (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                    if (!isSaving) (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSaving) (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                    if (!isSaving) (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                   }}
                 >
                   {isSaving ? (

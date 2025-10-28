@@ -464,7 +464,7 @@ export default function TabletHome({
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: '#5D1F1F'}}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: 'var(--primary-color)'}}></div>
           <p className="text-gray-600">جاري تحميل التطبيق...</p>
         </div>
       </div>
@@ -511,7 +511,7 @@ export default function TabletHome({
       
       {/* Compact Sticky Header */}
       {isCompactHeaderVisible && (
-        <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-2 z-50 transition-all duration-300" style={{backgroundColor: '#5d1f1f'}}>
+        <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-2 z-50 transition-all duration-300" style={{backgroundColor: 'var(--primary-color)'}}>
           <div className="relative flex items-center min-h-[55px]">
             {/* Reserve space for menu button on the right */}
             <div className="flex items-center w-full pr-14">
@@ -533,9 +533,9 @@ export default function TabletHome({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-white border-0 rounded-full px-5 py-2.5 pr-12 text-sm text-gray-800 placeholder-gray-500 shadow-md focus:outline-none focus:ring-1 transition-all duration-300"
-                      style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                      style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                       onFocus={(e) => {
-                        e.target.style.boxShadow = '0 0 0 1px #5D1F1F';
+                        e.target.style.boxShadow = '0 0 0 1px var(--primary-color)';
                       }}
                       onBlur={(e) => {
                         e.target.style.boxShadow = 'none';
@@ -565,7 +565,7 @@ export default function TabletHome({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6H19" />
                     </svg>
                     {cartBadgeCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: '#5D1F1F'}}>
+                      <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: 'var(--primary-color)'}}>
                         {cartBadgeCount}
                       </span>
                     )}
@@ -597,7 +597,7 @@ export default function TabletHome({
       )}
 
       {/* Main Tablet Header */}
-      <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-0 z-40" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-0 z-40" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="relative flex items-center min-h-[75px]">
           {/* Reserve space for menu button on the right */}
           <div className="flex items-center w-full pr-16">
@@ -621,9 +621,9 @@ export default function TabletHome({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-white border-0 rounded-full px-6 py-3 pr-14 text-gray-800 placeholder-gray-500 shadow-lg focus:outline-none focus:ring-2 transition-all duration-300"
-                    style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                    style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = '0 0 0 2px #5D1F1F';
+                      e.target.style.boxShadow = '0 0 0 2px var(--primary-color)';
                     }}
                     onBlur={(e) => {
                       e.target.style.boxShadow = 'none';
@@ -653,7 +653,7 @@ export default function TabletHome({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6H19" />
                   </svg>
                   {cartBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: '#5D1F1F'}}>
+                    <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: 'var(--primary-color)'}}>
                       {cartBadgeCount}
                     </span>
                   )}
@@ -792,7 +792,7 @@ export default function TabletHome({
                           href={sm.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="transition-colors hover:text-[#5D1F1F] flex items-center gap-2"
+                          className="transition-colors hover:text-[var(--primary-color)] flex items-center gap-2"
                         >
                           {sm.platform}
                         </a>
@@ -806,10 +806,10 @@ export default function TabletHome({
             <div>
               <h6 className="font-semibold mb-3">خدمة العملاء</h6>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">المساعدة</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">سياسة الإرجاع</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الشحن والتوصيل</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الدفع</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">المساعدة</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">سياسة الإرجاع</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">الشحن والتوصيل</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">الدفع</a></li>
               </ul>
             </div>
           </div>

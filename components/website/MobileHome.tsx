@@ -478,7 +478,7 @@ export default function MobileHome({
   return (
     <div className="min-h-screen text-gray-800">
       {/* Mobile Header */}
-      <header className="border-b border-gray-700 py-2 fixed top-0 left-0 right-0 z-50 h-16" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="border-b border-gray-700 py-2 fixed top-0 left-0 right-0 z-50 h-16" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="px-4 flex items-center justify-between w-full">
           {/* Complete horizontal layout from right to left */}
           <div className="flex items-center gap-2 w-full justify-between">
@@ -544,7 +544,7 @@ export default function MobileHome({
               isMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}>
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-red-600 bg-[#5d1f1f]">
+              <div className="flex items-center justify-between p-4 border-b border-red-600 bg-[var(--primary-color)]">
                 <h2 className="text-lg font-bold text-white">القائمة الرئيسية</h2>
                 <button
                   onClick={closeMenu}
@@ -571,7 +571,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
@@ -590,7 +590,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
@@ -609,7 +609,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                           </svg>
@@ -628,7 +628,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -653,7 +653,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
@@ -672,7 +672,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                           </svg>
@@ -691,7 +691,7 @@ export default function MobileHome({
                         }}
                         className="flex items-center gap-3 w-full p-3 text-black hover:bg-gray-300 rounded-lg transition-colors text-right group"
                       >
-                        <div className="p-2 bg-[#5d1f1f] rounded-full group-hover:bg-red-700 transition-colors">
+                        <div className="p-2 bg-[var(--primary-color)] rounded-full group-hover:bg-red-700 transition-colors">
                           <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
@@ -722,7 +722,7 @@ export default function MobileHome({
       <div 
         className="fixed left-0 right-0 z-40 transition-all duration-300 ease-in-out overflow-hidden" 
         style={{
-          backgroundColor: '#5d1f1f',
+          backgroundColor: 'var(--primary-color)',
           top: isSearchActive ? '64px' : '0px',
           transform: isSearchActive ? 'translateY(0)' : 'translateY(-100%)',
           opacity: isSearchActive ? 1 : 0,
@@ -876,7 +876,7 @@ export default function MobileHome({
                           href={sm.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="transition-colors hover:text-[#5D1F1F] flex items-center gap-2"
+                          className="transition-colors hover:text-[var(--primary-color)] flex items-center gap-2"
                         >
                           {sm.platform}
                         </a>
@@ -892,10 +892,10 @@ export default function MobileHome({
             <div>
               <h6 className="font-semibold mb-2 text-sm text-white">خدمة العملاء</h6>
               <ul className="space-y-1.5 text-gray-400 text-sm">
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">المساعدة</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">سياسة الإرجاع</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الشحن والتوصيل</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الدفع</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">المساعدة</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">سياسة الإرجاع</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">الشحن والتوصيل</a></li>
+                <li><a href="#" className="transition-colors hover:text-[var(--primary-color)]">الدفع</a></li>
               </ul>
             </div>
 

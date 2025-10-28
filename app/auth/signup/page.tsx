@@ -202,7 +202,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#5d1f1f] hover:bg-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--primary-color)] hover:bg-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -258,7 +258,7 @@ export default function SignUpPage() {
             <span className="text-sm text-gray-600">لديك حساب بالفعل؟ </span>
             <button
               onClick={() => router.push('/auth/login')}
-              className="text-sm text-[#5d1f1f] hover:text-red-800 transition-colors font-medium"
+              className="text-sm text-[var(--primary-color)] hover:text-red-800 transition-colors font-medium"
             >
               تسجيل الدخول
             </button>

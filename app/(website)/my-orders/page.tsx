@@ -426,7 +426,7 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: '#5D1F1F'}}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: 'var(--primary-color)'}}></div>
           <p className="text-gray-600">جاري تحميل الطلبات...</p>
         </div>
       </div>
@@ -455,7 +455,7 @@ export default function OrdersPage() {
       `}</style>
 
       {/* Store Header (Red) */}
-      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="relative flex items-center min-h-[60px] md:min-h-[80px]">
           <div className="max-w-[95%] md:max-w-[95%] lg:max-w-[80%] mx-auto px-2 md:px-3 lg:px-4 flex items-center justify-between min-h-[60px] md:min-h-[80px] w-full">
             
@@ -498,7 +498,7 @@ export default function OrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'completed' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'completed' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             الطلبات المنفذة
@@ -511,7 +511,7 @@ export default function OrdersPage() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
             style={{
-              backgroundColor: activeTab === 'pending' ? '#5d1f1f' : 'transparent'
+              backgroundColor: activeTab === 'pending' ? 'var(--primary-color)' : 'transparent'
             }}
           >
             الطلبات قيد التنفيذ
@@ -562,7 +562,7 @@ export default function OrdersPage() {
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   className="px-2 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm md:text-base"
-                  style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                  style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                 />
               </div>
               <div className="flex flex-col flex-1 min-w-[140px]">
@@ -572,7 +572,7 @@ export default function OrdersPage() {
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   className="px-2 md:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm md:text-base"
-                  style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                  style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                 />
               </div>
               <div className="flex items-end w-full md:w-auto mt-2 md:mt-0">
@@ -607,12 +607,12 @@ export default function OrdersPage() {
               <button
                 onClick={() => window.location.href = '/'}
                 className="px-6 py-2 rounded-lg text-white transition-colors"
-                style={{backgroundColor: '#5d1f1f'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5d1f1f';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }}
               >
                 تصفح المنتجات

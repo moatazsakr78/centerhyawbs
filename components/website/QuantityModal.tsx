@@ -141,7 +141,7 @@ export default function QuantityModal({ isOpen, onClose, onConfirm, productName 
             <button
               onClick={handleConfirm}
               className="flex-1 py-3 rounded-xl text-white font-bold text-lg transition-all duration-200 hover:opacity-90"
-              style={{ backgroundColor: '#5D1F1F' }}
+              style={{ backgroundColor: 'var(--primary-color)' }}
             >
               إضافة للطلب
             </button>

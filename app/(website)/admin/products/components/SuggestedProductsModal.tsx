@@ -57,7 +57,7 @@ export default function SuggestedProductsModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b" style={{backgroundColor: '#5d1f1f'}}>
+        <div className="p-6 border-b" style={{backgroundColor: 'var(--primary-color)'}}>
           <div className="flex items-center justify-between">
             <div className="text-white">
               <h3 className="text-xl font-semibold">إدارة المنتجات المقترحة</h3>
@@ -92,7 +92,7 @@ export default function SuggestedProductsModal({
 
         {/* Selected Count */}
         <div className="px-4 py-2 border-b" style={{ backgroundColor: '#F5F1F1' }}>
-          <p className="text-sm" style={{ color: '#5D1F1F' }}>
+          <p className="text-sm" style={{ color: 'var(--primary-color)' }}>
             تم تحديد {selectedSuggestions.length} منتج كمقترحات
           </p>
         </div>
@@ -111,7 +111,7 @@ export default function SuggestedProductsModal({
                       ? 'shadow-md' 
                       : 'border-gray-300 bg-white hover:border-gray-400 hover:shadow-sm'
                   }`}
-                  style={isSelected ? { borderColor: '#5D1F1F', backgroundColor: '#F5F1F1' } : {}}
+                  style={isSelected ? { borderColor: 'var(--primary-color)', backgroundColor: '#F5F1F1' } : {}}
                 >
                   <div className="flex items-start gap-3">
                     <img 
@@ -128,7 +128,7 @@ export default function SuggestedProductsModal({
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-gray-800 text-sm truncate">{product.name}</h4>
                       <p className="text-xs text-gray-600 mt-1">{product.category}</p>
-                      <p className="text-sm font-semibold mt-1" style={{color: '#5d1f1f'}}>
+                      <p className="text-sm font-semibold mt-1" style={{color: 'var(--primary-color)'}}>
                         {product.price} ريال
                       </p>
                     </div>
@@ -139,7 +139,7 @@ export default function SuggestedProductsModal({
                             ? '' 
                             : 'border-gray-300'
                         }`}
-                        style={isSelected ? { backgroundColor: '#5D1F1F', borderColor: '#5D1F1F' } : {}}
+                        style={isSelected ? { backgroundColor: 'var(--primary-color)', borderColor: 'var(--primary-color)' } : {}}
                       >
                         {isSelected && (
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

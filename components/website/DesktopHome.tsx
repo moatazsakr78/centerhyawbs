@@ -462,7 +462,7 @@ export default function DesktopHome({
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: '#5D1F1F'}}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderBottomColor: 'var(--primary-color)'}}></div>
           <p className="text-gray-600">جاري تحميل التطبيق...</p>
         </div>
       </div>
@@ -497,7 +497,7 @@ export default function DesktopHome({
       `}</style>
       {/* Compact Sticky Header */}
       {isCompactHeaderVisible && (
-        <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-2 z-50 transition-all duration-300" style={{backgroundColor: '#5d1f1f'}}>
+        <header className="fixed top-0 left-0 right-0 border-b border-gray-700 py-2 z-50 transition-all duration-300" style={{backgroundColor: 'var(--primary-color)'}}>
           <div className="relative flex items-center min-h-[50px]">
             {/* Main Compact Content Container */}
             <div className="max-w-[90%] mx-auto px-4 flex items-center justify-between w-full min-h-[50px]">
@@ -515,9 +515,9 @@ export default function DesktopHome({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white border-0 rounded-full px-4 py-1.5 pr-8 text-sm text-gray-800 placeholder-gray-500 shadow-sm focus:outline-none focus:ring-1"
-                  style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                  style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                   onFocus={(e) => {
-                    e.target.style.boxShadow = '0 0 0 1px #5D1F1F';
+                    e.target.style.boxShadow = '0 0 0 1px var(--primary-color)';
                   }}
                   onBlur={(e) => {
                     e.target.style.boxShadow = 'none';
@@ -549,7 +549,7 @@ export default function DesktopHome({
                   onClick={() => setIsCartModalOpen(true)}
                   className="relative p-2 rounded-lg transition-colors"
                   onMouseEnter={(e) => {
-                    (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                    (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                   }}
                   onMouseLeave={(e) => {
                     (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
@@ -559,7 +559,7 @@ export default function DesktopHome({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6H19" />
                   </svg>
                   {cartBadgeCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: '#5D1F1F'}}>
+                    <span className="absolute -top-1 -right-1 bg-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold" style={{color: 'var(--primary-color)'}}>
                       {cartBadgeCount}
                     </span>
                   )}
@@ -585,7 +585,7 @@ export default function DesktopHome({
       )}
 
       {/* Main Desktop Header */}
-      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: '#5d1f1f'}}>
+      <header className="border-b border-gray-700 py-0 relative z-40" style={{backgroundColor: 'var(--primary-color)'}}>
         <div className="relative flex items-center min-h-[80px]">
           {/* Main Content Container */}
           <div className="max-w-[80%] mx-auto px-4 flex items-center justify-between min-h-[80px] w-full">
@@ -605,9 +605,9 @@ export default function DesktopHome({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border-0 rounded-full px-5 py-2.5 pr-12 text-gray-800 placeholder-gray-500 shadow-md focus:outline-none focus:ring-2 transition-all duration-300"
-                style={{"--tw-ring-color": "#5D1F1F"} as React.CSSProperties}
+                style={{"--tw-ring-color": "var(--primary-color)"} as React.CSSProperties}
                 onFocus={(e) => {
-                  e.target.style.boxShadow = '0 0 0 2px #5D1F1F';
+                  e.target.style.boxShadow = '0 0 0 2px var(--primary-color)';
                 }}
                 onBlur={(e) => {
                   e.target.style.boxShadow = 'none';
@@ -621,10 +621,10 @@ export default function DesktopHome({
           
           <div className="flex items-center gap-4">
             <nav className="flex gap-6">
-              <a href="#products" className="text-gray-300 transition-colors font-medium hover:text-[#5D1F1F]">المنتجات</a>
-              <a href="#categories" className="text-gray-300 transition-colors font-medium hover:text-[#5D1F1F]">الفئات</a>
-              <a href="#offers" className="text-gray-300 transition-colors font-medium hover:text-[#5D1F1F]">العروض</a>
-              <a href="#about" className="text-gray-300 transition-colors font-medium hover:text-[#5D1F1F]">عن المتجر</a>
+              <a href="#products" className="text-gray-300 transition-colors font-medium" style={{'--tw-hover-text-opacity': '1'} as React.CSSProperties} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>المنتجات</a>
+              <a href="#categories" className="text-gray-300 transition-colors font-medium" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>الفئات</a>
+              <a href="#offers" className="text-gray-300 transition-colors font-medium" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>العروض</a>
+              <a href="#about" className="text-gray-300 transition-colors font-medium" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>عن المتجر</a>
             </nav>
           </div>
           
@@ -640,12 +640,12 @@ export default function DesktopHome({
               <button 
                 onClick={() => setIsCartModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-white"
-                style={{backgroundColor: '#5D1F1F'}}
+                style={{backgroundColor: 'var(--primary-color)'}}
                 onMouseEnter={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }}
               >
                 <span>السلة ({cartBadgeCount})</span>
@@ -750,7 +750,9 @@ export default function DesktopHome({
                           href={sm.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="transition-colors hover:text-[#5D1F1F] flex items-center gap-2"
+                          className="transition-colors flex items-center gap-2"
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = ''}
                         >
                           {sm.platform}
                         </a>
@@ -764,10 +766,10 @@ export default function DesktopHome({
             <div>
               <h6 className="font-semibold mb-3">خدمة العملاء</h6>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">المساعدة</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">سياسة الإرجاع</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الشحن والتوصيل</a></li>
-                <li><a href="#" className="transition-colors hover:text-[#5D1F1F]">الدفع</a></li>
+                <li><a href="#" className="transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>المساعدة</a></li>
+                <li><a href="#" className="transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>سياسة الإرجاع</a></li>
+                <li><a href="#" className="transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>الشحن والتوصيل</a></li>
+                <li><a href="#" className="transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'} onMouseLeave={(e) => e.currentTarget.style.color = ''}>الدفع</a></li>
               </ul>
             </div>
             <div>

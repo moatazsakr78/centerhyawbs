@@ -262,12 +262,12 @@ export default function AddCustomSectionModal({
             onClick={handleSubmit}
             disabled={isCreating || !sectionName.trim() || selectedProducts.size === 0}
             className="px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: '#5D1F1F' }}
+            style={{ backgroundColor: 'var(--primary-color)' }}
             onMouseEnter={(e) => {
-              if (!isCreating) (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+              if (!isCreating) (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
             }}
             onMouseLeave={(e) => {
-              if (!isCreating) (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+              if (!isCreating) (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
             }}
           >
             {isCreating ? (

@@ -114,7 +114,7 @@ export default function ProductCard({
           </p>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold" style={{color: '#5d1f1f'}}>{product.price} ريال</span>
+          <span className="text-lg font-bold" style={{color: 'var(--primary-color)'}}>{product.price} ريال</span>
           <span className="text-sm text-gray-500">{product.category}</span>
         </div>
       </div>
@@ -130,7 +130,7 @@ export default function ProductCard({
               onChange={onToggleVisibility}
               className="rounded"
               style={{
-                accentColor: '#5D1F1F'
+                accentColor: 'var(--primary-color)'
               }}
             />
             <span className={product.isHidden ? 'text-red-600' : 'text-green-600'}>
@@ -147,7 +147,7 @@ export default function ProductCard({
               onChange={onToggleFeatured}
               className="rounded"
               style={{
-                accentColor: '#5D1F1F'
+                accentColor: 'var(--primary-color)'
               }}
             />
             <span className={product.isFeatured ? 'text-yellow-600' : 'text-gray-600'}>
@@ -161,13 +161,13 @@ export default function ProductCard({
           onClick={onManageSuggestions}
           className="w-full text-white px-3 py-2 rounded text-sm font-medium transition-colors"
           style={{
-            backgroundColor: '#5D1F1F'
+            backgroundColor: 'var(--primary-color)'
           }}
           onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+            (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
           }}
           onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+            (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
           }}
         >
           إدارة المقترحات ({product.suggestedProducts.length})

@@ -148,7 +148,7 @@ export default function LoginPage() {
             <div className="text-center">
               <button
                 type="button"
-                className="text-sm text-[#5d1f1f] hover:text-red-800 transition-colors"
+                className="text-sm text-[var(--primary-color)] hover:text-red-800 transition-colors"
                 onClick={() => alert('سيتم إضافة خاصية استعادة كلمة المرور قريباً')}
               >
                 نسيت كلمة المرور؟
@@ -159,7 +159,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#5d1f1f] hover:bg-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--primary-color)] hover:bg-red-800 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -215,7 +215,7 @@ export default function LoginPage() {
             <span className="text-sm text-gray-600">ليس لديك حساب؟ </span>
             <button
               onClick={() => router.push('/auth/signup')}
-              className="text-sm text-[#5d1f1f] hover:text-red-800 transition-colors font-medium"
+              className="text-sm text-[var(--primary-color)] hover:text-red-800 transition-colors font-medium"
             >
               إنشاء حساب جديد
             </button>

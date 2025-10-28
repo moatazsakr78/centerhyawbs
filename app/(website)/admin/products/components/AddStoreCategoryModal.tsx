@@ -303,7 +303,7 @@ export default function AddStoreCategoryModal({
 
 
         {/* Header - Mobile optimized */}
-        <div className="flex items-center justify-between p-3 md:p-4 border-b border-red-600 bg-[#5d1f1f] flex-shrink-0">
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-red-600 bg-[var(--primary-color)] flex-shrink-0">
           <h2 className="text-base md:text-lg font-bold text-white">
             {editingCategory ? 'تعديل فئة المتجر' : 'إضافة فئة جديدة للمتجر'}
           </h2>
@@ -482,16 +482,16 @@ export default function AddStoreCategoryModal({
                     disabled={isCreating || !categoryName.trim()}
                     className="px-6 py-2 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: !categoryName.trim() ? '#9CA3AF' : '#5D1F1F'
+                      backgroundColor: !categoryName.trim() ? '#9CA3AF' : 'var(--primary-color)'
                     }}
                     onMouseEnter={(e) => {
                       if (!isCreating && categoryName.trim()) {
-                        (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                        (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isCreating && categoryName.trim()) {
-                        (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                        (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                       }
                     }}
                   >
@@ -768,16 +768,16 @@ export default function AddStoreCategoryModal({
               disabled={isCreating || !categoryName.trim()}
               className="px-4 md:px-6 py-2 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               style={{
-                backgroundColor: !categoryName.trim() ? '#9CA3AF' : '#5D1F1F'
+                backgroundColor: !categoryName.trim() ? '#9CA3AF' : 'var(--primary-color)'
               }}
               onMouseEnter={(e) => {
                 if (!isCreating && categoryName.trim()) {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-hover-color)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isCreating && categoryName.trim()) {
-                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                  (e.target as HTMLButtonElement).style.backgroundColor = 'var(--primary-color)';
                 }
               }}
             >

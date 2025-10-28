@@ -85,7 +85,7 @@ function SortableCustomSectionCard({ section, index, onToggleVisibility, isDragg
     >
       {/* Section Icon */}
       <div className="mb-4 flex items-center justify-center">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: '#5D1F1F' }}>
+        <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--primary-color)' }}>
           <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
@@ -204,7 +204,7 @@ export default function CustomSectionManagementGrid({
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="rounded-full p-4 mb-4" style={{ backgroundColor: 'rgba(93, 31, 31, 0.1)' }}>
-          <svg className="w-16 h-16" style={{ color: '#5D1F1F' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16" style={{ color: 'var(--primary-color)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
@@ -245,7 +245,7 @@ export default function CustomSectionManagementGrid({
         {activeId && activeSectionItem ? (
           <div className="bg-white rounded-lg p-4 border border-blue-400 shadow-2xl opacity-90 rotate-3 scale-105">
             <div className="mb-4 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: '#5D1F1F' }}>
+              <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--primary-color)' }}>
                 <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
