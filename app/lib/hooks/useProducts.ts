@@ -194,6 +194,21 @@ export function useProducts() {
         setBranches(branchesData || [])
       }
 
+      // Load selected branches from product_display_settings (once for all products)
+      let selectedBranchIds: string[] = []
+      try {
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('product_display_settings')
+          .select('selected_branches')
+          .single()
+
+        if (!settingsError && settingsData && settingsData.selected_branches) {
+          selectedBranchIds = settingsData.selected_branches
+        }
+      } catch (err) {
+        console.warn('Unable to fetch display settings:', err)
+      }
+
       // For each product, fetch inventory and variants data
       const enrichedProducts = await Promise.all(
         (productsData || []).map(async (rawProduct) => {
@@ -202,13 +217,13 @@ export function useProducts() {
           // Parse product colors and description from description field
           let productColors: any[] = []
           let actualDescription: string = product.description || ""
-          
+
           try {
             if (product.description && product.description.startsWith('{')) {
               const descriptionData = JSON.parse(product.description)
               productColors = descriptionData.colors || []
               actualDescription = descriptionData.text || ""
-              
+
               // Try to assign images from video_url to colors
               if (productColors.length > 0 && product.video_url) {
                 try {
@@ -237,7 +252,7 @@ export function useProducts() {
               .from('inventory')
               .select('branch_id, warehouse_id, quantity, min_stock')
               .eq('product_id', product.id)
-            
+
             if (!error && data) {
               inventoryData = data
             }
@@ -252,7 +267,7 @@ export function useProducts() {
               .from('product_variants')
               .select('*')
               .eq('product_id', product.id)
-            
+
             if (!error && data) {
               variantsData = data
             }
@@ -271,7 +286,11 @@ export function useProducts() {
                 quantity: inv.quantity || 0,
                 min_stock: inv.min_stock || 0
               }
-              totalQuantity += inv.quantity || 0
+              // Only count quantity from selected branches (if any are selected)
+              // If no branches selected, count from all branches
+              if (selectedBranchIds.length === 0 || selectedBranchIds.includes(locationId)) {
+                totalQuantity += inv.quantity || 0
+              }
             }
           })
 
@@ -879,10 +898,23 @@ export function useProducts() {
       )
       .subscribe()
 
+    // Product display settings subscription - reload products when branch selection changes
+    const settingsChannel = supabase
+      .channel('product_display_settings_changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'product_display_settings' },
+        async () => {
+          // Reload all products when settings change
+          await fetchProducts()
+        }
+      )
+      .subscribe()
+
     return () => {
       productsChannel.unsubscribe()
       inventoryChannel.unsubscribe()
       variantsChannel.unsubscribe()
+      settingsChannel.unsubscribe()
     }
   }, [])
 
