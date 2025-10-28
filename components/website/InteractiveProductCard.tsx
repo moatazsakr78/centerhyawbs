@@ -7,6 +7,9 @@ import { useCart } from '../../lib/contexts/CartContext';
 import { useUserProfile } from '../../lib/hooks/useUserProfile';
 import { useWebsiteCurrency } from '@/lib/hooks/useCurrency';
 import { useRatingsDisplay } from '../../lib/hooks/useRatingSettings';
+import { useProductDisplaySettings } from '@/lib/hooks/useProductDisplaySettings';
+import { useProductVoting } from '@/app/lib/hooks/useProductVoting';
+import ProductVoteModal from './ProductVoteModal';
 
 interface InteractiveProductCardProps {
   product: Product;
@@ -41,6 +44,25 @@ export default function InteractiveProductCard({
 
   // Get rating settings
   const { showRatings } = useRatingsDisplay();
+
+  // Get product display settings
+  const { settings: displaySettings } = useProductDisplaySettings();
+
+  // Vote modal state
+  const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+  const [voteModalMode, setVoteModalMode] = useState<'vote' | 'stats'>('vote');
+
+  // Get voting stats
+  const { voteStats } = useProductVoting(String(product.id));
+
+  // Check if product is out of stock
+  const isOutOfStock = (product.totalQuantity || product.stock || 0) === 0;
+
+  // Check if voting mode is active
+  const isVotingMode = displaySettings?.display_mode === 'show_with_stock_and_vote';
+
+  // Check if user has already voted
+  const hasUserVoted = voteStats.userVote !== null;
 
   // Get current product data based on selected size
   const getCurrentProductData = () => {
@@ -293,7 +315,7 @@ export default function InteractiveProductCard({
   const classes = getResponsiveClasses();
 
   return (
-    <div 
+    <div
       className={`${classes.containerClass} flex flex-col`}
       data-device-type={deviceType}
       onClick={() => {
@@ -321,7 +343,7 @@ export default function InteractiveProductCard({
         <img
           src={getCurrentDisplayImage()}
           alt={product.name}
-          className={`${classes.imageClass} transition-opacity duration-200`}
+          className={`${classes.imageClass} transition-opacity duration-200 ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== '/placeholder-product.svg') {
@@ -501,83 +523,130 @@ export default function InteractiveProductCard({
             </div>
           </div>
         )}
+
       </div>
       
       {/* Desktop/Tablet Button */}
       {deviceType !== 'mobile' && (
-        <button 
-          onClick={async (e) => {
-            e.stopPropagation();
-            const productToAdd = {
-              ...currentProduct,
-              selectedColor: selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : null),
-              selectedShape: selectedShape || (product.shapes && product.shapes.length > 0 ? product.shapes[0] : null),
-              selectedSize: selectedSize,
-              price: getDisplayPrice() // Use the display price based on user role
-            };
-            await onAddToCart(productToAdd);
-          }}
-          className={`w-full mt-3 rounded-lg font-medium transition-colors text-white px-4 py-2 text-sm`}
-          style={{backgroundColor: '#5D1F1F'}}
-          onMouseEnter={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
-          }}
-          onMouseLeave={(e) => {
-            (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
-          }}
-        >
-          أضف للسلة
-        </button>
+        <>
+          {isVotingMode && isOutOfStock ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (hasUserVoted) {
+                  setVoteModalMode('stats');
+                } else {
+                  setVoteModalMode('vote');
+                }
+                setIsVoteModalOpen(true);
+              }}
+              className={`w-full mt-3 rounded-lg font-medium transition-colors text-white px-4 py-2 text-sm ${
+                hasUserVoted
+                  ? 'bg-gray-600 hover:bg-gray-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {hasUserVoted ? 'عرض الإحصائيات 📊' : 'صوت 🗳️'}
+            </button>
+          ) : (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const productToAdd = {
+                  ...currentProduct,
+                  selectedColor: selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : null),
+                  selectedShape: selectedShape || (product.shapes && product.shapes.length > 0 ? product.shapes[0] : null),
+                  selectedSize: selectedSize,
+                  price: getDisplayPrice() // Use the display price based on user role
+                };
+                await onAddToCart(productToAdd);
+              }}
+              className={`w-full mt-3 rounded-lg font-medium transition-colors text-white px-4 py-2 text-sm`}
+              style={{backgroundColor: '#5D1F1F'}}
+              onMouseEnter={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+              }}
+            >
+              أضف للسلة
+            </button>
+          )}
+        </>
       )}
       
       {/* Mobile Buttons */}
       {deviceType === 'mobile' && (
         <div className="flex gap-1 mt-3">
-          {/* Add Button (80% width) */}
-          <button
-            onClick={async (e) => {
-              e.stopPropagation();
-              const productToAdd = {
-                ...currentProduct,
-                selectedColor: selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : null),
-                selectedShape: selectedShape || (product.shapes && product.shapes.length > 0 ? product.shapes[0] : null),
-                selectedSize: selectedSize,
-                price: getDisplayPrice() // Use the display price based on user role
-              };
-              await onAddToCart(productToAdd);
-            }}
-            className="flex-[4] rounded-lg font-medium transition-colors text-white p-1.5 text-xs"
-            style={{backgroundColor: '#5D1F1F'}}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
-            }}
-          >
-            إضافة
-          </button>
+          {isVotingMode && isOutOfStock ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (hasUserVoted) {
+                  setVoteModalMode('stats');
+                } else {
+                  setVoteModalMode('vote');
+                }
+                setIsVoteModalOpen(true);
+              }}
+              className={`w-full rounded-lg font-medium transition-colors text-white p-1.5 text-xs ${
+                hasUserVoted
+                  ? 'bg-gray-600 hover:bg-gray-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {hasUserVoted ? 'عرض الإحصائيات 📊' : 'صوت 🗳️'}
+            </button>
+          ) : (
+            <>
+              {/* Add Button (80% width) */}
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const productToAdd = {
+                    ...currentProduct,
+                    selectedColor: selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : null),
+                    selectedShape: selectedShape || (product.shapes && product.shapes.length > 0 ? product.shapes[0] : null),
+                    selectedSize: selectedSize,
+                    price: getDisplayPrice() // Use the display price based on user role
+                  };
+                  await onAddToCart(productToAdd);
+                }}
+                className="flex-[4] rounded-lg font-medium transition-colors text-white p-1.5 text-xs"
+                style={{backgroundColor: '#5D1F1F'}}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLButtonElement).style.backgroundColor = '#4A1616';
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLButtonElement).style.backgroundColor = '#5D1F1F';
+                }}
+              >
+                إضافة
+              </button>
 
-          {/* Note Button (20% width) with gray color like in the image */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowNoteModal(true);
-            }}
-            className="flex-1 rounded-lg font-medium transition-colors p-1.5"
-            style={{backgroundColor: '#D1D5DB', color: '#374151'}}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#9CA3AF';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#D1D5DB';
-            }}
-            title="إضافة ملاحظة"
-          >
-            <svg className="w-3 h-3 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
+              {/* Note Button (20% width) with gray color like in the image */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowNoteModal(true);
+                }}
+                className="flex-1 rounded-lg font-medium transition-colors p-1.5"
+                style={{backgroundColor: '#D1D5DB', color: '#374151'}}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLButtonElement).style.backgroundColor = '#9CA3AF';
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLButtonElement).style.backgroundColor = '#D1D5DB';
+                }}
+                title="إضافة ملاحظة"
+              >
+                <svg className="w-3 h-3 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
       )}
       {/* Note Modal */}
@@ -632,6 +701,14 @@ export default function InteractiveProductCard({
           </div>
         </div>
       )}
+
+      {/* Product Vote Modal */}
+      <ProductVoteModal
+        isOpen={isVoteModalOpen}
+        onClose={() => setIsVoteModalOpen(false)}
+        product={currentProduct}
+        mode={voteModalMode}
+      />
     </div>
   );
 }

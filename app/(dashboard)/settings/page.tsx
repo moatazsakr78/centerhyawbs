@@ -894,15 +894,15 @@ export default function SettingsPage() {
                   <div className="flex-1">
                     <span className="text-white font-medium">ظهور بالمخزون مع التصويت</span>
                     <p className="text-xs text-gray-400 mt-1">
-                      المنتجات المتوفرة تظهر عادي، والمنتجات المنتهية تظهر مع إمكانية التصويت لإعادة توفيرها (قريباً)
+                      المنتجات المتوفرة تظهر عادي، والمنتجات المنتهية تظهر مع إمكانية التصويت لإعادة توفيرها
                     </p>
                   </div>
                 </label>
               </div>
             </div>
 
-            {/* Branches Selection - Only show when "show_with_stock" is selected */}
-            {productDisplayMode === 'show_with_stock' && (
+            {/* Branches Selection - Show when "show_with_stock" or "show_with_stock_and_vote" is selected */}
+            {(productDisplayMode === 'show_with_stock' || productDisplayMode === 'show_with_stock_and_vote') && (
               <div className="mt-4 p-4 bg-[#2B3544] rounded-lg border border-gray-600">
                 <div className="flex items-start gap-2 mb-3">
                   <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
