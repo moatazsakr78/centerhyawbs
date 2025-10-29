@@ -57,7 +57,7 @@ export default function TabletHome({
   const { isAdmin } = useUserProfile();
 
   // Get company settings
-  const { companyName, logoUrl, socialMedia } = useCompanySettings();
+  const { companyName, logoUrl, socialMedia, logoWidth, logoHeight, logoWidthCompact, logoHeightCompact } = useCompanySettings();
 
   // Get product display settings
   const { settings: displaySettings } = useProductDisplaySettings();
@@ -520,7 +520,12 @@ export default function TabletHome({
                 
                 {/* Logo and Title - Left Side */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-12 w-12 object-contain" />
+                  <img
+                    src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                    alt={companyName}
+                    style={{ width: `${logoWidthCompact}px`, height: `${logoHeightCompact}px` }}
+                    className="object-contain"
+                  />
                   <h1 className="text-lg font-bold text-white">{companyName}</h1>
                 </div>
               
@@ -606,7 +611,12 @@ export default function TabletHome({
               
               {/* Logo and Title - Left Side */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-16 w-16 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidth * 0.8}px`, height: `${logoHeight * 0.8}px` }}
+                  className="object-contain"
+                />
                 <div className="flex flex-col">
                   <h1 className="text-lg font-bold text-white leading-tight">{companyName}</h1>
                 </div>
@@ -770,7 +780,12 @@ export default function TabletHome({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-7 w-7 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidthCompact / 1.4}px`, height: `${logoHeightCompact / 1.4}px` }}
+                  className="object-contain"
+                />
                 <h5 className="font-bold text-lg text-white">{companyName}</h5>
               </div>
               <p className="text-gray-400 mb-4">متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية</p>

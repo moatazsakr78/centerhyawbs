@@ -58,7 +58,7 @@ export default function DesktopHome({
   const { isAdmin } = useUserProfile();
 
   // Get company settings
-  const { companyName, logoUrl, socialMedia } = useCompanySettings();
+  const { companyName, logoUrl, socialMedia, logoWidth, logoHeight, logoWidthCompact, logoHeightCompact } = useCompanySettings();
 
   // Get cart badge count and cart functions
   const { cartBadgeCount } = useCartBadge();
@@ -502,7 +502,12 @@ export default function DesktopHome({
             {/* Main Compact Content Container */}
             <div className="max-w-[90%] mx-auto px-4 flex items-center justify-between w-full min-h-[50px]">
               <div className="flex items-center gap-3">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-10 w-10 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidthCompact}px`, height: `${logoHeightCompact}px` }}
+                  className="object-contain"
+                />
                 <h1 className="text-base font-bold text-white">{companyName}</h1>
               </div>
             
@@ -591,7 +596,12 @@ export default function DesktopHome({
           <div className="max-w-[80%] mx-auto px-4 flex items-center justify-between min-h-[80px] w-full">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-20 w-20 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidth}px`, height: `${logoHeight}px` }}
+                  className="object-contain"
+                />
                 <h1 className="text-xl font-bold text-white">{companyName}</h1>
               </div>
             </div>
@@ -733,7 +743,12 @@ export default function DesktopHome({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-8 w-8 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidthCompact / 1.25}px`, height: `${logoHeightCompact / 1.25}px` }}
+                  className="object-contain"
+                />
                 <h5 className="font-bold text-lg text-white">{companyName}</h5>
               </div>
               <p className="text-gray-400">متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية</p>

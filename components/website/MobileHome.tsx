@@ -56,7 +56,7 @@ export default function MobileHome({
   const isAdminOrStaff = profile?.role === 'أدمن رئيسي' || profile?.role === 'موظف';
 
   // Get company settings
-  const { companyName, logoUrl, socialMedia } = useCompanySettings();
+  const { companyName, logoUrl, socialMedia, logoWidth, logoHeight, logoWidthCompact, logoHeightCompact } = useCompanySettings();
 
   // Get product display settings
   const { settings: displaySettings } = useProductDisplaySettings();
@@ -493,9 +493,14 @@ export default function MobileHome({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              
+
               {/* Logo */}
-              <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-14 w-14 object-contain" />
+              <img
+                src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                alt={companyName}
+                style={{ width: `${logoWidthCompact * 1.2}px`, height: `${logoHeightCompact * 1.2}px` }}
+                className="object-contain"
+              />
 
               {/* Logo Text */}
               <div className="flex flex-col leading-tight">
@@ -857,7 +862,12 @@ export default function MobileHome({
             {/* Company Info */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <img src={logoUrl || '/assets/logo/El Farouk Group2.png'} alt={companyName} className="h-6 w-6 object-contain" />
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt={companyName}
+                  style={{ width: `${logoWidthCompact / 1.6}px`, height: `${logoHeightCompact / 1.6}px` }}
+                  className="object-contain"
+                />
                 <h5 className="font-bold text-base text-white">{companyName}</h5>
               </div>
               <p className="text-gray-400 text-sm">متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية</p>

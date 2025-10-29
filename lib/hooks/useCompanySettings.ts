@@ -26,6 +26,10 @@ export function useCompanySettings() {
     logoUrl: companySettings.logoUrl,
     socialMedia: companySettings.socialMedia,
     branches: companySettings.branches,
+    logoWidth: companySettings.logoWidth || 80,
+    logoHeight: companySettings.logoHeight || 80,
+    logoWidthCompact: companySettings.logoWidthCompact || 40,
+    logoHeightCompact: companySettings.logoHeightCompact || 40,
     updateCompanySettings,
     isLoading
   };

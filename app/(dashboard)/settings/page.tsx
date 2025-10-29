@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import TopHeader from '@/app/components/layout/TopHeader';
 import Sidebar from '@/app/components/layout/Sidebar';
+import ImageCropModal from '@/app/components/ImageCropModal';
 import { Currency, DEFAULT_SYSTEM_CURRENCY, DEFAULT_WEBSITE_CURRENCY, DEFAULT_UNIFIED_CURRENCY, CURRENCY_MODES } from '@/lib/constants/currencies';
 import { useCurrencySettings } from '@/lib/hooks/useCurrency';
 import { useCurrencySettings as useDbCurrencySettings } from '@/lib/hooks/useSystemSettings';
@@ -252,6 +253,10 @@ export default function SettingsPage() {
     logoUrl: dbLogoUrl,
     socialMedia: dbSocialMedia,
     branches: dbBranches,
+    logoWidth: dbLogoWidth,
+    logoHeight: dbLogoHeight,
+    logoWidthCompact: dbLogoWidthCompact,
+    logoHeightCompact: dbLogoHeightCompact,
     updateCompanySettings,
     isLoading: isCompanyLoading
   } = useCompanySettings();
@@ -271,6 +276,10 @@ export default function SettingsPage() {
   const [logoUrl, setLogoUrl] = useState(dbLogoUrl);
   const [socialMedia, setSocialMedia] = useState(dbSocialMedia);
   const [branches, setBranches] = useState(dbBranches);
+  const [logoWidth, setLogoWidth] = useState(dbLogoWidth);
+  const [logoHeight, setLogoHeight] = useState(dbLogoHeight);
+  const [logoWidthCompact, setLogoWidthCompact] = useState(dbLogoWidthCompact);
+  const [logoHeightCompact, setLogoHeightCompact] = useState(dbLogoHeightCompact);
 
   // State for database branches
   const [dbBranchesFromDB, setDbBranchesFromDB] = useState<any[]>([]);
@@ -284,6 +293,10 @@ export default function SettingsPage() {
   const [newPrimaryHoverColor, setNewPrimaryHoverColor] = useState('#4A1616');
   const [newButtonColor, setNewButtonColor] = useState('#5d1f1f');
   const [newButtonHoverColor, setNewButtonHoverColor] = useState('#4A1616');
+
+  // Image Crop Modal State
+  const [isImageCropModalOpen, setIsImageCropModalOpen] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState('');
 
   // Update pending state when database values change
   useEffect(() => {
@@ -299,7 +312,11 @@ export default function SettingsPage() {
     setLogoUrl(dbLogoUrl);
     setSocialMedia(dbSocialMedia);
     setBranches(dbBranches);
-  }, [dbCompanyName, dbLogoUrl, dbSocialMedia, dbBranches]);
+    setLogoWidth(dbLogoWidth);
+    setLogoHeight(dbLogoHeight);
+    setLogoWidthCompact(dbLogoWidthCompact);
+    setLogoHeightCompact(dbLogoHeightCompact);
+  }, [dbCompanyName, dbLogoUrl, dbSocialMedia, dbBranches, dbLogoWidth, dbLogoHeight, dbLogoWidthCompact, dbLogoHeightCompact]);
 
   // Load branches from database
   useEffect(() => {
@@ -674,7 +691,11 @@ export default function SettingsPage() {
           name: companyName,
           logoUrl: logoUrl,
           socialMedia: socialMedia,
-          branches: branches
+          branches: branches,
+          logoWidth: logoWidth,
+          logoHeight: logoHeight,
+          logoWidthCompact: logoWidthCompact,
+          logoHeightCompact: logoHeightCompact
         });
       }
 
@@ -706,6 +727,10 @@ export default function SettingsPage() {
     setLogoUrl(dbLogoUrl);
     setSocialMedia(dbSocialMedia);
     setBranches(dbBranches);
+    setLogoWidth(dbLogoWidth);
+    setLogoHeight(dbLogoHeight);
+    setLogoWidthCompact(dbLogoWidthCompact);
+    setLogoHeightCompact(dbLogoHeightCompact);
   };
 
   const handleDeleteCurrency = async (currency: string) => {
@@ -1137,6 +1162,8 @@ export default function SettingsPage() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
       // Check file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
         alert('حجم الملف كبير جداً. الحد الأقصى 2 ميجابايت');
@@ -1149,13 +1176,27 @@ export default function SettingsPage() {
         return;
       }
 
-      // Convert to base64
+      // Convert to base64 and open crop modal
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoUrl(reader.result as string);
+        const result = reader.result as string;
+        console.log('Image converted to base64, length:', result?.length);
+        setTempImageUrl(result);
+        setIsImageCropModalOpen(true);
+      };
+      reader.onerror = (error) => {
+        console.error('Error reading file:', error);
+        alert('حدث خطأ أثناء قراءة الملف');
       };
       reader.readAsDataURL(file);
     }
+    // Reset input value to allow selecting the same file again
+    e.target.value = '';
+  };
+
+  // Handle crop complete
+  const handleCropComplete = (croppedImageUrl: string) => {
+    setLogoUrl(croppedImageUrl);
   };
 
   const renderCompanySettings = () => {
@@ -1213,6 +1254,169 @@ export default function SettingsPage() {
                   حذف الشعار
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Logo Dimensions Settings */}
+        <div className="p-4 bg-[#374151] rounded-lg border border-gray-600">
+          <h4 className="text-white font-medium text-base mb-4">أبعاد اللوجو المخصصة</h4>
+          <p className="text-sm text-gray-400 mb-4">
+            قم بتحديد أبعاد اللوجو بالبكسل لضمان ظهوره بشكل مناسب في جميع أجزاء المتجر
+          </p>
+
+          <div className="grid grid-cols-2 gap-6">
+            {/* Main Logo Dimensions */}
+            <div className="space-y-4">
+              <h5 className="text-white text-sm font-medium flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                اللوجو الرئيسي (الشريط الكبير)
+              </h5>
+
+              {/* Width */}
+              <div>
+                <label className="block text-gray-300 text-xs mb-2">العرض (px)</label>
+                <input
+                  type="number"
+                  min="20"
+                  max="200"
+                  value={logoWidth}
+                  onChange={(e) => setLogoWidth(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-[#2B3544] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              {/* Height */}
+              <div>
+                <label className="block text-gray-300 text-xs mb-2">الارتفاع (px)</label>
+                <input
+                  type="number"
+                  min="20"
+                  max="200"
+                  value={logoHeight}
+                  onChange={(e) => setLogoHeight(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-[#2B3544] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              {/* Preview */}
+              {logoUrl && (
+                <div className="mt-4 p-3 bg-[#2B3544] rounded border border-gray-600">
+                  <p className="text-xs text-gray-400 mb-2">معاينة:</p>
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={logoUrl}
+                      alt="Logo Preview"
+                      style={{ width: `${logoWidth}px`, height: `${logoHeight}px`, objectFit: 'contain' }}
+                      className="border border-gray-500 rounded"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Compact Logo Dimensions */}
+            <div className="space-y-4">
+              <h5 className="text-white text-sm font-medium flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                اللوجو المصغر (الشريط الصغير عند التمرير)
+              </h5>
+
+              {/* Width Compact */}
+              <div>
+                <label className="block text-gray-300 text-xs mb-2">العرض (px)</label>
+                <input
+                  type="number"
+                  min="20"
+                  max="100"
+                  value={logoWidthCompact}
+                  onChange={(e) => setLogoWidthCompact(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-[#2B3544] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              {/* Height Compact */}
+              <div>
+                <label className="block text-gray-300 text-xs mb-2">الارتفاع (px)</label>
+                <input
+                  type="number"
+                  min="20"
+                  max="100"
+                  value={logoHeightCompact}
+                  onChange={(e) => setLogoHeightCompact(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-[#2B3544] border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              {/* Preview Compact */}
+              {logoUrl && (
+                <div className="mt-4 p-3 bg-[#2B3544] rounded border border-gray-600">
+                  <p className="text-xs text-gray-400 mb-2">معاينة:</p>
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={logoUrl}
+                      alt="Logo Preview Compact"
+                      style={{ width: `${logoWidthCompact}px`, height: `${logoHeightCompact}px`, objectFit: 'contain' }}
+                      className="border border-gray-500 rounded"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="mt-6 pt-4 border-t border-gray-600">
+            <p className="text-sm text-gray-400 mb-3">إعدادات سريعة:</p>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  setLogoWidth(80);
+                  setLogoHeight(80);
+                  setLogoWidthCompact(40);
+                  setLogoHeightCompact(40);
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              >
+                مربع متوسط (80x80 / 40x40)
+              </button>
+              <button
+                onClick={() => {
+                  setLogoWidth(120);
+                  setLogoHeight(60);
+                  setLogoWidthCompact(60);
+                  setLogoHeightCompact(30);
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              >
+                مستطيل عريض (120x60 / 60x30)
+              </button>
+              <button
+                onClick={() => {
+                  setLogoWidth(60);
+                  setLogoHeight(120);
+                  setLogoWidthCompact(30);
+                  setLogoHeightCompact(60);
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              >
+                مستطيل طولي (60x120 / 30x60)
+              </button>
+              <button
+                onClick={() => {
+                  setLogoWidth(100);
+                  setLogoHeight(100);
+                  setLogoWidthCompact(50);
+                  setLogoHeightCompact(50);
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              >
+                مربع كبير (100x100 / 50x50)
+              </button>
             </div>
           </div>
         </div>
@@ -1712,6 +1916,14 @@ export default function SettingsPage() {
         </div>
       </div>
       </div>
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        isOpen={isImageCropModalOpen}
+        imageUrl={tempImageUrl}
+        onClose={() => setIsImageCropModalOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
     </>
   );
 }

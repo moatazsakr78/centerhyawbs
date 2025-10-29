@@ -112,6 +112,11 @@ export interface CompanySettings {
   logoUrl: string;
   socialMedia: SocialMedia[];
   branches: Branch[];
+  // Logo dimensions
+  logoWidth?: number;        // Width for main header logo (default: 80px)
+  logoHeight?: number;       // Height for main header logo (default: 80px)
+  logoWidthCompact?: number; // Width for compact/scrolled header logo (default: 40px)
+  logoHeightCompact?: number; // Height for compact/scrolled header logo (default: 40px)
 }
 
 // Main settings object that combines all categories
