@@ -26,6 +26,7 @@ export interface WebsiteSettings {
   products_per_page: number;
   enable_product_reviews: boolean;
   auto_approve_reviews: boolean;
+  product_card_color?: string; // لون خلفية كارت المنتج
 }
 
 // UI/Theme settings
@@ -155,7 +156,8 @@ export const DEFAULT_SETTINGS: SystemSettingsObject = {
     default_language: 'ar',
     products_per_page: 20,
     enable_product_reviews: true,
-    auto_approve_reviews: false
+    auto_approve_reviews: false,
+    product_card_color: '#D1D5DB' // رمادي فاتح (default)
   },
   ui: {
     theme: 'dark',

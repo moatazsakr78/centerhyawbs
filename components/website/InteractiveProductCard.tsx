@@ -293,19 +293,19 @@ export default function InteractiveProductCard({
     switch (deviceType) {
       case 'desktop':
         return {
-          containerClass: 'bg-custom-gray rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
+          containerClass: 'rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-72 object-cover rounded-lg scale-105',
           titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
       case 'tablet':
         return {
-          containerClass: 'bg-custom-gray rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
+          containerClass: 'rounded-lg p-4 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-64 object-cover rounded-lg scale-105',
           titleClass: 'font-semibold mb-2 text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
       case 'mobile':
         return {
-          containerClass: 'bg-custom-gray rounded-lg p-3 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
+          containerClass: 'rounded-lg p-3 hover:bg-gray-300 transition-colors border border-gray-300 shadow-md cursor-pointer group',
           imageClass: 'w-full h-40 object-cover rounded-lg scale-105',
           titleClass: 'font-semibold mb-2 text-sm text-gray-800 truncate transition-colors group-hover:text-[var(--primary-color)]'
         };
@@ -318,6 +318,7 @@ export default function InteractiveProductCard({
     <div
       className={`${classes.containerClass} flex flex-col`}
       data-device-type={deviceType}
+      style={{ backgroundColor: 'var(--product-card-bg-color)' }}
       onClick={() => {
         if (onProductClick) {
           onProductClick(String(currentProduct.id));

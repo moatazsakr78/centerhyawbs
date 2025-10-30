@@ -15,10 +15,12 @@ import Sidebar from '@/app/components/layout/Sidebar';
 import ImageCropModal from '@/app/components/ImageCropModal';
 import { Currency, DEFAULT_SYSTEM_CURRENCY, DEFAULT_WEBSITE_CURRENCY, DEFAULT_UNIFIED_CURRENCY, CURRENCY_MODES } from '@/lib/constants/currencies';
 import { useCurrencySettings } from '@/lib/hooks/useCurrency';
-import { useCurrencySettings as useDbCurrencySettings } from '@/lib/hooks/useSystemSettings';
+import { useCurrencySettings as useDbCurrencySettings, useSystemSettings } from '@/lib/hooks/useSystemSettings';
 import { useRatingsDisplay } from '@/lib/hooks/useRatingSettings';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { useStoreThemes } from '@/lib/hooks/useStoreTheme';
+import { useProductCardColors } from '@/lib/hooks/useProductCardColors';
+import { useBackgroundColors } from '@/lib/hooks/useBackgroundColors';
 import { supabase } from '@/app/lib/supabase/client';
 
 // Custom dropdown component with delete buttons
@@ -271,6 +273,29 @@ export default function SettingsPage() {
     updateTheme
   } = useStoreThemes();
 
+  // Product Card Colors using hook
+  const {
+    colors: productCardColors,
+    isLoading: isCardColorsLoading,
+    addColor: addCardColor,
+    activateColor: activateCardColor,
+    deleteColor: deleteCardColor,
+    updateColor: updateCardColor
+  } = useProductCardColors();
+
+  // Background Colors using hook
+  const {
+    colors: backgroundColors,
+    isLoading: isBgColorsLoading,
+    addColor: addBgColor,
+    activateColor: activateBgColor,
+    deleteColor: deleteBgColor,
+    updateColor: updateBgColor
+  } = useBackgroundColors();
+
+  // System Settings using hook
+  const { getWebsiteSettings, updateSettings: updateSystemSettings } = useSystemSettings();
+
   // Local state for pending changes (not saved until user clicks save)
   const [companyName, setCompanyName] = useState(dbCompanyName);
   const [logoUrl, setLogoUrl] = useState(dbLogoUrl);
@@ -293,6 +318,20 @@ export default function SettingsPage() {
   const [newPrimaryHoverColor, setNewPrimaryHoverColor] = useState('#4A1616');
   const [newButtonColor, setNewButtonColor] = useState('#5d1f1f');
   const [newButtonHoverColor, setNewButtonHoverColor] = useState('#4A1616');
+
+  // Product Card Color Settings State
+  const [isAddCardColorModalOpen, setIsAddCardColorModalOpen] = useState(false);
+  const [isEditCardColorModalOpen, setIsEditCardColorModalOpen] = useState(false);
+  const [editingCardColor, setEditingCardColor] = useState<any | null>(null);
+  const [newCardColorName, setNewCardColorName] = useState('');
+  const [newCardBackgroundColor, setNewCardBackgroundColor] = useState('#D1D5DB');
+
+  // Background Color Settings State
+  const [isAddBgColorModalOpen, setIsAddBgColorModalOpen] = useState(false);
+  const [isEditBgColorModalOpen, setIsEditBgColorModalOpen] = useState(false);
+  const [editingBgColor, setEditingBgColor] = useState<any | null>(null);
+  const [newBgColorName, setNewBgColorName] = useState('');
+  const [newBgBackgroundColor, setNewBgBackgroundColor] = useState('#C0C0C0');
 
   // Image Crop Modal State
   const [isImageCropModalOpen, setIsImageCropModalOpen] = useState(false);
@@ -1034,23 +1073,6 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       {/* Theme Info */}
                       <div className="flex items-center gap-4 flex-1">
-                        {/* Theme Name and Status */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-white font-medium">{theme.name}</h4>
-                            {theme.is_active && (
-                              <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
-                                نشط
-                              </span>
-                            )}
-                            {theme.is_default && (
-                              <span className="px-2 py-0.5 bg-gray-600 text-white text-xs rounded-full">
-                                افتراضي
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
                         {/* Color Preview */}
                         <div className="flex items-center gap-2">
                           <div className="flex flex-col gap-1">
@@ -1067,6 +1089,23 @@ export default function SettingsPage() {
                                 title={`Hover: ${theme.primary_hover_color}`}
                               ></div>
                             </div>
+                          </div>
+                        </div>
+
+                        {/* Theme Name and Status */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-white font-medium">{theme.name}</h4>
+                            {theme.is_active && (
+                              <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
+                                نشط
+                              </span>
+                            )}
+                            {theme.is_default && (
+                              <span className="px-2 py-0.5 bg-gray-600 text-white text-xs rounded-full">
+                                افتراضي
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1143,6 +1182,258 @@ export default function SettingsPage() {
                 setNewButtonColor('#5d1f1f');
                 setNewButtonHoverColor('#4A1616');
                 setIsAddThemeModalOpen(true);
+              }}
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              إضافة لون جديد
+            </button>
+          </div>
+
+          {/* Product Card Color Settings */}
+          <div className="space-y-4 mt-8 p-4 bg-[#374151] rounded-lg border border-gray-600">
+            <h3 className="text-white font-medium text-lg">لون كارت المنتج</h3>
+            <p className="text-sm text-gray-400">تخصيص لون خلفية كارت المنتج في المتجر</p>
+
+            {/* Current Colors */}
+            {!isCardColorsLoading && productCardColors.length > 0 && (
+              <div className="space-y-3">
+                {productCardColors.map((color: any) => (
+                  <div
+                    key={color.id}
+                    className={`p-4 bg-[#2B3544] rounded-lg border-2 transition-all ${
+                      color.is_active
+                        ? 'border-blue-500 shadow-lg'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Color Info */}
+                      <div className="flex items-center gap-4 flex-1">
+                        {/* Color Preview */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-gray-400">لون الخلفية</span>
+                            <div
+                              className="w-16 h-8 rounded border-2 border-gray-600"
+                              style={{ backgroundColor: color.background_color }}
+                              title={color.background_color}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Color Name and Status */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-white font-medium">{color.name}</h4>
+                            {color.is_active && (
+                              <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
+                                نشط
+                              </span>
+                            )}
+                            {color.is_default && (
+                              <span className="px-2 py-0.5 bg-gray-600 text-white text-xs rounded-full">
+                                افتراضي
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        {/* Activate Button */}
+                        {!color.is_active && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await activateCardColor(color.id);
+                                alert('تم تفعيل اللون بنجاح!');
+                              } catch (error) {
+                                console.error('Error activating color:', error);
+                                alert('حدث خطأ أثناء تفعيل اللون');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+                          >
+                            تفعيل
+                          </button>
+                        )}
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => {
+                            setEditingCardColor(color);
+                            setNewCardColorName(color.name);
+                            setNewCardBackgroundColor(color.background_color);
+                            setIsEditCardColorModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors"
+                        >
+                          تعديل
+                        </button>
+
+                        {/* Delete Button - Only for non-default themes */}
+                        {!color.is_default && (
+                          <button
+                            onClick={async () => {
+                              const confirmDelete = window.confirm(`هل تريد حذف اللون "${color.name}" نهائياً؟`);
+                              if (!confirmDelete) return;
+
+                              try {
+                                await deleteCardColor(color.id);
+                                alert('تم حذف اللون بنجاح!');
+                              } catch (error) {
+                                console.error('Error deleting color:', error);
+                                alert('حدث خطأ أثناء حذف اللون');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+                          >
+                            حذف
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Color Button */}
+            <button
+              onClick={() => {
+                setNewCardColorName('');
+                setNewCardBackgroundColor('#D1D5DB');
+                setIsAddCardColorModalOpen(true);
+              }}
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              إضافة لون جديد
+            </button>
+          </div>
+
+          {/* Background Color Settings */}
+          <div className="space-y-4 mt-8 p-4 bg-[#374151] rounded-lg border border-gray-600">
+            <h3 className="text-white font-medium text-lg">لون الخلفية</h3>
+            <p className="text-sm text-gray-400">تخصيص لون الخلفية التي توضع عليها كروت المنتجات في المتجر</p>
+
+            {/* Current Colors */}
+            {!isBgColorsLoading && backgroundColors.length > 0 && (
+              <div className="space-y-3">
+                {backgroundColors.map((color: any) => (
+                  <div
+                    key={color.id}
+                    className={`p-4 bg-[#2B3544] rounded-lg border-2 transition-all ${
+                      color.is_active
+                        ? 'border-blue-500 shadow-lg'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Color Info */}
+                      <div className="flex items-center gap-4 flex-1">
+                        {/* Color Preview */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-gray-400">لون الخلفية</span>
+                            <div
+                              className="w-16 h-8 rounded border-2 border-gray-600"
+                              style={{ backgroundColor: color.background_color }}
+                              title={color.background_color}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Color Name and Status */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-white font-medium">{color.name}</h4>
+                            {color.is_active && (
+                              <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
+                                نشط
+                              </span>
+                            )}
+                            {color.is_default && (
+                              <span className="px-2 py-0.5 bg-gray-600 text-white text-xs rounded-full">
+                                افتراضي
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2">
+                        {/* Activate Button */}
+                        {!color.is_active && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await activateBgColor(color.id);
+                                alert('تم تفعيل اللون بنجاح!');
+                              } catch (error) {
+                                console.error('Error activating color:', error);
+                                alert('حدث خطأ أثناء تفعيل اللون');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+                          >
+                            تفعيل
+                          </button>
+                        )}
+
+                        {/* Edit Button */}
+                        <button
+                          onClick={() => {
+                            setEditingBgColor(color);
+                            setNewBgColorName(color.name);
+                            setNewBgBackgroundColor(color.background_color);
+                            setIsEditBgColorModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition-colors"
+                        >
+                          تعديل
+                        </button>
+
+                        {/* Delete Button - Only for non-default colors */}
+                        {!color.is_default && (
+                          <button
+                            onClick={async () => {
+                              const confirmDelete = window.confirm(`هل تريد حذف اللون "${color.name}" نهائياً؟`);
+                              if (!confirmDelete) return;
+
+                              try {
+                                await deleteBgColor(color.id);
+                                alert('تم حذف اللون بنجاح!');
+                              } catch (error) {
+                                console.error('Error deleting color:', error);
+                                alert('حدث خطأ أثناء حذف اللون');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+                          >
+                            حذف
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Color Button */}
+            <button
+              onClick={() => {
+                setNewBgColorName('');
+                setNewBgBackgroundColor('#C0C0C0');
+                setIsAddBgColorModalOpen(true);
               }}
               className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
             >
@@ -1803,6 +2094,300 @@ export default function SettingsPage() {
                   } catch (error) {
                     console.error('Error updating theme:', error);
                     alert('حدث خطأ أثناء تحديث اللون');
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                حفظ التعديلات
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Product Card Color Modal */}
+      {isAddCardColorModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-[#2B3544] rounded-lg p-6 w-full max-w-lg border border-gray-600">
+            <h3 className="text-white text-xl font-bold mb-6">إضافة لون جديد لكارت المنتج</h3>
+
+            <div className="space-y-4">
+              {/* Color Name */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">اسم اللون</label>
+                <input
+                  type="text"
+                  value={newCardColorName}
+                  onChange={(e) => setNewCardColorName(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
+                  placeholder="مثال: أزرق داكن"
+                />
+              </div>
+
+              {/* Background Color */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">لون الخلفية</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={newCardBackgroundColor}
+                    onChange={(e) => setNewCardBackgroundColor(e.target.value)}
+                    className="w-16 h-10 rounded border-2 border-gray-600 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={newCardBackgroundColor}
+                    onChange={(e) => setNewCardBackgroundColor(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    style={{ direction: 'ltr' }}
+                    placeholder="#D1D5DB"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsAddCardColorModalOpen(false)}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newCardColorName.trim()) {
+                    alert('الرجاء إدخال اسم للون');
+                    return;
+                  }
+
+                  try {
+                    await addCardColor(newCardColorName, newCardBackgroundColor);
+                    alert('تم إضافة اللون بنجاح!');
+                    setIsAddCardColorModalOpen(false);
+                  } catch (error) {
+                    console.error('Error adding color:', error);
+                    alert('حدث خطأ أثناء إضافة اللون');
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                إضافة اللون
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Card Color Modal */}
+      {isEditCardColorModalOpen && editingCardColor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-[#2B3544] rounded-lg p-6 w-full max-w-lg border border-gray-600">
+            <h3 className="text-white text-xl font-bold mb-6">تعديل لون كارت المنتج</h3>
+
+            <div className="space-y-4">
+              {/* Color Name */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">اسم اللون</label>
+                <input
+                  type="text"
+                  value={newCardColorName}
+                  onChange={(e) => setNewCardColorName(e.target.value)}
+                  disabled={editingCardColor.is_default}
+                  className="w-full px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right disabled:opacity-50"
+                />
+              </div>
+
+              {/* Background Color */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">لون الخلفية</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={newCardBackgroundColor}
+                    onChange={(e) => setNewCardBackgroundColor(e.target.value)}
+                    className="w-16 h-10 rounded border-2 border-gray-600 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={newCardBackgroundColor}
+                    onChange={(e) => setNewCardBackgroundColor(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    style={{ direction: 'ltr' }}
+                    placeholder="#D1D5DB"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsEditCardColorModalOpen(false);
+                  setEditingCardColor(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await updateCardColor(editingCardColor.id, newCardColorName, newCardBackgroundColor);
+                    alert('تم تحديث اللون بنجاح!');
+                    setIsEditCardColorModalOpen(false);
+                    setEditingCardColor(null);
+                  } catch (error) {
+                    console.error('Error updating color:', error);
+                    alert('حدث خطأ أثناء تحديث اللون');
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                حفظ التعديلات
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Background Color Modal */}
+      {isAddBgColorModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-[#2B3544] rounded-lg p-6 w-full max-w-lg border border-gray-600">
+            <h3 className="text-white text-xl font-bold mb-6">إضافة لون خلفية جديد</h3>
+
+            <div className="space-y-4">
+              {/* Color Name */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">اسم اللون</label>
+                <input
+                  type="text"
+                  value={newBgColorName}
+                  onChange={(e) => setNewBgColorName(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right"
+                  placeholder="مثال: أخضر فاتح"
+                />
+              </div>
+
+              {/* Background Color */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">لون الخلفية</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={newBgBackgroundColor}
+                    onChange={(e) => setNewBgBackgroundColor(e.target.value)}
+                    className="w-16 h-10 rounded border-2 border-gray-600 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={newBgBackgroundColor}
+                    onChange={(e) => setNewBgBackgroundColor(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    style={{ direction: 'ltr' }}
+                    placeholder="#C0C0C0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setIsAddBgColorModalOpen(false)}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={async () => {
+                  if (!newBgColorName.trim()) {
+                    alert('الرجاء إدخال اسم للون');
+                    return;
+                  }
+
+                  try {
+                    await addBgColor(newBgColorName, newBgBackgroundColor);
+                    alert('تم إضافة لون الخلفية بنجاح!');
+                    setIsAddBgColorModalOpen(false);
+                  } catch (error) {
+                    console.error('Error adding background color:', error);
+                    alert('حدث خطأ أثناء إضافة لون الخلفية');
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                إضافة اللون
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Background Color Modal */}
+      {isEditBgColorModalOpen && editingBgColor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-[#2B3544] rounded-lg p-6 w-full max-w-lg border border-gray-600">
+            <h3 className="text-white text-xl font-bold mb-6">تعديل لون الخلفية</h3>
+
+            <div className="space-y-4">
+              {/* Color Name */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">اسم اللون</label>
+                <input
+                  type="text"
+                  value={newBgColorName}
+                  onChange={(e) => setNewBgColorName(e.target.value)}
+                  disabled={editingBgColor.is_default}
+                  className="w-full px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-right disabled:opacity-50"
+                />
+              </div>
+
+              {/* Background Color */}
+              <div>
+                <label className="block text-white text-sm font-medium mb-2">لون الخلفية</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={newBgBackgroundColor}
+                    onChange={(e) => setNewBgBackgroundColor(e.target.value)}
+                    className="w-16 h-10 rounded border-2 border-gray-600 cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={newBgBackgroundColor}
+                    onChange={(e) => setNewBgBackgroundColor(e.target.value)}
+                    className="flex-1 px-3 py-2 bg-[#374151] border border-gray-600 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    style={{ direction: 'ltr' }}
+                    placeholder="#C0C0C0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsEditBgColorModalOpen(false);
+                  setEditingBgColor(null);
+                }}
+                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await updateBgColor(editingBgColor.id, newBgColorName, newBgBackgroundColor);
+                    alert('تم تحديث لون الخلفية بنجاح!');
+                    setIsEditBgColorModalOpen(false);
+                    setEditingBgColor(null);
+                  } catch (error) {
+                    console.error('Error updating background color:', error);
+                    alert('حدث خطأ أثناء تحديث لون الخلفية');
                   }
                 }}
                 className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"

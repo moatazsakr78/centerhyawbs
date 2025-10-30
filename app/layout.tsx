@@ -7,6 +7,8 @@ import { SystemSettingsProvider } from '@/lib/hooks/useSystemSettings'
 import { CartProvider } from '@/lib/contexts/CartContext'
 import { UserProfileProvider } from '@/lib/contexts/UserProfileContext'
 import { ThemeProvider } from '@/lib/contexts/ThemeContext'
+import { ProductCardColorProvider } from '@/lib/contexts/ProductCardColorContext'
+import { BackgroundColorProvider } from '@/lib/contexts/BackgroundColorContext'
 
 export const metadata: Metadata = {
   title: 'El Farouk Group Store',
@@ -52,16 +54,20 @@ export default function RootLayout({
       </head>
       <body className="font-arabic bg-[#1F2937] text-gray-800">
         <ThemeProvider>
-          <SystemSettingsProvider>
-            <CurrencyProvider>
-              <UserProfileProvider>
-                <CartProvider>
-                  <TopHeader />
-                  {children}
-                </CartProvider>
-              </UserProfileProvider>
-            </CurrencyProvider>
-          </SystemSettingsProvider>
+          <ProductCardColorProvider>
+            <BackgroundColorProvider>
+              <SystemSettingsProvider>
+                <CurrencyProvider>
+                  <UserProfileProvider>
+                    <CartProvider>
+                      <TopHeader />
+                      {children}
+                    </CartProvider>
+                  </UserProfileProvider>
+                </CurrencyProvider>
+              </SystemSettingsProvider>
+            </BackgroundColorProvider>
+          </ProductCardColorProvider>
         </ThemeProvider>
       </body>
     </html>
