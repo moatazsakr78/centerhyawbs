@@ -303,7 +303,9 @@
       "Bash(start http://localhost:3003/settings)",
       "Bash(for:*)",
       "Bash(do sed:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "additionalDirectories": [
