@@ -25,14 +25,20 @@ interface MobileHomeProps {
   onRemoveFromCart: (productId: string | number) => void;
   onUpdateQuantity: (productId: string | number, quantity: number) => void;
   onClearCart: () => void;
+  serverProducts?: any[];
+  serverCategories?: any[];
+  serverSizeGroups?: any[];
 }
 
-export default function MobileHome({ 
-  userInfo, 
-  onCartUpdate, 
-  onRemoveFromCart, 
-  onUpdateQuantity, 
-  onClearCart 
+export default function MobileHome({
+  userInfo,
+  onCartUpdate,
+  onRemoveFromCart,
+  onUpdateQuantity,
+  onClearCart,
+  serverProducts,
+  serverCategories,
+  serverSizeGroups
 }: MobileHomeProps) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -104,7 +110,10 @@ export default function MobileHome({
   
   
   // Get real products from database
-  const { products: databaseProducts, isLoading } = useProducts();
+  // Get real products from database (or use server products if provided)
+  const { products: clientProducts, isLoading: clientLoading } = useProducts();
+  const databaseProducts = serverProducts || clientProducts;
+  const isLoading = serverProducts ? false : clientLoading;
 
   // Convert database products to website format with colors
   useEffect(() => {
@@ -255,7 +264,7 @@ export default function MobileHome({
     };
 
     fetchProductsWithColors();
-  }, [databaseProducts]);
+  }, [databaseProducts, serverProducts, companyName]);
 
   // Load raw sections data immediately on mount
   useEffect(() => {

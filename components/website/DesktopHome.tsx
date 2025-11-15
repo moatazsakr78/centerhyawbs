@@ -29,14 +29,20 @@ interface DesktopHomeProps {
   onRemoveFromCart: (productId: string | number) => void;
   onUpdateQuantity: (productId: string | number, quantity: number) => void;
   onClearCart: () => void;
+  serverProducts?: any[];
+  serverCategories?: any[];
+  serverSizeGroups?: any[];
 }
 
-export default function DesktopHome({ 
-  userInfo, 
-  onCartUpdate, 
-  onRemoveFromCart, 
-  onUpdateQuantity, 
-  onClearCart 
+export default function DesktopHome({
+  userInfo,
+  onCartUpdate,
+  onRemoveFromCart,
+  onUpdateQuantity,
+  onClearCart,
+  serverProducts,
+  serverCategories,
+  serverSizeGroups
 }: DesktopHomeProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,18 +110,56 @@ export default function DesktopHome({
     }
   };
   
-  
-  // Get real products from database
-  const { products: databaseProducts, isLoading } = useProducts();
+
+  // Get real products from database (or use server products if provided)
+  const { products: clientProducts, isLoading: clientLoading } = useProducts();
+  const databaseProducts = serverProducts || clientProducts;
+  const isLoading = serverProducts ? false : clientLoading;
 
   // Convert database products to website format with colors
   useEffect(() => {
     const fetchProductsWithColors = async () => {
       try {
         if (databaseProducts && databaseProducts.length > 0) {
-          // First, fetch all product variants for colors, shapes and size groups
+          let variants, sizeGroups;
+
+          // If server data is provided, use it directly (already processed)
+          if (serverProducts && serverProducts.length > 0) {
+            // Server products already have colors, shapes, and sizes processed
+            // Just convert to website format
+            const convertedProducts: Product[] = serverProducts.map((product: any) => ({
+              id: product.id,
+              name: product.name || 'منتج بدون اسم',
+              description: product.description || '',
+              price: product.finalPrice || Number(product.price),
+              wholesale_price: Number(product.wholesale_price) || undefined,
+              originalPrice: product.hasDiscount ? Number(product.price) : undefined,
+              image: product.main_image_url || undefined,
+              images: product.allImages || [product.main_image_url].filter(Boolean),
+              colors: product.colors || [],
+              shapes: product.shapes || [],
+              sizes: [], // Sizes will be added below from serverSizeGroups
+              category: product.category?.name || 'عام',
+              brand: companyName,
+              stock: product.stock || 0,
+              totalQuantity: product.stock || 0,
+              rating: Number(product.rating) || 0,
+              reviews: product.rating_count || 0,
+              isOnSale: product.hasDiscount || false,
+              discount: product.hasDiscount && product.discount_percentage
+                ? Math.round(Number(product.discount_percentage))
+                : undefined,
+              tags: [],
+              isFeatured: product.is_featured || false
+            }));
+
+            setWebsiteProducts(convertedProducts);
+            return;
+          }
+
+          // Client-side: fetch all product variants for colors, shapes and size groups
           const { supabase } = await import('../../app/lib/supabase/client');
-          const { data: variants, error: variantsError } = await supabase
+          const { data: fetchedVariants, error: variantsError } = await supabase
             .from('product_variants')
             .select('*')
             .in('variant_type', ['color', 'shape']);
@@ -123,9 +167,10 @@ export default function DesktopHome({
           if (variantsError) {
             console.error('Error fetching product variants:', variantsError);
           }
+          variants = fetchedVariants;
 
           // Fetch size groups with their items
-          const { data: sizeGroups, error: sizeGroupsError } = await supabase
+          const { data: fetchedSizeGroups, error: sizeGroupsError } = await supabase
             .from('product_size_groups')
             .select(`
               *,
@@ -145,6 +190,7 @@ export default function DesktopHome({
           if (sizeGroupsError) {
             console.error('Error fetching size groups:', sizeGroupsError);
           }
+          sizeGroups = fetchedSizeGroups;
 
           // Create a map of products that are part of size groups
           const productsInSizeGroups = new Map();
@@ -263,7 +309,7 @@ export default function DesktopHome({
     };
 
     fetchProductsWithColors();
-  }, [databaseProducts]);
+  }, [databaseProducts, serverProducts, companyName]);
 
   // Convert store categories to website format
   useEffect(() => {
