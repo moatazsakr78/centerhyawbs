@@ -12,7 +12,7 @@ import ManagementModal from '../../components/ManagementModal'
 import CategoriesTreeView from '../../components/CategoriesTreeView'
 import ColumnsControlModal from '../../components/ColumnsControlModal'
 import QuantityAdjustmentModal from '../../components/QuantityAdjustmentModal'
-import { useProducts } from '../../lib/hooks/useProductsOptimized'
+import { useProductsAdmin } from '../../../lib/hooks/useProductsAdmin'
 import { supabase } from '../../lib/supabase/client'
 import { revalidateProductPage } from '../../../lib/utils/revalidate'
 import {
@@ -111,8 +111,8 @@ export default function InventoryPage() {
     branchId: ''
   })
 
-  // Get products and branches data using the same hook as products page
-  const { products, setProducts, branches, isLoading, error, fetchProducts } = useProducts()
+  // ✨ OPTIMIZED: Use super-optimized admin hook (reduces 201 queries to 3!)
+  const { products, setProducts, branches, isLoading, error, fetchProducts } = useProductsAdmin()
 
   // Categories state for filtering
   const [categories, setCategories] = useState<Category[]>([])
