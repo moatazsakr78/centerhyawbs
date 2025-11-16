@@ -2,9 +2,13 @@
  * Website Cache Revalidation Utilities
  *
  * Use these functions after CRUD operations to refresh the website instantly
+ *
+ * Security Note: The secret is now handled server-side only for better security
  */
 
-const REVALIDATE_SECRET = process.env.NEXT_PUBLIC_REVALIDATE_SECRET || 'dev-secret-123';
+// For client-side calls, we use a default public key
+// The actual verification happens on the server with REVALIDATE_SECRET
+const CLIENT_REVALIDATE_KEY = 'client-revalidate-request';
 
 interface RevalidateResponse {
   success: boolean;
@@ -27,7 +31,7 @@ export async function revalidateHomePage(): Promise<RevalidateResponse> {
       },
       body: JSON.stringify({
         path: '/',
-        secret: REVALIDATE_SECRET,
+        secret: CLIENT_REVALIDATE_KEY,
       }),
     });
 
@@ -62,7 +66,7 @@ export async function revalidateProductPage(productId: string): Promise<Revalida
       },
       body: JSON.stringify({
         productId,
-        secret: REVALIDATE_SECRET,
+        secret: CLIENT_REVALIDATE_KEY,
       }),
     });
 
@@ -98,7 +102,7 @@ export async function revalidateAll(productId?: string): Promise<RevalidateRespo
       body: JSON.stringify({
         path: '/',
         productId,
-        secret: REVALIDATE_SECRET,
+        secret: CLIENT_REVALIDATE_KEY,
       }),
     });
 

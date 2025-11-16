@@ -14,8 +14,10 @@ import { getProductWithAllData } from '@/lib/data/products';
 import { notFound } from 'next/navigation';
 import ProductDetailContent from './ProductDetailContent';
 
-// ✅ ISR Configuration: Revalidate every 30 seconds for near-real-time updates
-export const revalidate = 30;
+// ✅ ISR Configuration: Long cache time + On-Demand Revalidation
+// Cache stays fresh for 10 minutes as a fallback
+// But updates are INSTANT via on-demand revalidation (when you save in admin)
+export const revalidate = 600; // 10 minutes
 
 // ✅ Dynamic params for on-demand static generation
 export const dynamicParams = true;

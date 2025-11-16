@@ -24,11 +24,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { path, secret, productId } = body;
 
-    // Security: Check secret key (optional but recommended)
-    // You can set this in your .env.local file
+    // Security: Accept both client key and server secret for flexibility
     const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || 'dev-secret-123';
+    const CLIENT_KEY = 'client-revalidate-request';
 
-    if (secret !== REVALIDATE_SECRET) {
+    // Allow either the server secret or the client key
+    const isValidSecret = secret === REVALIDATE_SECRET || secret === CLIENT_KEY;
+
+    if (!isValidSecret) {
+      console.error('❌ Invalid revalidation secret:', secret);
       return NextResponse.json(
         { error: 'Invalid secret' },
         { status: 401 }

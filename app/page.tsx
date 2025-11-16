@@ -20,8 +20,10 @@ import {
  * This approach serves 1000s of users with minimal database load!
  */
 
-// Enable ISR with 30-second revalidation for near-real-time updates
-export const revalidate = 30; // 30 seconds
+// Enable ISR with long cache + on-demand revalidation
+// Updates happen INSTANTLY when you save products in admin
+// This 10-minute fallback is just for external changes (if any)
+export const revalidate = 600; // 10 minutes
 
 // Enable static generation
 export const dynamic = 'force-static';
