@@ -474,11 +474,19 @@ export default function ProductDetailContent({ productId, serverData }: ProductD
         // Parse product description if it's JSON
         let actualDescription: string = product.description || "";
         try {
-          if (product.description && product.description.startsWith('{')) {
+          if (product.description && product.description.trim().startsWith('{')) {
             const descriptionData = JSON.parse(product.description);
-            actualDescription = descriptionData.text || "";
+            // Extract text field and replace escaped newlines with actual newlines
+            actualDescription = (descriptionData.text || "")
+              .replace(/\\n/g, '\n')
+              .replace(/\\r/g, '\r')
+              .trim();
+          } else {
+            // Plain text description - just clean it up
+            actualDescription = product.description.trim();
           }
         } catch (e) {
+          console.error('Failed to parse product description JSON:', e);
           // If parsing fails, use original description
           actualDescription = product.description || "";
         }
@@ -1107,7 +1115,7 @@ export default function ProductDetailContent({ productId, serverData }: ProductD
           <div className="md:col-span-4 col-span-1 space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-2">{productDetails.name}</h1>
-              <p className="text-gray-600">{productDetails.description}</p>
+              <p className="text-gray-600" style={{whiteSpace: 'pre-line'}}>{productDetails.description}</p>
             </div>
 
             {/* Rating and Reviews - conditionally shown based on settings */}

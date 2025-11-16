@@ -14,8 +14,8 @@ import { getProductWithAllData } from '@/lib/data/products';
 import { notFound } from 'next/navigation';
 import ProductDetailContent from './ProductDetailContent';
 
-// ✅ ISR Configuration: Revalidate every 10 minutes
-export const revalidate = 600;
+// ✅ ISR Configuration: Revalidate every 30 seconds for near-real-time updates
+export const revalidate = 30;
 
 // ✅ Dynamic params for on-demand static generation
 export const dynamicParams = true;

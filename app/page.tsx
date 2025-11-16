@@ -13,15 +13,15 @@ import {
  *
  * Performance Strategy:
  * - Static Generation: Pre-renders at build time
- * - ISR (Incremental Static Regeneration): Revalidates every 5 minutes
+ * - ISR (Incremental Static Regeneration): Revalidates every 30 seconds
  * - CDN-friendly: Can be cached on edge for fast delivery
  * - Dynamic data (cart, stock) fetched client-side
  *
  * This approach serves 1000s of users with minimal database load!
  */
 
-// Enable ISR with 5-minute revalidation
-export const revalidate = 300; // 5 minutes
+// Enable ISR with 30-second revalidation for near-real-time updates
+export const revalidate = 30; // 30 seconds
 
 // Enable static generation
 export const dynamic = 'force-static';

@@ -11,6 +11,7 @@ import AddStoreCategoryModal from './components/AddStoreCategoryModal';
 import ProductSizeModal from './components/ProductSizeModal';
 import ManageSizeGroupsModal from './components/ManageSizeGroupsModal';
 import { supabase } from '../../../lib/supabase/client';
+import { revalidateAll } from '../../../../lib/utils/revalidate';
 
 interface ProductManagementItem {
   id: string;
@@ -312,11 +313,23 @@ export default function ProductManagementPage() {
       const successCount = results.filter(r => r.success).length;
       
       console.log(`🎉 Successfully updated ${successCount} products`);
-      
+
       // Update original products state to match current state
       setOriginalProducts(JSON.parse(JSON.stringify(products)));
       setHasUnsavedChanges(false);
-      
+
+      // ✨ Refresh website cache instantly (On-Demand ISR)
+      console.log('🔄 Refreshing website cache...');
+      revalidateAll().then((result) => {
+        if (result.success) {
+          console.log('✅ Website cache refreshed successfully!', result);
+        } else {
+          console.warn('⚠️ Failed to refresh website cache:', result.error);
+        }
+      }).catch((error) => {
+        console.error('❌ Error refreshing website cache:', error);
+      });
+
       // Refresh products from database to get the latest state
       setTimeout(async () => {
         try {
@@ -325,8 +338,8 @@ export default function ProductManagementPage() {
           console.error('Error refreshing products:', error);
         }
       }, 500);
-      
-      alert(`تم حفظ ${successCount} تغيير بنجاح!`);
+
+      alert(`تم حفظ ${successCount} تغيير بنجاح!\n\nسيظهر التحديث في المتجر خلال 30 ثانية أو فوراً إذا تم تفعيل التحديث الفوري.`);
       
     } catch (error) {
       console.error('❌ Error saving changes:', error);
@@ -409,6 +422,18 @@ export default function ProductManagementPage() {
       setOriginalCategories(JSON.parse(JSON.stringify(categories)));
       setHasUnsavedChanges(false);
 
+      // ✨ Refresh website cache instantly (On-Demand ISR)
+      console.log('🔄 Refreshing website cache...');
+      revalidateAll().then((result) => {
+        if (result.success) {
+          console.log('✅ Website cache refreshed successfully!', result);
+        } else {
+          console.warn('⚠️ Failed to refresh website cache:', result.error);
+        }
+      }).catch((error) => {
+        console.error('❌ Error refreshing website cache:', error);
+      });
+
       // Refresh categories from database to get the latest state
       setTimeout(async () => {
         try {
@@ -418,7 +443,7 @@ export default function ProductManagementPage() {
         }
       }, 500);
 
-      alert('تم حفظ تغييرات الفئات بنجاح!');
+      alert('تم حفظ تغييرات الفئات بنجاح!\n\nسيظهر التحديث في المتجر خلال 30 ثانية أو فوراً إذا تم تفعيل التحديث الفوري.');
 
     } catch (error) {
       console.error('❌ Error saving category changes:', error);
