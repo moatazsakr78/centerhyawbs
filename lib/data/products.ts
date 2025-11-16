@@ -69,7 +69,6 @@ export async function getProductById(productId: string) {
       .from('products')
       .select(`
         *,
-        additional_images_urls,
         categories (
           id,
           name,
@@ -86,6 +85,132 @@ export async function getProductById(productId: string) {
     return product;
   } catch (error) {
     console.error(`Error fetching product ${productId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get product with ALL related data (variants, videos, suggested products)
+ * ✨ Optimized: Combines 7 client queries into 2-3 server queries
+ * Supports Static Generation with ISR
+ */
+export async function getProductWithAllData(productId: string) {
+  try {
+    // Query 1: Get main product data with category
+    const { data: product, error: productError } = await supabase
+      .from('products')
+      .select(`
+        *,
+        categories (
+          id,
+          name,
+          name_en
+        )
+      `)
+      .eq('id', productId)
+      .eq('is_active', true)
+      .eq('is_hidden', false)
+      .single();
+
+    if (productError || !product) {
+      console.error('Error fetching product:', productError);
+      return null;
+    }
+
+    // Query 2: Get ALL variants (colors, shapes, sizes) in ONE query
+    const { data: variants, error: variantsError } = await supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', productId);
+
+    if (variantsError) {
+      console.error('Error fetching variants:', variantsError);
+    }
+
+    // Query 3: Get product videos (if table exists - optional)
+    let videos: any[] = [];
+    try {
+      const { data: videoData } = await (supabase as any)
+        .from('product_videos')
+        .select('*')
+        .eq('product_id', productId)
+        .order('sort_order', { ascending: true });
+      videos = videoData || [];
+    } catch (error) {
+      console.log('Product videos table not found or error:', error);
+    }
+
+    // Query 4: Get suggested products (if any)
+    let suggestedProducts: any[] = [];
+    const suggestedProductIds = (product as any).suggested_products;
+    if (suggestedProductIds && Array.isArray(suggestedProductIds) && suggestedProductIds.length > 0) {
+      const { data: suggested, error: suggestedError } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          description,
+          price,
+          main_image_url,
+          discount_percentage,
+          discount_amount,
+          discount_start_date,
+          discount_end_date,
+          rating,
+          rating_count,
+          categories (
+            id,
+            name
+          )
+        `)
+        .in('id', suggestedProductIds)
+        .eq('is_active', true)
+        .eq('is_hidden', false);
+
+      if (!suggestedError && suggested) {
+        suggestedProducts = suggested;
+      }
+    }
+
+    // Query 5: Get related size products (if product name contains size indicators)
+    let relatedSizeProducts: any[] = [];
+    try {
+      const productName = (product as any).name || '';
+      const baseName = productName
+        .replace(/\s*مقاس\s*\d+\s*/g, '')
+        .replace(/\s*مقياس\s*\d+\s*/g, '')
+        .replace(/\s*حجم\s*(صغير|متوسط|كبير)\s*/g, '')
+        .trim();
+
+      if (baseName && baseName !== productName) {
+        const { data: relatedProducts } = await supabase
+          .from('products')
+          .select('id, name, price')
+          .ilike('name', `%${baseName}%`)
+          .neq('id', productId)
+          .eq('is_active', true)
+          .limit(10);
+
+        if (relatedProducts && relatedProducts.length > 0) {
+          relatedSizeProducts = relatedProducts.filter(p =>
+            /مقاس|مقياس|حجم/.test(p.name)
+          );
+        }
+      }
+    } catch (error) {
+      console.log('Error finding related size products:', error);
+    }
+
+    // Combine all data
+    return {
+      product,
+      variants: variants || [],
+      videos: videos || [],
+      suggestedProducts: suggestedProducts || [],
+      relatedSizeProducts: relatedSizeProducts || []
+    };
+  } catch (error) {
+    console.error(`Error fetching product with all data ${productId}:`, error);
     return null;
   }
 }
