@@ -14,6 +14,7 @@ import ColumnsControlModal from '../../components/ColumnsControlModal'
 import QuantityAdjustmentModal from '../../components/QuantityAdjustmentModal'
 import { useProducts } from '../../lib/hooks/useProductsOptimized'
 import { supabase } from '../../lib/supabase/client'
+import { revalidateProductPage } from '../../../lib/utils/revalidate'
 import {
   ArrowPathIcon,
   BuildingStorefrontIcon,
@@ -807,7 +808,19 @@ export default function InventoryPage() {
       console.log('Refreshing products data...')
       await fetchProducts()
       console.log('Products data refreshed')
-      
+
+      // ✨ Refresh website cache instantly (On-Demand ISR)
+      console.log('🔄 Refreshing website cache for product...')
+      revalidateProductPage(selectedProductForQuantity.id).then((result) => {
+        if (result.success) {
+          console.log('✅ Website cache refreshed successfully!', result);
+        } else {
+          console.warn('⚠️ Failed to refresh website cache:', result.error);
+        }
+      }).catch((error) => {
+        console.error('❌ Error refreshing website cache:', error);
+      });
+
       // Show success message
       const successMessage = quantityModalMode === 'add' ? 'تم إضافة الكمية بنجاح' : 'تم تعديل الكمية بنجاح'
       alert(successMessage)
