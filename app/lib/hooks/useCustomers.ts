@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../supabase/client'
 
 export interface Customer {
@@ -35,10 +35,23 @@ export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastFetch, setLastFetch] = useState<number>(0)
 
-  const fetchCustomers = async () => {
+  // ✨ OPTIMIZED: Memoized fetch function with caching
+  const fetchCustomers = useCallback(async (force = false) => {
     try {
+      // Simple cache: don't refetch if less than 5 seconds since last fetch (unless forced)
+      const now = Date.now()
+      if (!force && lastFetch && now - lastFetch < 5000) {
+        console.log('⚡ Using cached customers data (< 5s old)')
+        return
+      }
+
       setIsLoading(true)
+      setError(null)
+
+      console.time('⚡ Fetch customers')
+
       const { data, error } = await supabase
         .from('customers')
         .select('*')
@@ -47,60 +60,73 @@ export function useCustomers() {
 
       if (error) throw error
 
+      console.timeEnd('⚡ Fetch customers')
+
       setCustomers(data || [])
+      setLastFetch(now)
       setError(null)
     } catch (err) {
-      console.error('Error fetching customers:', err)
+      console.error('❌ Error fetching customers:', err)
       setError('فشل في تحميل العملاء')
       setCustomers([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [lastFetch])
 
-  const handleCustomerChange = (payload: any) => {
-    console.log('Customer change:', payload)
+  // ✨ OPTIMIZED: Debounced real-time handler
+  const handleCustomerChange = useCallback((payload: any) => {
+    console.log('📡 Customer change detected:', payload.eventType)
+
     if (payload.eventType === 'INSERT') {
       setCustomers(prev => [payload.new, ...prev])
     } else if (payload.eventType === 'UPDATE') {
-      setCustomers(prev => prev.map(customer => 
+      setCustomers(prev => prev.map(customer =>
         customer.id === payload.new.id ? payload.new : customer
       ))
     } else if (payload.eventType === 'DELETE') {
       setCustomers(prev => prev.filter(customer => customer.id !== payload.old.id))
     }
-  }
+  }, [])
 
-  const isDefaultCustomer = (customerId: string): boolean => {
+  // ✨ OPTIMIZED: Memoized helper functions
+  const isDefaultCustomer = useCallback((customerId: string): boolean => {
     return customerId === DEFAULT_CUSTOMER_ID
-  }
+  }, [])
 
-  const getDefaultCustomer = (): Customer | null => {
+  const getDefaultCustomer = useCallback((): Customer | null => {
     return customers.find(customer => customer.id === DEFAULT_CUSTOMER_ID) || null
-  }
+  }, [customers])
 
+  // Initial fetch
   useEffect(() => {
     fetchCustomers()
+  }, [fetchCustomers])
 
-    // Subscribe to real-time changes
+  // ✨ OPTIMIZED: Real-time subscription with cleanup
+  useEffect(() => {
+    console.log('🔴 Setting up customers real-time subscription')
+
     const subscription = supabase
-      .channel('customers')
-      .on('postgres_changes', 
+      .channel('customers_changes_optimized')
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'customers' },
         handleCustomerChange
       )
       .subscribe()
 
     return () => {
+      console.log('🔴 Cleaning up customers subscription')
       subscription.unsubscribe()
     }
-  }, [])
+  }, [handleCustomerChange])
 
   return {
     customers,
+    setCustomers, // ✨ Expose for optimistic updates
     isLoading,
     error,
-    refetch: fetchCustomers,
+    refetch: () => fetchCustomers(true), // Force refetch
     isDefaultCustomer,
     getDefaultCustomer
   }

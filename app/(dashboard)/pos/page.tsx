@@ -98,7 +98,8 @@ import TransferLocationModal from "../../components/TransferLocationModal";
 import QuickAddProductModal from "../../components/QuickAddProductModal";
 import ColumnsControlModal from "../../components/ColumnsControlModal";
 import PaymentSplit from "../../components/PaymentSplit";
-import { useProducts, Product } from "../../lib/hooks/useProductsOptimized";
+import { useProductsAdmin } from "../../../lib/hooks/useProductsAdmin";
+import { Product } from "../../lib/hooks/useProductsOptimized";
 import { usePersistentSelections } from "../../lib/hooks/usePersistentSelections";
 import { usePOSTabs } from "@/lib/hooks/usePOSTabs";
 import {
@@ -233,8 +234,8 @@ function POSPageContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
-  // Get products and branches data using the same hook as products page
-  const { products, branches, isLoading, error, fetchProducts } = useProducts();
+  // ✨ OPTIMIZED: Use super-optimized admin hook for better performance
+  const { products, branches, isLoading, error, fetchProducts } = useProductsAdmin();
 
   // Generate dynamic table columns based on branches - same as Products page
   const dynamicTableColumns = useMemo(() => {

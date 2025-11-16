@@ -16,6 +16,7 @@ import { supabase } from '@/app/lib/supabase/client';
 export interface Product {
   id: string;
   name: string;
+  name_en?: string | null;
   barcode?: string | null;
   price: number;
   cost_price: number;
@@ -29,21 +30,34 @@ export interface Product {
   max_stock?: number | null;
   unit?: string | null;
   description?: string | null;
+  description_en?: string | null;
   wholesale_price?: number | null;
   price1?: number | null;
   price2?: number | null;
   price3?: number | null;
   price4?: number | null;
+  product_code?: string | null;
+  // New rating and discount fields
+  rating?: number | null;
+  rating_count?: number | null;
+  discount_percentage?: number | null;
+  discount_amount?: number | null;
+  discount_start_date?: string | null;
+  discount_end_date?: string | null;
   category?: {
     id: string;
     name: string;
   } | null;
   // Computed fields
   totalQuantity?: number;
-  inventoryData?: Record<string, { quantity: number; min_stock: number; audit_status?: string }>;
+  inventoryData?: Record<string, { quantity: number; min_stock: number; audit_status: string }>;
   variantsData?: Record<string, any[]>;
   productColors?: Array<{id: string; name: string; color: string}>;
   allImages?: string[];
+  // Helper computed fields
+  finalPrice?: number; // Price after discount
+  isDiscounted?: boolean;
+  discountLabel?: string;
 }
 
 export interface Branch {
@@ -228,12 +242,39 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         // Remove duplicates
         const allImages = Array.from(new Set(allProductImages.filter(img => img && img.trim() !== '')));
 
+        // Calculate discount information
+        const now = new Date();
+        const discountStart = product.discount_start_date ? new Date(product.discount_start_date) : null;
+        const discountEnd = product.discount_end_date ? new Date(product.discount_end_date) : null;
+
+        const isDiscountActive = (
+          (product.discount_percentage > 0 || product.discount_amount > 0) &&
+          (!discountStart || now >= discountStart) &&
+          (!discountEnd || now <= discountEnd)
+        );
+
+        let finalPrice = product.price;
+        let discountLabel = '';
+
+        if (isDiscountActive) {
+          if (product.discount_percentage > 0) {
+            finalPrice = product.price * (1 - (product.discount_percentage / 100));
+            discountLabel = `-${product.discount_percentage}%`;
+          } else if (product.discount_amount > 0) {
+            finalPrice = Math.max(0, product.price - product.discount_amount);
+            discountLabel = `-${product.discount_amount}`;
+          }
+        }
+
         return {
           ...product,
           totalQuantity,
           inventoryData,
           variantsData,
           allImages,
+          finalPrice,
+          isDiscounted: isDiscountActive,
+          discountLabel,
         };
       });
 
@@ -301,6 +342,134 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
     };
   }, [fetchProducts]);
 
+  // ✨ Create new product
+  const createProduct = useCallback(async (productData: Partial<Product>): Promise<Product | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          name: productData.name!,
+          name_en: productData.name_en,
+          description: productData.description,
+          description_en: productData.description_en,
+          barcode: productData.barcode,
+          price: productData.price || 0,
+          cost_price: productData.cost_price || 0,
+          category_id: productData.category_id,
+          product_code: productData.product_code,
+          wholesale_price: productData.wholesale_price || 0,
+          price1: productData.price1 || 0,
+          price2: productData.price2 || 0,
+          price3: productData.price3 || 0,
+          price4: productData.price4 || 0,
+          main_image_url: productData.main_image_url,
+          sub_image_url: productData.sub_image_url,
+          unit: productData.unit || 'قطعة',
+          is_active: true
+        })
+        .select(`
+          *,
+          categories (
+            id,
+            name
+          )
+        `)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error creating product:', err)
+      throw err
+    }
+  }, [])
+
+  // ✨ Update existing product
+  const updateProduct = useCallback(async (productId: string, productData: Partial<Product>): Promise<Product | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          name: productData.name,
+          name_en: productData.name_en,
+          description: productData.description,
+          description_en: productData.description_en,
+          barcode: productData.barcode,
+          price: productData.price,
+          cost_price: productData.cost_price,
+          wholesale_price: productData.wholesale_price,
+          price1: productData.price1,
+          price2: productData.price2,
+          price3: productData.price3,
+          price4: productData.price4,
+          category_id: productData.category_id,
+          product_code: productData.product_code,
+          main_image_url: productData.main_image_url,
+          sub_image_url: productData.sub_image_url,
+          unit: productData.unit,
+          is_active: productData.is_active,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId)
+        .select(`
+          *,
+          categories (
+            id,
+            name
+          )
+        `)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.error('Error updating product:', err)
+      throw err
+    }
+  }, [])
+
+  // ✨ Delete product
+  const deleteProduct = useCallback(async (productId: string): Promise<void> => {
+    try {
+      // Check if product exists in sales invoices
+      const { data: saleItems, error: saleError } = await supabase
+        .from('sale_items')
+        .select('id')
+        .eq('product_id', productId)
+        .limit(1)
+
+      if (saleError) throw saleError
+
+      if (saleItems && saleItems.length > 0) {
+        throw new Error('المنتج موجود في فواتير لا يمكن حذفه')
+      }
+
+      // Check if product exists in purchase invoices
+      const { data: purchaseItems, error: purchaseError } = await supabase
+        .from('purchase_invoice_items')
+        .select('id')
+        .eq('product_id', productId)
+        .limit(1)
+
+      if (purchaseError) throw purchaseError
+
+      if (purchaseItems && purchaseItems.length > 0) {
+        throw new Error('المنتج موجود في فواتير لا يمكن حذفه')
+      }
+
+      // If no invoice references found, proceed with deletion
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error deleting product:', err)
+      throw err
+    }
+  }, [])
+
   return {
     products,
     setProducts, // ✨ Expose setProducts for optimistic updates
@@ -308,5 +477,8 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
     isLoading,
     error,
     fetchProducts: () => fetchProducts(true), // Force refetch
+    createProduct, // ✨ Expose createProduct
+    updateProduct, // ✨ Expose updateProduct
+    deleteProduct, // ✨ Expose deleteProduct
   };
 }

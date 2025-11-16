@@ -17,7 +17,8 @@ import ProductExportModal from '../../components/ProductExportModal'
 import ProductImportModal from '../../components/ProductImportModal'
 import BarcodePrintModal from '../../components/BarcodePrintModal'
 import { useBranches, Branch, ProductVariant } from '../../lib/hooks/useBranches'
-import { useProducts, Product } from '../../lib/hooks/useProductsOptimized'
+import { useProductsAdmin } from '../../../lib/hooks/useProductsAdmin'
+import { Product } from '../../lib/hooks/useProductsOptimized'
 import {
   ArrowPathIcon,
   FolderPlusIcon,
@@ -98,8 +99,8 @@ export default function ProductsPage() {
   const [isToolbarHidden, setIsToolbarHidden] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
 
-  // Get products and branches data
-  const { products, branches, isLoading, error, fetchProducts, createProduct, updateProduct, deleteProduct } = useProducts()
+  // ✨ OPTIMIZED: Use super-optimized admin hook (reduces queries significantly!)
+  const { products, setProducts, branches, isLoading, error, fetchProducts, createProduct, updateProduct, deleteProduct } = useProductsAdmin()
   const { fetchBranchInventory, fetchProductVariants } = useBranches()
 
   // Device detection for tablet and mobile optimization

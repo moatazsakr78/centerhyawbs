@@ -8,41 +8,7 @@ import { supabase } from '../../lib/supabase/client';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { useStoreTheme } from '@/lib/hooks/useStoreTheme';
 import { paymentService, PaymentReceipt } from '@/lib/services/paymentService';
-
-// Order status type
-type OrderStatus = 'pending' | 'processing' | 'ready_for_pickup' | 'ready_for_shipping' | 'shipped' | 'delivered' | 'cancelled' | 'issue';
-
-// Order delivery type
-type DeliveryType = 'pickup' | 'delivery';
-
-// Order interface with customer info
-interface Order {
-  id: string;
-  orderId?: string; // UUID for database operations
-  date: string;
-  total: number;
-  subtotal?: number | null;
-  shipping?: number | null;
-  status: OrderStatus;
-  deliveryType: DeliveryType;
-  customerName: string;
-  customerPhone?: string;
-  customerAddress?: string;
-  created_at?: string;
-  updated_at?: string;
-  items: {
-    id: string;
-    product_id?: string;
-    name: string;
-    quantity: number;
-    price: number;
-    image?: string;
-    barcode?: string;
-    notes?: string;
-    isPrepared?: boolean;
-  }[];
-  preparationProgress?: number;
-}
+import { useOrders, Order, OrderStatus, DeliveryType } from '../../lib/hooks/useOrders';
 
 const statusTranslations: Record<OrderStatus, string> = {
   pending: 'معلق',
@@ -83,10 +49,13 @@ export default function CustomerOrdersPage() {
 
   // Get store theme colors
   const { primaryColor, primaryHoverColor, isLoading: isThemeLoading } = useStoreTheme();
+
+  // ✨ OPTIMIZED: Use optimized orders hook
+  const { orders, setOrders, branches, records, isLoading, error } = useOrders();
+  const loading = isLoading; // Alias for compatibility
+
   const [activeTab, setActiveTab] = useState<'all' | 'preparation' | 'followup' | 'completed' | 'issues'>('all');
-  const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
@@ -119,8 +88,6 @@ export default function CustomerOrdersPage() {
     selectedRecord: '',
     notes: ''
   });
-  const [branches, setBranches] = useState<any[]>([]);
-  const [records, setRecords] = useState<any[]>([]);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
 
   // Payment receipts states
@@ -133,132 +100,6 @@ export default function CustomerOrdersPage() {
       console.log('Context menu is now showing at position:', contextMenu.x, contextMenu.y, 'for order:', contextMenu.orderId);
     }
   }, [contextMenu]);
-
-  // Load orders from database
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        
-        // Get all orders with their items and product details for all customers
-        const { data: ordersData, error: ordersError } = await supabase
-          .from('orders')
-          .select(`
-            id,
-            order_number,
-            customer_name,
-            customer_phone,
-            customer_address,
-            total_amount,
-            subtotal_amount,
-            shipping_amount,
-            status,
-            delivery_type,
-            notes,
-            created_at,
-            updated_at,
-            order_items (
-              id,
-              quantity,
-              unit_price,
-              notes,
-              is_prepared,
-              products (
-                id,
-                name,
-                barcode,
-                main_image_url
-              )
-            )
-          `)
-          .order('created_at', { ascending: false });
-
-        if (ordersError) {
-          console.error('Error fetching orders:', ordersError);
-          return;
-        }
-
-        // Transform data to match our Order interface and filter out orders with no items
-        const transformedOrders: Order[] = (ordersData || [])
-          .filter((order: any) => order.order_items && order.order_items.length > 0) // Filter out empty orders
-          .map((order: any) => {
-            // First, map all items
-            const rawItems = order.order_items.map((item: any) => ({
-              id: item.id.toString(),
-              product_id: item.products?.id,
-              name: item.products?.name || 'منتج غير معروف',
-              quantity: item.quantity,
-              price: parseFloat(item.unit_price),
-              image: item.products?.main_image_url || undefined,
-              barcode: item.products?.barcode || null,
-              notes: item.notes || '',
-              isPrepared: item.is_prepared || false
-            }));
-
-            // Group items by product_id and combine quantities
-            const groupedItemsMap = new Map();
-            rawItems.forEach((item: any) => {
-              const key = item.product_id || item.name; // Use product_id as key, fallback to name
-              if (groupedItemsMap.has(key)) {
-                const existingItem = groupedItemsMap.get(key);
-                existingItem.quantity += item.quantity;
-                // Keep the prepared status as true if any of the items is prepared
-                existingItem.isPrepared = existingItem.isPrepared || item.isPrepared;
-                // Combine notes if different
-                if (item.notes && item.notes !== existingItem.notes) {
-                  existingItem.notes = existingItem.notes ? `${existingItem.notes}، ${item.notes}` : item.notes;
-                }
-              } else {
-                groupedItemsMap.set(key, { ...item });
-              }
-            });
-
-            // Convert back to array
-            const items = Array.from(groupedItemsMap.values());
-
-            // Calculate preparation progress based on grouped items
-            const preparedItems = items.filter((item: { isPrepared: boolean }) => item.isPrepared).length;
-            const totalItems = items.length;
-            const preparationProgress = totalItems > 0 ? (preparedItems / totalItems) * 100 : 0;
-
-            return {
-              id: order.order_number,
-              orderId: order.id, // Keep the actual UUID for database operations
-              date: order.created_at.split('T')[0], // Extract date part
-              total: parseFloat(order.total_amount),
-              subtotal: order.subtotal_amount ? parseFloat(order.subtotal_amount) : null,
-              shipping: order.shipping_amount ? parseFloat(order.shipping_amount) : null,
-              status: order.status,
-              deliveryType: order.delivery_type || 'pickup',
-              customerName: order.customer_name || 'عميل غير محدد',
-              customerPhone: order.customer_phone,
-              customerAddress: order.customer_address,
-              created_at: order.created_at,
-              updated_at: order.updated_at,
-              items,
-              preparationProgress
-            };
-          });
-
-        setOrders(transformedOrders);
-        setLoading(false);
-
-        // Load branches and records for invoice creation
-        const [branchesResult, recordsResult] = await Promise.all([
-          supabase.from('branches').select('id, name').eq('is_active', true).order('name'),
-          supabase.from('records').select('id, name').eq('is_active', true).order('name')
-        ]);
-
-        if (!branchesResult.error) setBranches(branchesResult.data || []);
-        if (!recordsResult.error) setRecords(recordsResult.data || []);
-
-      } catch (error) {
-        console.error('Error loading orders:', error);
-        setLoading(false);
-      }
-    };
-
-    loadOrders();
-  }, []);
 
   // Load payment receipts for all orders
   useEffect(() => {

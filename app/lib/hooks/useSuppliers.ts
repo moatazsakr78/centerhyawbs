@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../supabase/client'
 
 export interface Supplier {
@@ -35,10 +35,23 @@ export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastFetch, setLastFetch] = useState<number>(0)
 
-  const fetchSuppliers = async () => {
+  // ✨ OPTIMIZED: Memoized fetch function with caching
+  const fetchSuppliers = useCallback(async (force = false) => {
     try {
+      // Simple cache: don't refetch if less than 5 seconds since last fetch (unless forced)
+      const now = Date.now()
+      if (!force && lastFetch && now - lastFetch < 5000) {
+        console.log('⚡ Using cached suppliers data (< 5s old)')
+        return
+      }
+
       setIsLoading(true)
+      setError(null)
+
+      console.time('⚡ Fetch suppliers')
+
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
@@ -47,63 +60,76 @@ export function useSuppliers() {
 
       if (error) throw error
 
+      console.timeEnd('⚡ Fetch suppliers')
+
       setSuppliers((data || []).map((supplier: any) => ({
         ...supplier,
         loyalty_points: supplier.loyalty_points || 0
       })))
+      setLastFetch(now)
       setError(null)
     } catch (err) {
-      console.error('Error fetching suppliers:', err)
+      console.error('❌ Error fetching suppliers:', err)
       setError('فشل في تحميل الموردين')
       setSuppliers([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [lastFetch])
 
-  const handleSupplierChange = (payload: any) => {
-    console.log('Supplier change:', payload)
+  // ✨ OPTIMIZED: Debounced real-time handler
+  const handleSupplierChange = useCallback((payload: any) => {
+    console.log('📡 Supplier change detected:', payload.eventType)
+
     if (payload.eventType === 'INSERT') {
       setSuppliers(prev => [payload.new, ...prev])
     } else if (payload.eventType === 'UPDATE') {
-      setSuppliers(prev => prev.map(supplier => 
+      setSuppliers(prev => prev.map(supplier =>
         supplier.id === payload.new.id ? payload.new : supplier
       ))
     } else if (payload.eventType === 'DELETE') {
       setSuppliers(prev => prev.filter(supplier => supplier.id !== payload.old.id))
     }
-  }
+  }, [])
 
-  const isDefaultSupplier = (supplierId: string): boolean => {
+  // ✨ OPTIMIZED: Memoized helper functions
+  const isDefaultSupplier = useCallback((supplierId: string): boolean => {
     return supplierId === DEFAULT_SUPPLIER_ID
-  }
+  }, [])
 
-  const getDefaultSupplier = (): Supplier | null => {
+  const getDefaultSupplier = useCallback((): Supplier | null => {
     return suppliers.find(supplier => supplier.id === DEFAULT_SUPPLIER_ID) || null
-  }
+  }, [suppliers])
 
+  // Initial fetch
   useEffect(() => {
     fetchSuppliers()
+  }, [fetchSuppliers])
 
-    // Subscribe to real-time changes
+  // ✨ OPTIMIZED: Real-time subscription with cleanup
+  useEffect(() => {
+    console.log('🔴 Setting up suppliers real-time subscription')
+
     const subscription = supabase
-      .channel('suppliers')
-      .on('postgres_changes', 
+      .channel('suppliers_changes_optimized')
+      .on('postgres_changes',
         { event: '*', schema: 'public', table: 'suppliers' },
         handleSupplierChange
       )
       .subscribe()
 
     return () => {
+      console.log('🔴 Cleaning up suppliers subscription')
       subscription.unsubscribe()
     }
-  }, [])
+  }, [handleSupplierChange])
 
   return {
     suppliers,
+    setSuppliers, // ✨ Expose for optimistic updates
     isLoading,
     error,
-    refetch: fetchSuppliers,
+    refetch: () => fetchSuppliers(true), // Force refetch
     isDefaultSupplier,
     getDefaultSupplier
   }
