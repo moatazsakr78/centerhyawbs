@@ -12,12 +12,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
-import {
-  getProductsWithInventory,
-  groupInventoryByProduct,
-  groupVariantsByProduct,
-  calculateTotalStock,
-} from '@/lib/data/admin';
 
 export interface Product {
   id: string;
@@ -84,7 +78,7 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
 
       console.time('⚡ Fetch products with inventory');
 
-      // ✨ Fetch branches first (needed for data processing)
+      // ✨ Query 1: Fetch branches
       const { data: branchesData, error: branchesError } = await supabase
         .from('branches')
         .select('*')
@@ -97,14 +91,89 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         setBranches(branchesData || []);
       }
 
-      // ✨ ONE optimized call instead of N+1 queries!
-      const { products: rawProducts, inventory, variants } = await getProductsWithInventory();
+      // ✨ Query 2: Get all products with categories
+      const { data: rawProducts, error: productsError } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          barcode,
+          price,
+          cost_price,
+          main_image_url,
+          sub_image_url,
+          category_id,
+          is_active,
+          display_order,
+          stock,
+          min_stock,
+          max_stock,
+          unit,
+          description,
+          wholesale_price,
+          price1,
+          price2,
+          price3,
+          price4,
+          categories (
+            id,
+            name
+          )
+        `)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (productsError) {
+        throw productsError;
+      }
+
+      console.log('🔍 Products fetched:', rawProducts?.length || 0);
+
+      if (!rawProducts || rawProducts.length === 0) {
+        setProducts([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const productIds = rawProducts.map(p => p.id);
+
+      // ✨ Query 3: Get ALL inventory for ALL products in ONE query
+      const { data: inventory, error: inventoryError } = await supabase
+        .from('inventory')
+        .select('product_id, branch_id, warehouse_id, quantity, min_stock, audit_status')
+        .in('product_id', productIds);
+
+      if (inventoryError) {
+        console.warn('Error fetching inventory:', inventoryError);
+      }
+
+      // ✨ Query 4: Get ALL variants for ALL products in ONE query
+      const { data: variants, error: variantsError } = await supabase
+        .from('product_variants')
+        .select('product_id, variant_type, name, quantity, color_hex, color_name, image_url, branch_id')
+        .in('product_id', productIds);
+
+      if (variantsError) {
+        console.warn('Error fetching variants:', variantsError);
+      }
 
       console.timeEnd('⚡ Fetch products with inventory');
 
       // Group inventory and variants by product ID for O(1) lookup
-      const inventoryMap = groupInventoryByProduct(inventory);
-      const variantsMap = groupVariantsByProduct(variants);
+      const inventoryMap = new Map<string, any[]>();
+      const variantsMap = new Map<string, any[]>();
+
+      (inventory || []).forEach(item => {
+        const existing = inventoryMap.get(item.product_id) || [];
+        existing.push(item);
+        inventoryMap.set(item.product_id, existing);
+      });
+
+      (variants || []).forEach(item => {
+        const existing = variantsMap.get(item.product_id) || [];
+        existing.push(item);
+        variantsMap.set(item.product_id, existing);
+      });
 
       // Enrich products with computed data (client-side - fast!)
       const enrichedProducts: Product[] = rawProducts.map((product: any) => {
@@ -112,7 +181,14 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         const productVariants = variantsMap.get(product.id) || [];
 
         // Calculate total stock
-        const totalQuantity = calculateTotalStock(inventory, product.id, selectedBranches);
+        let totalQuantity = 0;
+        productInventory.forEach((inv: any) => {
+          const locationId = inv.branch_id || inv.warehouse_id;
+          // Only count if no branch filter, or if branch is in selected branches
+          if (selectedBranches.length === 0 || selectedBranches.includes(locationId)) {
+            totalQuantity += inv.quantity || 0;
+          }
+        });
 
         // Group inventory by branch for easy lookup
         const inventoryData: Record<string, any> = {};
