@@ -41,6 +41,7 @@ export async function getWebsiteProducts() {
         rating,
         rating_count,
         display_order,
+        stock,
         categories (
           id,
           name
@@ -51,6 +52,29 @@ export async function getWebsiteProducts() {
       .order('display_order', { ascending: true });
 
     if (error) throw error;
+
+    // Get inventory totals for all products
+    if (products && products.length > 0) {
+      const productIds = products.map(p => p.id);
+      const { data: inventoryData } = await supabase
+        .from('inventory')
+        .select('product_id, quantity')
+        .in('product_id', productIds);
+
+      if (inventoryData) {
+        // Calculate total stock per product
+        const stockMap = new Map<string, number>();
+        inventoryData.forEach(item => {
+          const currentStock = stockMap.get(item.product_id) || 0;
+          stockMap.set(item.product_id, currentStock + (item.quantity || 0));
+        });
+
+        // Override stock values with actual inventory totals
+        products.forEach((product: any) => {
+          product.stock = stockMap.get(product.id) || 0;
+        });
+      }
+    }
 
     return products || [];
   } catch (error) {
@@ -111,6 +135,22 @@ export async function getProductWithAllData(productId: string) {
       .eq('is_active', true)
       .eq('is_hidden', false)
       .single();
+
+    // Get total inventory quantity from all branches
+    let totalStock = 0;
+    if (product) {
+      const { data: inventoryData } = await supabase
+        .from('inventory')
+        .select('quantity')
+        .eq('product_id', productId);
+
+      if (inventoryData && inventoryData.length > 0) {
+        totalStock = inventoryData.reduce((sum, item) => sum + (item.quantity || 0), 0);
+      }
+
+      // Override product.stock with actual inventory total
+      (product as any).stock = totalStock;
+    }
 
     if (productError || !product) {
       console.error('Error fetching product:', productError);
