@@ -1,171 +1,63 @@
-'use client';
+import ClientHomePage from '@/components/website/ClientHomePage';
+import {
+  getWebsiteProducts,
+  getStoreCategoriesWithProducts,
+  getCustomSections,
+  getCompanySettings,
+  getStoreTheme,
+  getProductDisplaySettings
+} from '@/lib/data/products';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { detectDeviceClient, DeviceInfo } from '@/lib/device-detection';
-import DesktopHome from '@/components/website/DesktopHome';
-import TabletHome from '@/components/website/TabletHome';
-import MobileHome from '@/components/website/MobileHome';
-import { useRealCart } from '@/lib/useRealCart';
-import { useAuth } from '@/lib/useAuth';
-import { UserInfo } from '@/components/website/shared/types';
-import { CartProvider } from '@/lib/contexts/CartContext';
+/**
+ * Home Page - Server Component with Static Generation + ISR
+ *
+ * Performance Strategy:
+ * - Static Generation: Pre-renders at build time
+ * - ISR (Incremental Static Regeneration): Revalidates every 5 minutes
+ * - CDN-friendly: Can be cached on edge for fast delivery
+ * - Dynamic data (cart, stock) fetched client-side
+ *
+ * This approach serves 1000s of users with minimal database load!
+ */
 
-export default function HomePage() {
-  const router = useRouter();
-  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo>({
-    type: 'desktop',
-    userAgent: '',
-    isMobile: false,
-    isTablet: false,
-    isDesktop: true
-  });
-  const [isClient, setIsClient] = useState(false);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    id: '1',
-    name: 'عميل تجريبي',
-    email: 'customer@example.com',
-    cart: []
-  });
+// Enable ISR with 5-minute revalidation
+export const revalidate = 300; // 5 minutes
 
-  const { cart, addToCart, removeFromCart, updateQuantity, clearCart, getCartItemsCount, refreshCart } = useRealCart();
-  const { user, isAuthenticated } = useAuth();
+// Enable static generation
+export const dynamic = 'force-static';
 
-  useEffect(() => {
-    // Set client flag first
-    setIsClient(true);
-    // Client-side device detection
-    const detected = detectDeviceClient();
-    setDeviceInfo(detected);
-  }, []);
+export default async function HomePage() {
+  // Fetch all data on the server (runs at build time + every 5 minutes)
+  // These queries run ONCE and serve thousands of users!
+  const [
+    products,
+    categories,
+    sections,
+    settings,
+    theme,
+    displaySettings
+  ] = await Promise.all([
+    getWebsiteProducts(),
+    getStoreCategoriesWithProducts(),
+    getCustomSections(),
+    getCompanySettings(),
+    getStoreTheme(),
+    getProductDisplaySettings()
+  ]);
 
-  // Separate effect for cart refresh
-  useEffect(() => {
-    if (isClient) {
-      refreshCart();
-    }
-  }, [isClient, refreshCart]);
-
-  // Add effect to refresh cart when component mounts or becomes visible
-  useEffect(() => {
-    const handleFocus = () => {
-      refreshCart();
-    };
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refreshCart();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [refreshCart]);
-
-  const handleCartUpdate = (newCart: any[]) => {
-    // Real cart is managed by useRealCart hook with Supabase
-  };
-
-  // Convert Supabase cart data to compatible format
-  const compatibleCart = cart.map(item => ({
-    id: item.id,
-    name: item.products?.name || 'منتج غير معروف',
-    price: item.price,
-    quantity: item.quantity,
-    image: item.products?.main_image_url || '',
-    description: '',
-    category: ''
-  }));
-
-  // Calculate cart count from real cart data
-  const realCartCount = getCartItemsCount();
-
-  const updatedUserInfo = {
-    ...userInfo,
-    id: isAuthenticated ? user?.id || '1' : '1',
-    name: isAuthenticated ? user?.name || 'عميل مسجل' : 'عميل تجريبي',
-    email: isAuthenticated ? user?.email || 'user@example.com' : 'customer@example.com',
-    cart: compatibleCart, // Compatible cart data format
-    cartCount: realCartCount // Real cart count for display
-  };
-
-  // Show loading screen during hydration to prevent mismatch
-  if (!isClient) {
-    return (
-      <CartProvider>
-        <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">جاري تحميل التطبيق...</p>
-          </div>
-        </div>
-      </CartProvider>
-    );
-  }
-
-  // Render appropriate component based on device type
+  // Pass pre-fetched data to client component
+  // The client component handles device detection and cart management
+  // UI remains exactly the same!
   return (
-    <CartProvider>
-      {(() => {
-        switch (deviceInfo.type) {
-    case 'mobile':
-      return (
-        <MobileHome 
-          userInfo={updatedUserInfo} 
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
-
-    case 'tablet':
-      return (
-        <TabletHome 
-          userInfo={updatedUserInfo} 
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
-
-    case 'desktop':
-    default:
-      return (
-        <DesktopHome 
-          userInfo={updatedUserInfo} 
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
-        }
-      })()}
-    </CartProvider>
+    <ClientHomePage
+      initialProducts={products}
+      initialCategories={categories}
+      initialSections={sections}
+      initialSettings={{
+        company: settings,
+        theme,
+        display: displaySettings
+      }}
+    />
   );
 }
