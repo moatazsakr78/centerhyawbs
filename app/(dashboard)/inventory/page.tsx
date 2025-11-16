@@ -612,9 +612,14 @@ export default function InventoryPage() {
 
   // OPTIMIZED: Memoized product filtering to prevent unnecessary re-renders
   const filteredProducts = useMemo(() => {
-    if (!products.length) return []
+    if (!products.length) {
+      console.log('📦 No products to filter');
+      return []
+    }
 
-    return products.filter(item => {
+    console.log('📦 Total products before filtering:', products.length);
+
+    const filtered = products.filter(item => {
       // Category filter: If a category is selected and it's not the root "منتجات" category
       if (selectedCategory && selectedCategory.name !== 'منتجات') {
         const categoryIds = getAllSubcategoryIds(selectedCategory.id, categories)
@@ -641,14 +646,57 @@ export default function InventoryPage() {
         const branchAuditStatus = (item.inventoryData?.[selectedAuditBranch] as any)?.audit_status || 'غير مجرود'
         return auditStatusFilters[branchAuditStatus as keyof typeof auditStatusFilters]
       } else {
-        // Filter by any branch that matches the audit status filters
-        return Object.entries(item.inventoryData || {}).some(([branchId, inventory]: [string, any]) => {
-          if (!selectedBranches[branchId]) return false
+        // ✨ FIXED: Show product if it has NO inventory data OR if it matches filter in selected branches
+        const inventoryEntries = Object.entries(item.inventoryData || {});
+
+        // If product has no inventory in ANY branch, show it (with default audit status)
+        if (inventoryEntries.length === 0) {
+          return auditStatusFilters['غير مجرود' as keyof typeof auditStatusFilters];
+        }
+
+        // Get inventory entries for selected branches only
+        const selectedBranchInventory = inventoryEntries.filter(([branchId]) => selectedBranches[branchId]);
+
+        // If no inventory in selected branches, check default audit status
+        if (selectedBranchInventory.length === 0) {
+          return auditStatusFilters['غير مجرود' as keyof typeof auditStatusFilters];
+        }
+
+        // Check if any selected branch matches the audit status filters
+        return selectedBranchInventory.some(([branchId, inventory]: [string, any]) => {
           const auditStatus = (inventory as any)?.audit_status || 'غير مجرود'
           return auditStatusFilters[auditStatus as keyof typeof auditStatusFilters]
         })
       }
     })
+
+    console.log('📦 Filtered products count:', filtered.length);
+    console.log('🔍 Filter states:', {
+      selectedCategory: selectedCategory?.name,
+      searchQuery,
+      stockStatusFilters: stockStatusFilters,
+      auditStatusFilters: auditStatusFilters,
+      selectedBranchesCount: Object.values(selectedBranches).filter(Boolean).length,
+      selectedBranches: Object.keys(selectedBranches).filter(id => selectedBranches[id])
+    });
+
+    // Debug: Check why products are being filtered out
+    if (filtered.length < products.length) {
+      console.log('⚠️ Products filtered out:', products.length - filtered.length);
+
+      // Sample a few filtered out products to understand why
+      const filteredOut = products.filter(item => !filtered.includes(item)).slice(0, 3);
+      filteredOut.forEach(item => {
+        console.log('❌ Filtered out product:', {
+          name: item.name,
+          hasInventoryData: !!item.inventoryData,
+          inventoryBranches: Object.keys(item.inventoryData || {}),
+          stockStatus: getStockStatus(item)
+        });
+      });
+    }
+
+    return filtered;
   }, [products, searchQuery, stockStatusFilters, auditStatusFilters, selectedAuditBranch, selectedBranches, getStockStatus, selectedCategory, categories, getAllSubcategoryIds])
 
   const toggleSidebar = () => {

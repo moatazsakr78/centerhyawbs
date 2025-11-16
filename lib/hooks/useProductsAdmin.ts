@@ -127,13 +127,14 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         throw productsError;
       }
 
-      console.log('🔍 Products fetched:', rawProducts?.length || 0);
-
       if (!rawProducts || rawProducts.length === 0) {
+        console.log('⚠️ No products found!');
         setProducts([]);
         setIsLoading(false);
         return;
       }
+
+      console.log('🔍 Total products fetched from DB:', rawProducts.length);
 
       const productIds = rawProducts.map(p => p.id);
 
@@ -236,10 +237,12 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         };
       });
 
+      console.log('✅ Enriched products ready:', enrichedProducts.length);
+
       setProducts(enrichedProducts);
       setLastFetch(now);
     } catch (err) {
-      console.error('Error fetching products:', err);
+      console.error('❌ Error fetching products:', err);
       setError(err instanceof Error ? err.message : 'فشل في جلب المنتجات');
     } finally {
       setIsLoading(false);
