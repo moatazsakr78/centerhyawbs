@@ -10,6 +10,7 @@ import { useRealCart } from '@/lib/useRealCart';
 import { useAuth } from '@/lib/useAuth';
 import { UserInfo } from '@/components/website/shared/types';
 import { CartProvider } from '@/lib/contexts/CartContext';
+import { PreFetchedDataProvider } from '@/lib/contexts/PreFetchedDataContext';
 
 /**
  * Client-side wrapper for the home page
@@ -129,61 +130,70 @@ export default function ClientHomePage({
   // Render appropriate component based on device type
   return (
     <CartProvider>
-      {(() => {
-        switch (deviceInfo.type) {
-    case 'mobile':
-      return (
-        <MobileHome
-          userInfo={updatedUserInfo}
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
+      <PreFetchedDataProvider
+        value={{
+          products: initialProducts,
+          categories: initialCategories,
+          sections: initialSections,
+          settings: initialSettings
+        }}
+      >
+        {(() => {
+          switch (deviceInfo.type) {
+      case 'mobile':
+        return (
+          <MobileHome
+            userInfo={updatedUserInfo}
+            onCartUpdate={handleCartUpdate}
+            onRemoveFromCart={(productId: string | number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) removeFromCart(item.id);
+            }}
+            onUpdateQuantity={(productId: string | number, quantity: number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) updateQuantity(item.id, quantity);
+            }}
+            onClearCart={clearCart}
+          />
+        );
 
-    case 'tablet':
-      return (
-        <TabletHome
-          userInfo={updatedUserInfo}
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
+      case 'tablet':
+        return (
+          <TabletHome
+            userInfo={updatedUserInfo}
+            onCartUpdate={handleCartUpdate}
+            onRemoveFromCart={(productId: string | number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) removeFromCart(item.id);
+            }}
+            onUpdateQuantity={(productId: string | number, quantity: number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) updateQuantity(item.id, quantity);
+            }}
+            onClearCart={clearCart}
+          />
+        );
 
-    case 'desktop':
-    default:
-      return (
-        <DesktopHome
-          userInfo={updatedUserInfo}
-          onCartUpdate={handleCartUpdate}
-          onRemoveFromCart={(productId: string | number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) removeFromCart(item.id);
-          }}
-          onUpdateQuantity={(productId: string | number, quantity: number) => {
-            const item = cart.find(item => item.product_id === String(productId));
-            if (item) updateQuantity(item.id, quantity);
-          }}
-          onClearCart={clearCart}
-        />
-      );
-        }
-      })()}
+      case 'desktop':
+      default:
+        return (
+          <DesktopHome
+            userInfo={updatedUserInfo}
+            onCartUpdate={handleCartUpdate}
+            onRemoveFromCart={(productId: string | number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) removeFromCart(item.id);
+            }}
+            onUpdateQuantity={(productId: string | number, quantity: number) => {
+              const item = cart.find(item => item.product_id === String(productId));
+              if (item) updateQuantity(item.id, quantity);
+            }}
+            onClearCart={clearCart}
+          />
+        );
+          }
+        })()}
+      </PreFetchedDataProvider>
     </CartProvider>
   );
 }

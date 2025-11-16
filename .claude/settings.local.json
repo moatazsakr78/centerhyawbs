@@ -307,7 +307,8 @@
       "Bash(git cherry-pick:*)",
       "Bash(git pull:*)",
       "Bash(mcp__supabase__execute_sql \"ALTER TABLE store_theme_colors ADD COLUMN IF NOT EXISTS interactive_color TEXT DEFAULT ''#EF4444'';\")",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run start)"
     ],
     "deny": [],
     "additionalDirectories": [

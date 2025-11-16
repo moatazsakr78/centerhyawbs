@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabase/client'
 import { ProductColor } from '../../../components/website/shared/types'
+import { usePreFetchedData } from '@/lib/contexts/PreFetchedDataContext'
 
 export interface Product {
   id: string
@@ -152,9 +153,13 @@ export interface Branch {
 }
 
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([])
+  // Check if we have pre-fetched data from server
+  const preFetchedData = usePreFetchedData()
+  const hasPreFetchedData = preFetchedData?.products && preFetchedData.products.length > 0
+
+  const [products, setProducts] = useState<Product[]>(hasPreFetchedData ? preFetchedData.products : [])
   const [branches, setBranches] = useState<Branch[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(!hasPreFetchedData) // Start as loaded if we have pre-fetched data
   const [error, setError] = useState<string | null>(null)
 
   // Fetch all products with categories and inventory data
@@ -918,10 +923,12 @@ export function useProducts() {
     }
   }, [])
 
-  // Initial data fetch
+  // Initial data fetch (skip if we have pre-fetched data)
   useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
+    if (!hasPreFetchedData) {
+      fetchProducts()
+    }
+  }, [fetchProducts, hasPreFetchedData])
 
   return {
     products,
