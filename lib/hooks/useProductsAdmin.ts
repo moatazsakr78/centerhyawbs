@@ -116,6 +116,7 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
           cost_price,
           main_image_url,
           sub_image_url,
+          additional_images_urls,
           category_id,
           is_active,
           display_order,
@@ -129,6 +130,12 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
           price2,
           price3,
           price4,
+          rating,
+          rating_count,
+          discount_percentage,
+          discount_amount,
+          discount_start_date,
+          discount_end_date,
           categories (
             id,
             name
@@ -229,10 +236,20 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
           }
         });
 
-        // ✨ Process product images (main + sub + variants)
+        // ✨ Process product images (main + sub + additional + variants)
         const allProductImages: string[] = [];
         if (product.main_image_url) allProductImages.push(product.main_image_url);
         if (product.sub_image_url) allProductImages.push(product.sub_image_url);
+
+        // ✨ Add additional images from JSONB field
+        const additionalImages = (product as any).additional_images_urls;
+        if (additionalImages && Array.isArray(additionalImages)) {
+          additionalImages.forEach((imgUrl: string) => {
+            if (imgUrl && imgUrl.trim() !== '') {
+              allProductImages.push(imgUrl);
+            }
+          });
+        }
 
         // Add variant images
         productVariants.forEach((variant: any) => {
