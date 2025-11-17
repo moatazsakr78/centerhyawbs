@@ -74,7 +74,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             await pool.end()
           }
         } catch (error) {
-          console.error('Auth error:', error)
+          console.error('❌ Auth error during login:', error)
+          console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          })
           return null
         }
       }
@@ -117,7 +121,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             await pool.end()
           }
         } catch (error) {
-          console.error('Error handling Google sign-in:', error)
+          console.error('❌ Error handling Google sign-in:', error)
+          console.error('Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          })
           return false
         }
       }
