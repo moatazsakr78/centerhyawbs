@@ -6,16 +6,18 @@ import { signIn } from 'next-auth/react';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { useStoreTheme } from '@/lib/hooks/useStoreTheme';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { companyName, logoUrl, isLoading: isCompanyLoading } = useCompanySettings();
 
   // Get store theme colors
   const { primaryColor, primaryHoverColor, isLoading: isThemeLoading } = useStoreTheme();
-  
+
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -31,12 +33,47 @@ export default function LoginPage() {
     if (error) setError('');
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('كلمات المرور غير متطابقة');
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      // Call register API
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'حدث خطأ أثناء إنشاء الحساب');
+        setIsLoading(false);
+        return;
+      }
+
+      // Auto sign-in after successful registration
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -44,7 +81,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
+        setError('تم إنشاء الحساب ولكن حدث خطأ في تسجيل الدخول');
         setIsLoading(false);
         return;
       }
@@ -53,14 +90,14 @@ export default function LoginPage() {
       router.push('/');
       router.refresh();
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Registration error:', error);
       setError('حدث خطأ غير متوقع');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleRegister = async () => {
     setIsGoogleLoading(true);
     setError('');
 
@@ -69,8 +106,8 @@ export default function LoginPage() {
         callbackUrl: '/',
       });
     } catch (error) {
-      console.error('Google login error:', error);
-      setError('حدث خطأ في تسجيل الدخول بجوجل');
+      console.error('Google register error:', error);
+      setError('حدث خطأ في التسجيل بجوجل');
       setIsGoogleLoading(false);
     }
   };
@@ -94,22 +131,22 @@ export default function LoginPage() {
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3">
               <div className="h-20 w-20 rounded-lg flex items-center justify-center">
-                <img 
-                  src={logoUrl || '/assets/logo/El Farouk Group2.png'} 
-                  alt="El Farouk Group Logo" 
+                <img
+                  src={logoUrl || '/assets/logo/El Farouk Group2.png'}
+                  alt="El Farouk Group Logo"
                   className="h-full w-full object-contain rounded-lg"
                 />
               </div>
               <h1 className="text-xl font-bold text-white">{companyName}</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-white">تسجيل الدخول</h2>
+            <h2 className="text-xl font-bold text-white">إنشاء حساب جديد</h2>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => router.push('/')}
               className="text-gray-300 hover:text-red-400 transition-colors font-medium flex items-center gap-2"
             >
@@ -122,18 +159,34 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* Login Form */}
-      <div className="max-w-md mx-auto px-4 py-16">
+      {/* Register Form */}
+      <div className="max-w-md mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">تسجيل الدخول</h2>
-          
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">إنشاء حساب جديد</h2>
+
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleEmailLogin} className="space-y-6">
+          <form onSubmit={handleEmailRegister} className="space-y-5">
+            {/* Name Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+                الاسم الكامل
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-right text-black"
+                placeholder="أدخل اسمك الكامل"
+              />
+            </div>
+
             {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
@@ -161,23 +214,29 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
+                minLength={6}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-right text-black"
-                placeholder="أدخل كلمة المرور"
+                placeholder="أدخل كلمة المرور (6 أحرف على الأقل)"
               />
             </div>
 
-            {/* Forgot Password Link */}
-            <div className="text-center">
-              <button
-                type="button"
-                className="text-sm text-[var(--primary-color)] hover:text-red-800 transition-colors"
-                onClick={() => alert('سيتم إضافة خاصية استعادة كلمة المرور قريباً')}
-              >
-                نسيت كلمة المرور؟
-              </button>
+            {/* Confirm Password Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+                تأكيد كلمة المرور
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-right text-black"
+                placeholder="أعد إدخال كلمة المرور"
+              />
             </div>
 
-            {/* Email Login Button */}
+            {/* Register Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -186,10 +245,10 @@ export default function LoginPage() {
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  جاري تسجيل الدخول...
+                  جاري إنشاء الحساب...
                 </div>
               ) : (
-                'تسجيل الدخول'
+                'إنشاء حساب'
               )}
             </button>
           </form>
@@ -201,9 +260,9 @@ export default function LoginPage() {
             <div className="flex-1 border-t border-gray-300"></div>
           </div>
 
-          {/* Google Login Button */}
+          {/* Google Register Button */}
           <button
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleRegister}
             disabled={isGoogleLoading}
             className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
@@ -229,17 +288,17 @@ export default function LoginPage() {
                 />
               </svg>
             )}
-            <span>{isGoogleLoading ? 'جاري الدخول...' : 'تسجيل دخول بجوجل'}</span>
+            <span>{isGoogleLoading ? 'جاري التسجيل...' : 'التسجيل بجوجل'}</span>
           </button>
 
-          {/* Sign Up Link */}
+          {/* Login Link */}
           <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">ليس لديك حساب؟ </span>
+            <span className="text-sm text-gray-600">لديك حساب بالفعل؟ </span>
             <button
-              onClick={() => router.push('/auth/register')}
+              onClick={() => router.push('/auth/login')}
               className="text-sm text-[var(--primary-color)] hover:text-red-800 transition-colors font-medium"
             >
-              إنشاء حساب جديد
+              تسجيل الدخول
             </button>
           </div>
         </div>
