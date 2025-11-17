@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/app/lib/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
-import { getOAuthRedirectUrl } from './utils/auth-urls';
+import { useSession } from 'next-auth/react';
+import { useCallback } from 'react';
 
 export interface AuthUser {
   id: string;
@@ -15,138 +13,66 @@ export interface AuthUser {
 
 export interface AuthState {
   user: AuthUser | null;
-  session: Session | null;
+  session: any | null;
   loading: boolean;
   initialized: boolean;
 }
 
 export function useAuth() {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    session: null,
-    loading: true,
-    initialized: false
-  });
+  // Use NextAuth session
+  const { data: session, status } = useSession();
 
-  // Convert Supabase user to our AuthUser format
-  const formatUser = useCallback((user: User | null): AuthUser | null => {
-    if (!user) return null;
-    
+  // Format NextAuth session to our AuthUser format
+  const formatUser = useCallback((): AuthUser | null => {
+    if (!session?.user) return null;
+
     return {
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0],
-      avatar: user.user_metadata?.avatar_url || user.user_metadata?.picture,
-      phone: user.phone
+      id: (session.user as any).id || '',
+      email: session.user.email || undefined,
+      name: session.user.name || session.user.email?.split('@')[0] || undefined,
+      avatar: session.user.image || undefined,
+      phone: undefined
     };
-  }, []);
+  }, [session]);
 
-  // Initialize auth state
-  useEffect(() => {
-    let mounted = true;
-
-    // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-        }
-
-        if (mounted) {
-          setAuthState({
-            user: formatUser(session?.user ?? null),
-            session,
-            loading: false,
-            initialized: true
-          });
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (mounted) {
-          setAuthState({
-            user: null,
-            session: null,
-            loading: false,
-            initialized: true
-          });
-        }
-      }
-    };
-
-    initializeAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (mounted) {
-          setAuthState({
-            user: formatUser(session?.user ?? null),
-            session,
-            loading: false,
-            initialized: true
-          });
-        }
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [formatUser]);
-
-  // Sign in with Google
+  // Sign in with Google (redirect to NextAuth)
   const signInWithGoogle = useCallback(async () => {
     try {
-      const redirectUrl = getOAuthRedirectUrl('/auth/callback');
-      console.log('🔗 OAuth Debug Info:');
-      console.log('- Redirect URL:', redirectUrl);
-      console.log('- Current window origin:', typeof window !== 'undefined' ? window.location.origin : 'server-side');
-      console.log('- Environment NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL);
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl
-        }
-      });
-
-      if (error) {
-        console.error('❌ OAuth Error:', error);
-        throw error;
-      }
-
-      console.log('✅ OAuth initiated successfully');
-      return { success: true, data };
+      const { signIn } = await import('next-auth/react');
+      await signIn('google', { callbackUrl: '/' });
+      return { success: true };
     } catch (error) {
       console.error('Error signing in with Google:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'خطأ في تسجيل الدخول' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'خطأ في تسجيل الدخول'
       };
     }
   }, []);
 
-  // Sign in with email/password
+  // Sign in with email/password (redirect to NextAuth)
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { signIn } = await import('next-auth/react');
+      const result = await signIn('credentials', {
         email,
-        password
+        password,
+        redirect: false,
       });
 
-      if (error) {
-        throw error;
+      if (result?.error) {
+        return {
+          success: false,
+          error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        };
       }
 
-      return { success: true, data };
+      return { success: true };
     } catch (error) {
       console.error('Error signing in with email:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'خطأ في تسجيل الدخول' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'خطأ في تسجيل الدخول'
       };
     }
   }, []);
@@ -154,26 +80,27 @@ export function useAuth() {
   // Sign up with email/password
   const signUpWithEmail = useCallback(async (email: string, password: string, name?: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: name
-          }
-        }
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name })
       });
 
-      if (error) {
-        throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || 'فشل التسجيل'
+        };
       }
 
-      return { success: true, data };
+      return { success: true };
     } catch (error) {
       console.error('Error signing up:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'خطأ في إنشاء الحساب' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'خطأ في إنشاء الحساب'
       };
     }
   }, []);
@@ -181,28 +108,24 @@ export function useAuth() {
   // Sign out
   const signOut = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        throw error;
-      }
-
+      const { signOut: nextAuthSignOut } = await import('next-auth/react');
+      await nextAuthSignOut({ callbackUrl: '/' });
       return { success: true };
     } catch (error) {
       console.error('Error signing out:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'خطأ في تسجيل الخروج' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'خطأ في تسجيل الخروج'
       };
     }
   }, []);
 
   return {
-    user: authState.user,
-    session: authState.session,
-    loading: authState.loading,
-    initialized: authState.initialized,
-    isAuthenticated: !!authState.user,
+    user: formatUser(),
+    session: session,
+    loading: status === 'loading',
+    initialized: status !== 'loading',
+    isAuthenticated: status === 'authenticated',
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,

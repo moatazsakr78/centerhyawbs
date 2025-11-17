@@ -2,6 +2,19 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
+import { createClient } from "@supabase/supabase-js"
+
+// Create Supabase client for server-side operations
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  }
+)
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -29,49 +42,50 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         try {
-          // Use direct PostgreSQL connection
-          const { Pool } = await import('pg')
-          const pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-          })
+          // Use Supabase client to query public.auth_users table
+          const { data: users, error } = await supabase
+            .from('auth_users')
+            .select('id, email, name, image, password_hash, role')
+            .eq('email', credentials.email)
+            .limit(1)
 
-          try {
-            // Get user from database
-            const result = await pool.query(
-              'SELECT id, email, name, image, password_hash, role FROM auth_system.users WHERE email = $1',
-              [credentials.email]
-            )
+          if (error) {
+            console.error('❌ Supabase query error:', error)
+            return null
+          }
 
-            if (result.rows.length === 0) {
-              return null
-            }
+          if (!users || users.length === 0) {
+            console.log('❌ User not found:', credentials.email)
+            return null
+          }
 
-            const user = result.rows[0]
+          const user = users[0]
 
-            if (!user || !user.password_hash) {
-              return null
-            }
+          if (!user || !user.password_hash) {
+            console.log('❌ User has no password hash')
+            return null
+          }
 
-            // Verify password
-            const passwordValid = await bcrypt.compare(
-              credentials.password as string,
-              user.password_hash
-            )
+          // Verify password
+          const passwordValid = await bcrypt.compare(
+            credentials.password as string,
+            user.password_hash
+          )
 
-            if (!passwordValid) {
-              return null
-            }
+          if (!passwordValid) {
+            console.log('❌ Invalid password for:', credentials.email)
+            return null
+          }
 
-            // Return user object
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              role: user.role
-            }
-          } finally {
-            await pool.end()
+          console.log('✅ Login successful for:', credentials.email)
+
+          // Return user object
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role
           }
         } catch (error) {
           console.error('❌ Auth error during login:', error)
@@ -90,36 +104,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Handle Google OAuth sign-in
       if (account?.provider === "google") {
         try {
-          const { Pool } = await import('pg')
-          const pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-          })
+          // Check if user exists using Supabase
+          const { data: existingUsers, error: queryError } = await supabase
+            .from('auth_users')
+            .select('id')
+            .eq('email', user.email!)
+            .limit(1)
 
-          try {
-            // Check if user exists
-            const existingUser = await pool.query(
-              'SELECT id FROM auth_system.users WHERE email = $1',
-              [user.email]
-            )
+          if (queryError) {
+            console.error('❌ Error checking existing user:', queryError)
+            return false
+          }
 
-            // If user doesn't exist, create one
-            if (existingUser.rows.length === 0) {
-              await pool.query(
-                'INSERT INTO auth_system.users (email, name, image, role, password_hash) VALUES ($1, $2, $3, $4, $5)',
-                [
-                  user.email!,
-                  user.name || user.email!.split('@')[0],
-                  user.image || null,
-                  'user',
-                  '' // No password for OAuth users
-                ]
-              )
+          // If user doesn't exist, create one
+          if (!existingUsers || existingUsers.length === 0) {
+            const { error: insertError } = await supabase
+              .from('auth_users')
+              .insert({
+                email: user.email!,
+                name: user.name || user.email!.split('@')[0],
+                image: user.image || null,
+                role: 'user',
+                password_hash: '' // No password for OAuth users
+              })
+
+            if (insertError) {
+              console.error('❌ Error creating user:', insertError)
+              return false
             }
 
-            return true
-          } finally {
-            await pool.end()
+            console.log('✅ Created new user via Google OAuth:', user.email)
           }
+
+          return true
         } catch (error) {
           console.error('❌ Error handling Google sign-in:', error)
           console.error('Error details:', {
@@ -138,23 +155,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         // For Google users, fetch from database
         if (account?.provider === "google") {
-          const { Pool } = await import('pg')
-          const pool = new Pool({
-            connectionString: process.env.DATABASE_URL,
-          })
+          const { data: users, error } = await supabase
+            .from('auth_users')
+            .select('id, role')
+            .eq('email', user.email!)
+            .limit(1)
 
-          try {
-            const result = await pool.query(
-              'SELECT id, role FROM auth_system.users WHERE email = $1',
-              [user.email!]
-            )
-
-            if (result.rows.length > 0) {
-              token.userId = result.rows[0].id
-              token.role = result.rows[0].role
-            }
-          } finally {
-            await pool.end()
+          if (!error && users && users.length > 0) {
+            token.userId = users[0].id
+            token.role = users[0].role
           }
         } else {
           token.userId = user.id

@@ -315,7 +315,8 @@
       "Bash(start http://localhost:3003/auth/login)",
       "Bash(start http://localhost:3000/auth/login)",
       "Bash(start http://localhost:3004/auth/login)",
-      "Bash(start http://localhost:3001/auth/login)"
+      "Bash(start http://localhost:3001/auth/login)",
+      "Bash(start http://localhost:3001/dashboard)"
     ],
     "deny": [],
     "additionalDirectories": [
