@@ -146,7 +146,20 @@ export default function ProductExportModal({
       if (exportOptions.name) data.name = product.name
       if (exportOptions.code) data.product_code = product.product_code
       if (exportOptions.barcode) data.barcode = product.barcode
-      if (exportOptions.description) data.description = product.description
+      if (exportOptions.description) {
+        // ✨ استخراج النص من JSON object إذا لزم الأمر
+        let description = product.description || ''
+        if (typeof description === 'string' && description.startsWith('{') && description.includes('"text"')) {
+          try {
+            const parsed = JSON.parse(description)
+            description = parsed.text || description
+          } catch (e) {
+            // إذا فشل التحليل، استخدم النص كما هو
+            console.log('Failed to parse description JSON, using as-is')
+          }
+        }
+        data.description = description
+      }
 
       // السعر
       if (exportOptions.purchasePrice) data.cost_price = product.cost_price

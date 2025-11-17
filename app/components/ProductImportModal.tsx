@@ -141,13 +141,26 @@ export default function ProductImportModal({
             }
           }
 
+          // ✨ معالجة الوصف - استخراج النص من JSON object إذا لزم الأمر
+          let description = productData.description || ''
+          if (typeof description === 'string' && description.startsWith('{') && description.includes('"text"')) {
+            try {
+              const parsed = JSON.parse(description)
+              description = parsed.text || description
+              console.log('✅ Extracted description text from JSON object')
+            } catch (e) {
+              // إذا فشل التحليل، استخدم النص كما هو
+              console.log('⚠️ Failed to parse description JSON, using as-is')
+            }
+          }
+
           // إنشاء المنتج
           const newProduct = await createProduct({
             name: productData.name,
             product_code: productData.product_code || `PROD-${Date.now()}-${i}`,
             barcode: productData.barcode || null,
             category_id: productData.category_id || null,
-            description: productData.description || '',
+            description: description,
             cost_price: productData.cost_price || 0,
             price: productData.price || 0,
             wholesale_price: productData.wholesale_price || 0,

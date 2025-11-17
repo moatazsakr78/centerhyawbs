@@ -206,19 +206,22 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
   useEffect(() => {
     if (editProduct && isOpen) {
       
-      // Parse description to extract text and colors
+      // ✅ قراءة الوصف كنص عادي
       let descriptionText = editProduct.description || ''
       let savedColors: ProductColor[] = []
-      
+
+      // محاولة استخراج الألوان من JSON القديم (للتوافق مع البيانات القديمة فقط)
       try {
         if (editProduct.description && editProduct.description.startsWith('{')) {
           const descriptionData = JSON.parse(editProduct.description)
-          descriptionText = descriptionData.text || ''
+          descriptionText = descriptionData.text || editProduct.description
           savedColors = descriptionData.colors || []
+          console.log('⚠️ Found old JSON format, extracting text and colors')
         }
       } catch (e) {
-        // If parsing fails, use the raw description
+        // الوصف نص عادي - استخدمه كما هو
         descriptionText = editProduct.description || ''
+        console.log('✅ Reading description as plain text')
       }
       
       setFormData({
@@ -1568,20 +1571,16 @@ export default function ProductSidebar({ isOpen, onClose, onProductCreated, crea
         console.log('🎨 SAVE: New product mode, using interface colors:', colorsToSave)
       }
 
-      let descriptionData: any = {
-        text: formData.description.trim() || '',
-        colors: colorsToSave.length > 0 ? colorsToSave : []
-      }
-      
-      console.log('🎨 Final description data being saved:', descriptionData)
-      
-      console.log('🎨 Final colors being saved:', colorsToSave)
+      // ✅ حفظ الوصف كنص عادي فقط (بدون JSON)
+      const descriptionToSave = formData.description.trim() || ''
+      console.log('✅ Saving description as plain text:', descriptionToSave)
+      console.log('🎨 Colors will be saved separately:', colorsToSave)
 
       // Prepare product data
       const productData: Partial<Product> = {
         name: formData.name.trim(),
         name_en: formData.name.trim(), // Could be separate field
-        description: JSON.stringify(descriptionData),
+        description: descriptionToSave,
         barcode: productBarcodes[0] || formData.barcode.trim() || undefined,
         barcodes: productBarcodes.length > 0 ? productBarcodes : (formData.barcode.trim() ? [formData.barcode.trim()] : []),
         price: parseFloat(formData.salePrice) || 0,

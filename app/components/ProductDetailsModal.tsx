@@ -34,6 +34,7 @@ interface DatabaseProduct {
   main_image_url?: string | null;
   sub_image_url?: string | null;
   additional_images_urls?: string[] | null; // ✨ الحقل الجديد للصور الإضافية
+  additional_images?: any[] | null; // ✨ الحقل القديم للصور الإضافية
   barcodes?: string[] | null;
   unit?: string | null;
   stock?: number | null;
@@ -83,13 +84,15 @@ const getProductSubImages = async (
   productId: string,
   productName: string = '',
   videoUrl: string | null = null,
-  additionalImagesUrls: any = null // ✨ معامل جديد
+  additionalImagesUrls: any = null, // ✨ معامل جديد
+  additionalImages: any = null // ✨ معامل للحقل القديم
 ): Promise<string[]> => {
   try {
     console.log('🚀 getProductSubImages CALLED for:', productName);
     console.log('   - productId:', productId);
     console.log('   - videoUrl:', videoUrl);
     console.log('   - additionalImagesUrls:', additionalImagesUrls);
+    console.log('   - additionalImages:', additionalImages);
 
     // ✨ HIGHEST PRIORITY: Check additional_images_urls (new field)
     if (additionalImagesUrls && Array.isArray(additionalImagesUrls) && additionalImagesUrls.length > 0) {
@@ -97,7 +100,23 @@ const getProductSubImages = async (
       return additionalImagesUrls;
     }
 
-    // Second priority: Check if sub-images are stored in video_url field (old system)
+    // ✨ SECOND PRIORITY: Check additional_images (old field)
+    if (additionalImages && Array.isArray(additionalImages) && additionalImages.length > 0) {
+      // Extract URLs from additional_images array (could be array of objects or strings)
+      const imageUrls = additionalImages.map(img => {
+        if (typeof img === 'string') return img;
+        if (img && typeof img === 'object' && img.url) return img.url;
+        if (img && typeof img === 'object' && img.image_url) return img.image_url;
+        return null;
+      }).filter(url => url !== null) as string[];
+
+      if (imageUrls.length > 0) {
+        console.log(`✅ Modal: Loaded ${imageUrls.length} images from additional_images for ${productName}`);
+        return imageUrls;
+      }
+    }
+
+    // Third priority: Check if sub-images are stored in video_url field (old system)
     if (videoUrl) {
       try {
         const additionalImages = JSON.parse(videoUrl);
@@ -110,7 +129,7 @@ const getProductSubImages = async (
       }
     }
 
-    // Third priority: Check product_images table
+    // Fourth priority: Check product_images table
     const { data: productImages, error } = await supabase
       .from('product_images')
       .select('image_url')
@@ -122,7 +141,7 @@ const getProductSubImages = async (
       return productImages.map(img => img.image_url);
     }
 
-    // Fourth priority: Use fallback system (generates placeholder images)
+    // Fifth priority: Use fallback system (generates placeholder images)
     console.log(`⚠️ Modal: No images found, using fallback for product ${productName}`);
     return getProductSubImagesFallback(productId, productName);
   } catch (err) {
@@ -440,6 +459,8 @@ export default function ProductDetailsModal({
           .select(`
             *,
             additional_images_urls,
+            additional_images,
+            sub_image_url,
             category:categories(
               id,
               name,
@@ -591,7 +612,8 @@ export default function ProductDetailsModal({
           product.id,
           product.name,
           product.video_url,
-          product.additional_images_urls // ✨ تمرير الحقل الجديد
+          product.additional_images_urls, // ✨ تمرير الحقل الجديد
+          product.additional_images // ✨ تمرير الحقل القديم
         );
 
         // Get product videos from product_videos table using any type workaround
