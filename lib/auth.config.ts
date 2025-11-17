@@ -42,26 +42,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         try {
-          // Use Supabase client to query public.auth_users table
-          const { data: users, error } = await supabase
+          // Use Supabase client to query auth_users table for authentication
+          const { data: authUsers, error: authError } = await supabase
             .from('auth_users')
-            .select('id, email, name, image, password_hash, role')
+            .select('id, email, name, image, password_hash')
             .eq('email', credentials.email)
             .limit(1)
 
-          if (error) {
-            console.error('❌ Supabase query error:', error)
+          if (authError) {
+            console.error('❌ Supabase query error:', authError)
             return null
           }
 
-          if (!users || users.length === 0) {
+          if (!authUsers || authUsers.length === 0) {
             console.log('❌ User not found:', credentials.email)
             return null
           }
 
-          const user = users[0]
+          const authUser = authUsers[0]
 
-          if (!user || !user.password_hash) {
+          if (!authUser || !authUser.password_hash) {
             console.log('❌ User has no password hash')
             return null
           }
@@ -69,7 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Verify password
           const passwordValid = await bcrypt.compare(
             credentials.password as string,
-            user.password_hash
+            authUser.password_hash
           )
 
           if (!passwordValid) {
@@ -77,15 +77,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null
           }
 
-          console.log('✅ Login successful for:', credentials.email)
+          // Fetch role from user_profiles table
+          const { data: profiles, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', authUser.id)
+            .limit(1)
+
+          const userRole = profiles && profiles.length > 0 ? profiles[0].role : 'عميل'
+
+          console.log('✅ Login successful for:', credentials.email, 'with role:', userRole)
 
           // Return user object
           return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            role: user.role
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.name,
+            image: authUser.image,
+            role: userRole
           }
         } catch (error) {
           console.error('❌ Auth error during login:', error)
@@ -118,19 +127,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // If user doesn't exist, create one
           if (!existingUsers || existingUsers.length === 0) {
-            const { error: insertError } = await supabase
+            // Create auth_users entry
+            const { data: newUser, error: insertError } = await supabase
               .from('auth_users')
               .insert({
                 email: user.email!,
                 name: user.name || user.email!.split('@')[0],
                 image: user.image || null,
-                role: 'user',
                 password_hash: '' // No password for OAuth users
               })
+              .select('id')
+              .single()
 
             if (insertError) {
-              console.error('❌ Error creating user:', insertError)
+              console.error('❌ Error creating auth user:', insertError)
               return false
+            }
+
+            // Create user_profiles entry with default role
+            if (newUser) {
+              const { error: profileError } = await supabase
+                .from('user_profiles')
+                .insert({
+                  id: newUser.id,
+                  full_name: user.name || user.email!.split('@')[0],
+                  role: 'عميل' // Default role for new users
+                })
+
+              if (profileError) {
+                console.error('❌ Error creating user profile:', profileError)
+                // Don't fail the whole sign-in if profile creation fails
+              }
             }
 
             console.log('✅ Created new user via Google OAuth:', user.email)
@@ -155,15 +182,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         // For Google users, fetch from database
         if (account?.provider === "google") {
-          const { data: users, error } = await supabase
+          const { data: authUsers, error: authError } = await supabase
             .from('auth_users')
-            .select('id, role')
+            .select('id')
             .eq('email', user.email!)
             .limit(1)
 
-          if (!error && users && users.length > 0) {
-            token.userId = users[0].id
-            token.role = users[0].role
+          if (!authError && authUsers && authUsers.length > 0) {
+            token.userId = authUsers[0].id
+
+            // Fetch role from user_profiles
+            const { data: profiles, error: profileError } = await supabase
+              .from('user_profiles')
+              .select('role')
+              .eq('id', authUsers[0].id)
+              .limit(1)
+
+            token.role = profiles && profiles.length > 0 ? profiles[0].role : 'عميل'
           }
         } else {
           token.userId = user.id

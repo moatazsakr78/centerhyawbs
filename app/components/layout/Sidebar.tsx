@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
   ShoppingCartIcon,
@@ -17,9 +18,9 @@ import {
   ClipboardDocumentListIcon,
   CogIcon
 } from '@heroicons/react/24/outline'
-import { useUserProfile } from '../../../lib/hooks/useUserProfile'
+import { hasPageAccess, type UserRole } from '@/app/lib/auth/roleBasedAccess'
 
-const sidebarItems = [
+const allSidebarItems = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: HomeIcon },
   { href: '/pos', label: 'نقطة البيع', icon: ShoppingCartIcon },
   { href: '/products', label: 'المنتجات', icon: CubeIcon },
@@ -40,7 +41,15 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
-  const { profile, loading } = useUserProfile()
+  const { data: session, status } = useSession()
+  const loading = status === 'loading'
+
+  // Filter menu items based on user role
+  const sidebarItems = useMemo(() => {
+    const userRole = session?.user?.role as UserRole | null
+
+    return allSidebarItems.filter(item => hasPageAccess(userRole, item.href))
+  }, [session?.user?.role])
 
   // Close sidebar when pressing ESC
   useEffect(() => {
@@ -122,27 +131,27 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   <div className="h-3 bg-gray-400 rounded w-20 animate-pulse"></div>
                 </div>
               </div>
-            ) : profile ? (
+            ) : session?.user ? (
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center overflow-hidden">
-                  {profile.avatar_url ? (
+                  {session.user.image ? (
                     <img
-                      src={profile.avatar_url}
-                      alt={profile.full_name}
+                      src={session.user.image}
+                      alt={session.user.name || 'User'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-white text-base font-bold">
-                      {profile.full_name?.charAt(0)?.toUpperCase() || 'M'}
+                      {session.user.name?.charAt(0)?.toUpperCase() || session.user.email?.charAt(0)?.toUpperCase() || 'M'}
                     </span>
                   )}
                 </div>
                 <div>
                   <p className="text-base font-medium text-white">
-                    {profile.full_name || 'مستخدم'}
+                    {session.user.name || session.user.email || 'مستخدم'}
                   </p>
                   <p className="text-sm text-gray-400">
-                    {profile.is_admin ? 'أدمن رئيسي' : profile.role || 'مستخدم عادي'}
+                    {session.user.role || 'مستخدم عادي'}
                   </p>
                 </div>
               </div>
