@@ -22,6 +22,7 @@ export interface Product {
   cost_price: number;
   main_image_url?: string | null;
   sub_image_url?: string | null;
+  additional_images_urls?: string[] | null;
   category_id?: string | null;
   is_active?: boolean | null;
   display_order?: number | null;
@@ -157,7 +158,7 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
 
       console.log('🔍 Total products fetched from DB:', rawProducts.length);
 
-      const productIds = rawProducts.map(p => p.id);
+      const productIds = (rawProducts as any[]).map(p => p.id);
 
       // ✨ Query 3: Get ALL inventory for ALL products in ONE query
       const { data: inventory, error: inventoryError } = await supabase
