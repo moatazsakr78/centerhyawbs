@@ -462,7 +462,7 @@ export default function ProductDetailsModal({
           .single();
 
         console.log('📦 ProductDetailsModal: Raw product data:', rawProduct);
-        console.log('📦 ProductDetailsModal: additional_images_urls:', rawProduct?.additional_images_urls);
+        console.log('📦 ProductDetailsModal: additional_images_urls:', (rawProduct as any)?.additional_images_urls);
 
         if (productError) throw productError;
 
