@@ -56,12 +56,9 @@ export default function SignUpPage() {
     try {
       const result = await signUpWithEmail(formData.email, formData.password, formData.name);
       if (result.success) {
-        // Check if email confirmation is required
-        if (result.data?.user && !result.data.session) {
-          alert('تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق من صندوق الوارد.');
-        } else {
-          router.push('/');
-        }
+        // Account created successfully - redirect to login or home
+        alert('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
+        router.push('/auth/login');
       } else {
         setError(result.error || 'فشل في إنشاء الحساب');
       }
