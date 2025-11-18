@@ -109,45 +109,17 @@ export default function OrdersPage() {
       }
 
       try {
-        const { supabase } = await import('../../lib/supabase/client');
+        // Use API route instead of direct Supabase query
+        const response = await fetch('/api/user/orders');
 
-        // Get orders with their items and product details for current user
-        const query = supabase
-          .from('orders')
-          .select(`
-            id,
-            order_number,
-            customer_name,
-            customer_phone,
-            customer_address,
-            total_amount,
-            subtotal_amount,
-            shipping_amount,
-            status,
-            delivery_type,
-            notes,
-            created_at,
-            order_items (
-              id,
-              quantity,
-              unit_price,
-              products (
-                id,
-                name,
-                barcode,
-                main_image_url
-              )
-            )
-          `)
-          .eq('user_id', user.id);
-        
-        const { data: ordersData, error: ordersError } = await query
-          .order('created_at', { ascending: false });
-
-        if (ordersError) {
-          console.error('Error fetching orders:', ordersError);
+        if (!response.ok) {
+          console.error('Error fetching orders:', response.statusText);
+          setOrders([]);
+          setLoading(false);
           return;
         }
+
+        const ordersData = await response.json();
 
         // Transform data to match our Order interface and filter out orders with no items
         const transformedOrders: Order[] = (ordersData || [])
