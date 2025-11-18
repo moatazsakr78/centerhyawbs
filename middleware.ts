@@ -76,10 +76,17 @@ export default async function middleware(request: NextRequest) {
       const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
       const { payload } = await jwtVerify(sessionCookie.value, secret)
 
+      console.log('🔍 Full JWT payload:', JSON.stringify(payload, null, 2))
+
       userRole = payload.role as UserRole | null
       console.log('👤 Role from JWT:', userRole, '(Type:', typeof userRole, ')')
+
+      if (!userRole) {
+        console.log('⚠️ WARNING: No role found in JWT! User needs to re-login.')
+      }
     } catch (error) {
       console.error('❌ Error reading JWT:', error)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
     }
   }
 
