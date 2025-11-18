@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { hasPageAccess, getUnauthorizedRedirect, type UserRole } from '@/app/lib/auth/roleBasedAccess'
+import { hasPageAccess, getUnauthorizedRedirect, rolePermissions, type UserRole } from '@/app/lib/auth/roleBasedAccess'
 
 // Paths that don't need any authentication or authorization
 const alwaysPublicPaths = [

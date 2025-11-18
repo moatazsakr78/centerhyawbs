@@ -318,7 +318,8 @@
       "Bash(start http://localhost:3001/auth/login)",
       "Bash(start http://localhost:3001/dashboard)",
       "Bash(if exist .next rmdir /s /q .next)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(set PORT=3003)"
     ],
     "deny": [],
     "additionalDirectories": [
