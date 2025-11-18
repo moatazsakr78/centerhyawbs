@@ -39,7 +39,9 @@ const customerOnlyPaths = [
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  console.log('🔍 Middleware checking:', pathname)
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('🔍 MIDDLEWARE START - Path:', pathname)
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
   // Skip NextAuth internal routes and static files
   if (pathname.startsWith('/api/auth') ||
