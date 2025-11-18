@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useFormatPrice } from '@/lib/hooks/useCurrency';
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings';
 import { useStoreTheme } from '@/lib/hooks/useStoreTheme';
+import { useAuth } from '@/app/lib/hooks/useAuth';
 import PaymentModal from '@/app/components/PaymentModal';
 import ImageViewerModal from '@/app/components/ImageViewerModal';
 import { paymentService, PaymentReceipt } from '@/lib/services/paymentService';
@@ -66,6 +67,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const formatPrice = useFormatPrice();
   const { logoUrl, isLoading: isCompanyLoading } = useCompanySettings();
+  const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
 
   // Get store theme colors
   const { primaryColor, primaryHoverColor, isLoading: isThemeLoading } = useStoreTheme();
@@ -96,14 +98,21 @@ export default function OrdersPage() {
   // Load orders from database
   useEffect(() => {
     const loadOrders = async () => {
+      // Wait for auth to be ready
+      if (isAuthLoading) return;
+
+      // If not authenticated, show empty orders
+      if (!isAuthenticated || !user?.id) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         const { supabase } = await import('../../lib/supabase/client');
-        
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
+
         // Get orders with their items and product details for current user
-        let query = supabase
+        const query = supabase
           .from('orders')
           .select(`
             id,
@@ -129,16 +138,8 @@ export default function OrdersPage() {
                 main_image_url
               )
             )
-          `);
-          
-        // If user is logged in, filter by user ID, otherwise show orders for current session
-        if (user?.id) {
-          query = query.eq('user_id', user.id);
-        } else {
-          // For non-logged in users, we could use session storage to track their orders
-          // For now, we'll show no orders unless they're logged in
-          query = query.eq('user_id', 'no-user-logged-in');
-        }
+          `)
+          .eq('user_id', user.id);
         
         const { data: ordersData, error: ordersError } = await query
           .order('created_at', { ascending: false });
@@ -206,7 +207,7 @@ export default function OrdersPage() {
     };
 
     loadOrders();
-  }, []);
+  }, [user?.id, isAuthLoading, isAuthenticated]);
 
   // Filter orders based on active tab and date range
   useEffect(() => {
@@ -305,24 +306,15 @@ export default function OrdersPage() {
   };
 
   // Open payment modal
-  const openPaymentModal = async (orderId: string) => {
-    // Get customer ID from current user
-    try {
-      const { supabase } = await import('../../lib/supabase/client');
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert('يرجى تسجيل الدخول أولاً');
-        return;
-      }
-
-      setSelectedOrderId(orderId);
-      setSelectedCustomerId(user.id);
-      setShowPaymentModal(true);
-    } catch (error) {
-      console.error('Error opening payment modal:', error);
-      alert('حدث خطأ. يرجى المحاولة مرة أخرى');
+  const openPaymentModal = (orderId: string) => {
+    if (!user?.id) {
+      alert('يرجى تسجيل الدخول أولاً');
+      return;
     }
+
+    setSelectedOrderId(orderId);
+    setSelectedCustomerId(user.id);
+    setShowPaymentModal(true);
   };
 
   // Handle payment uploaded
@@ -426,7 +418,7 @@ export default function OrdersPage() {
 
 
 
-  if (loading || isCompanyLoading || isThemeLoading) {
+  if (loading || isCompanyLoading || isThemeLoading || isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#c0c0c0'}}>
         <div className="text-center">

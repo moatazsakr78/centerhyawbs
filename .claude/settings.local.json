@@ -319,7 +319,9 @@
       "Bash(start http://localhost:3001/dashboard)",
       "Bash(if exist .next rmdir /s /q .next)",
       "Bash(netstat:*)",
-      "Bash(set PORT=3003)"
+      "Bash(set PORT=3003)",
+      "Bash(vercel logs:*)",
+      "Bash(vercel ls:*)"
     ],
     "deny": [],
     "additionalDirectories": [
