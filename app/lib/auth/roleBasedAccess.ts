@@ -4,53 +4,73 @@ export type UserRole = 'عميل' | 'جملة' | 'موظف' | 'أدمن رئيس
 // Define allowed pages for each role
 export const rolePermissions: Record<UserRole, string[]> = {
   'عميل': [
+    // صفحات المتجر فقط - للعملاء
     '/', // الصفحة الرئيسية للمتجر
-    '/my-orders', // طلباتي
     '/store', // المتجر
-    '/products' // المنتجات (للعرض فقط)
+    '/product', // تفاصيل المنتج (dynamic route)
+    '/cart', // السلة
+    '/my-orders', // طلباتي
+    '/profile', // الملف الشخصي
+    '/favorites', // المفضلة
+    '/checkout', // إتمام الطلب
   ],
   'جملة': [
-    '/', // الصفحة الرئيسية للمتجر
-    '/my-orders', // طلباتي
-    '/store', // المتجر
-    '/products' // المنتجات (للعرض فقط)
+    // نفس صلاحيات العميل + أسعار الجملة
+    '/',
+    '/store',
+    '/product',
+    '/cart',
+    '/my-orders',
+    '/profile',
+    '/favorites',
+    '/checkout',
   ],
   'موظف': [
-    // Store pages
+    // كل صفحات النظام + المتجر
+    // صفحات المتجر
     '/',
     '/store',
-    '/products',
-    '/my-orders',
-    '/customer-orders',
-    '/admin/products',
-    '/shipping',
-    // System pages
+    '/product',
+
+    // صفحات الإدارة
+    '/customer-orders', // طلبات العملاء (مش my-orders)
+    '/admin/products', // إدارة المتجر
+    '/shipping', // الشحن
+
+    // صفحات النظام
     '/dashboard',
     '/pos',
+    '/products', // إدارة المنتجات في النظام
     '/inventory',
     '/customers',
     '/suppliers',
     '/records',
     '/reports',
-    '/permissions'
+    '/settings',
   ],
   'أدمن رئيسي': [
-    // All pages - full access
+    // كل الصفحات - صلاحيات كاملة
+    // صفحات المتجر
     '/',
     '/store',
-    '/products',
-    '/my-orders',
-    '/customer-orders',
-    '/admin/products',
-    '/shipping',
+    '/product',
+
+    // صفحات الإدارة (مش my-orders - العميل فقط)
+    '/customer-orders', // طلبات العملاء
+    '/admin/products', // إدارة المتجر
+    '/shipping', // الشحن
+
+    // صفحات النظام
     '/dashboard',
     '/pos',
+    '/products', // إدارة المنتجات
     '/inventory',
     '/customers',
     '/suppliers',
     '/records',
     '/reports',
-    '/permissions'
+    '/permissions', // الصلاحيات (للأدمن الرئيسي فقط)
+    '/settings',
   ]
 };
 

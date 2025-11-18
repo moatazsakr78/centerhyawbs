@@ -316,7 +316,9 @@
       "Bash(start http://localhost:3000/auth/login)",
       "Bash(start http://localhost:3004/auth/login)",
       "Bash(start http://localhost:3001/auth/login)",
-      "Bash(start http://localhost:3001/dashboard)"
+      "Bash(start http://localhost:3001/dashboard)",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "additionalDirectories": [
