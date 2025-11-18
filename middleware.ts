@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { hasPageAccess, rolePermissions, type UserRole } from '@/app/lib/auth/roleBasedAccess'
+import { jwtVerify } from 'jose'
 
 // Paths that don't need any authentication or authorization
 const alwaysPublicPaths = [
@@ -65,7 +66,22 @@ export default async function middleware(request: NextRequest) {
   )
 
   const hasSession = !!sessionCookie
-  console.log('👤 Session exists:', hasSession)
+  console.log('👤 Session cookie exists:', hasSession)
+
+  // Try to read role from JWT token
+  let userRole: UserRole | null = null
+
+  if (sessionCookie?.value) {
+    try {
+      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
+      const { payload } = await jwtVerify(sessionCookie.value, secret)
+
+      userRole = payload.role as UserRole | null
+      console.log('👤 Role from JWT:', userRole, '(Type:', typeof userRole, ')')
+    } catch (error) {
+      console.error('❌ Error reading JWT:', error)
+    }
+  }
 
   // Check if it's an admin-only path
   const isAdminPath = adminOnlyPaths.some(path =>
@@ -89,9 +105,21 @@ export default async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // If session exists, allow access
-    // Role-based authorization will be handled by individual pages using getServerSession
-    console.log('✅ Session exists, allowing access (role check in page)')
+    // Check if user has access based on role
+    const hasAccess = hasPageAccess(userRole, pathname)
+    console.log('🔍 Authorization check:', {
+      path: pathname,
+      userRole: userRole,
+      hasAccess: hasAccess,
+      allowedRoles: ['أدمن رئيسي', 'موظف']
+    })
+
+    if (!hasAccess) {
+      console.log('❌ Access DENIED! Redirecting to homepage')
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    console.log('✅ Access GRANTED!')
   }
 
   // Customer paths - just check for session
