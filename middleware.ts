@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { hasPageAccess, rolePermissions, type UserRole } from '@/app/lib/auth/roleBasedAccess'
-import { jwtVerify } from 'jose'
+import { auth } from '@/lib/auth.config'
 
 // Paths that don't need any authentication or authorization
 const alwaysPublicPaths = [
@@ -36,12 +36,8 @@ const customerOnlyPaths = [
   '/checkout',
 ]
 
-export default async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-  console.log('🔍 MIDDLEWARE START - Path:', pathname)
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+export default auth((req) => {
+  const { pathname } = req.nextUrl
 
   // Skip NextAuth internal routes and static files
   if (pathname.startsWith('/api/auth') ||
@@ -54,41 +50,12 @@ export default async function middleware(request: NextRequest) {
 
   // Allow always-public paths (login, register, etc.)
   if (alwaysPublicPaths.some(path => pathname === path || pathname.startsWith(path + '/'))) {
-    console.log('✅ Public path, allowing')
     return NextResponse.next()
   }
 
-  // Check for NextAuth session cookie
-  const sessionCookie = request.cookies.get(
-    process.env.NODE_ENV === 'production'
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
-  )
-
-  const hasSession = !!sessionCookie
-  console.log('👤 Session cookie exists:', hasSession)
-
-  // Try to read role from JWT token
-  let userRole: UserRole | null = null
-
-  if (sessionCookie?.value) {
-    try {
-      const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
-      const { payload } = await jwtVerify(sessionCookie.value, secret)
-
-      console.log('🔍 Full JWT payload:', JSON.stringify(payload, null, 2))
-
-      userRole = payload.role as UserRole | null
-      console.log('👤 Role from JWT:', userRole, '(Type:', typeof userRole, ')')
-
-      if (!userRole) {
-        console.log('⚠️ WARNING: No role found in JWT! Forcing re-login...')
-      }
-    } catch (error) {
-      console.error('❌ Error reading JWT:', error)
-      console.error('Error details:', error instanceof Error ? error.message : String(error))
-    }
-  }
+  // Get session from NextAuth
+  const session = req.auth
+  const userRole = session?.user?.role as UserRole | null
 
   // Check if it's an admin-only path
   const isAdminPath = adminOnlyPaths.some(path =>
@@ -102,50 +69,30 @@ export default async function middleware(request: NextRequest) {
 
   // Block admin paths for non-authenticated users
   if (isAdminPath) {
-    console.log('🔒 Admin-only path detected:', pathname)
-
-    // If no session cookie, redirect to login
-    if (!hasSession) {
-      console.log('❌ No session, redirecting to login')
-      const loginUrl = new URL('/auth/login', request.url)
+    // If no session, redirect to login
+    if (!session) {
+      const loginUrl = new URL('/auth/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    // If session exists but role is missing, force re-login to get fresh JWT
-    if (!userRole) {
-      console.log('❌ Session exists but role missing! Forcing re-login...')
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      loginUrl.searchParams.set('error', 'session_expired')
       return NextResponse.redirect(loginUrl)
     }
 
     // Check if user has access based on role
     const hasAccess = hasPageAccess(userRole, pathname)
-    console.log('🔍 Authorization check:', {
-      path: pathname,
-      userRole: userRole,
-      hasAccess: hasAccess,
-      allowedRoles: ['أدمن رئيسي', 'موظف']
-    })
 
     if (!hasAccess) {
-      console.log('❌ Access DENIED! Redirecting to homepage')
-      return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL('/', req.url))
     }
-
-    console.log('✅ Access GRANTED!')
   }
 
   // Customer paths - just check for session
-  if (isCustomerPath && hasSession) {
-    console.log('✅ Customer path with session, allowing')
+  if (isCustomerPath && !session) {
+    const loginUrl = new URL('/auth/login', req.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  console.log('✅ Allowing access to:', pathname)
   return NextResponse.next()
-}
+})
 
 export const config = {
   matcher: [
