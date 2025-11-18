@@ -180,6 +180,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, account }) {
       // Add custom fields to JWT
       if (user) {
+        // Initial sign in - set userId and role
         // For Google users, fetch from database
         if (account?.provider === "google") {
           const { data: authUsers, error: authError } = await supabase
@@ -204,7 +205,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.userId = user.id
           token.role = user.role
         }
+
+        console.log('✅ JWT created with role:', token.role)
+      } else if (token.userId && !token.role) {
+        // Subsequent requests - role is missing, fetch it again
+        console.log('⚠️ Role missing in token, fetching from database...')
+
+        const { data: profiles, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', token.userId as string)
+          .limit(1)
+
+        if (!profileError && profiles && profiles.length > 0) {
+          token.role = profiles[0].role
+          console.log('✅ Role fetched:', token.role)
+        } else {
+          token.role = 'عميل' // Default fallback
+          console.log('⚠️ Could not fetch role, using default: عميل')
+        }
       }
+
       return token
     },
 
