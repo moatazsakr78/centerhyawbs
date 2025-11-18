@@ -65,7 +65,7 @@ class POSTabsService {
         active_tab_id: data.active_tab_id
       };
     } catch (error) {
-      console.error('Error loading POS tabs state:', error);
+      // Silent fail - POS will work with default tabs
       return null;
     }
   }
@@ -89,13 +89,13 @@ class POSTabsService {
         });
 
       if (error) {
-        console.error('Error saving POS tabs state:', error);
+        // Silent fail
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error saving POS tabs state:', error);
+      // Silent fail - POS will work without persistence
       return false;
     }
   }

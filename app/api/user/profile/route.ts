@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { NextResponse } from 'next/server'
+import { auth } from '@/lib/auth.config'
 import { createClient } from '@supabase/supabase-js'
 
 // Create Supabase client with service role (bypasses RLS)
@@ -14,22 +14,19 @@ const supabaseAdmin = createClient(
   }
 )
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get session from NextAuth
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET
-    })
+    const session = await auth()
 
-    if (!token || !token.userId) {
+    if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized - No valid session' },
         { status: 401 }
       )
     }
 
-    const userId = token.userId as string
+    const userId = session.user.id
 
     // Fetch user profile using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
@@ -39,7 +36,6 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('❌ Error fetching user profile:', error)
       return NextResponse.json(
         { error: error.message },
         { status: 404 }
@@ -48,7 +44,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ profile: data })
   } catch (error) {
-    console.error('❌ Server error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

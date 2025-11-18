@@ -28,16 +28,14 @@ export function usePersistentSelections() {
         .from('customers')
         .select('*')
         .eq('id', DEFAULT_CUSTOMER_ID)
-        .single()
+        .maybeSingle()
 
       if (error) {
-        console.error('Error loading default customer:', error)
         return null
       }
 
       return data
     } catch (error) {
-      console.error('Error loading default customer:', error)
       return null
     }
   }
