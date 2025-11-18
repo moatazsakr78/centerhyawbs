@@ -37,48 +37,23 @@ export default function LoginPage() {
     setError('');
 
     try {
-      console.log('\n🔐 Starting login process...');
-      console.log('📧 Email:', formData.email);
-
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
-      console.log('✅ SignIn result:', result);
-
       if (result?.error) {
-        console.error('❌ Login failed:', result.error);
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
         setIsLoading(false);
         return;
       }
 
-      // Fetch session to check JWT content
-      console.log('🔍 Fetching session after login...');
-      const sessionResponse = await fetch('/api/auth/session');
-      const session = await sessionResponse.json();
-
-      console.log('📋 Session data:', {
-        user: session.user,
-        hasUserId: !!session.user?.id,
-        hasRole: !!session.user?.role,
-        roleValue: session.user?.role
-      });
-
-      if (!session.user?.role) {
-        console.error('⚠️ WARNING: Session has no role!');
-      } else {
-        console.log('✅ Session has role:', session.user.role);
-      }
-
       // Success - redirect to home
-      console.log('🎉 Login successful! Redirecting...');
       router.push('/');
       router.refresh();
     } catch (error) {
-      console.error('❌ Login error:', error);
+      console.error('Login error:', error);
       setError('حدث خطأ غير متوقع');
     } finally {
       setIsLoading(false);

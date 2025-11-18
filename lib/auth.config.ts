@@ -178,26 +178,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async jwt({ token, user, account }) {
-      console.log('\n🔑 JWT CALLBACK TRIGGERED')
-      console.log('📋 User object:', user ? {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        hasRole: !!user.role
-      } : 'null')
-      console.log('📋 Account:', account ? { provider: account.provider } : 'null')
-      console.log('📋 Existing token:', {
-        userId: token.userId,
-        role: token.role,
-        hasRole: !!token.role
-      })
-
       // Add custom fields to JWT
       if (user) {
         // Initial sign in - set userId and role
         // For Google users, fetch from database
         if (account?.provider === "google") {
-          console.log('🔵 Google OAuth sign-in detected')
           const { data: authUsers, error: authError } = await supabase
             .from('auth_users')
             .select('id')
@@ -215,21 +200,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               .limit(1)
 
             token.role = profiles && profiles.length > 0 ? profiles[0].role : 'عميل'
-            console.log('✅ Google user role set to:', token.role)
           }
         } else {
-          console.log('🟢 Credentials sign-in detected')
+          // Credentials sign-in
           token.userId = user.id
           token.role = user.role
-          console.log('📝 Setting token.role from user.role:', user.role)
-          console.log('✅ Token after setting:', { userId: token.userId, role: token.role })
         }
-
-        console.log('✅ JWT created with role:', token.role)
       } else if (token.userId && !token.role) {
         // Subsequent requests - role is missing, fetch it again
-        console.log('⚠️ Role missing in token, fetching from database...')
-
         const { data: profiles, error: profileError } = await supabase
           .from('user_profiles')
           .select('role')
@@ -238,19 +216,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!profileError && profiles && profiles.length > 0) {
           token.role = profiles[0].role
-          console.log('✅ Role fetched:', token.role)
         } else {
           token.role = 'عميل' // Default fallback
-          console.log('⚠️ Could not fetch role, using default: عميل')
         }
       }
-
-      console.log('🔑 JWT CALLBACK COMPLETE - Final token:', {
-        userId: token.userId,
-        role: token.role,
-        hasRole: !!token.role
-      })
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
 
       return token
     },

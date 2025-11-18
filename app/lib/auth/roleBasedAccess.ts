@@ -76,25 +76,19 @@ export const rolePermissions: Record<UserRole, string[]> = {
 
 // Check if user has access to a specific page
 export const hasPageAccess = (userRole: UserRole | null, pagePath: string): boolean => {
-  console.log('🔍 hasPageAccess called:', { userRole, pagePath });
+  // No logging - keep console clean for production
 
   if (!userRole) {
-    console.log('❌ No user role provided');
     return false;
   }
 
   const allowedPages = rolePermissions[userRole];
   if (!allowedPages) {
-    console.log('❌ No permissions found for role:', userRole);
-    console.log('Available roles:', Object.keys(rolePermissions));
     return false;
   }
 
-  console.log('✅ Allowed pages for role:', userRole, '→', allowedPages.length, 'pages');
-
   // Check exact match first
   if (allowedPages.includes(pagePath)) {
-    console.log('✅ Exact match found:', pagePath);
     return true;
   }
 
@@ -102,16 +96,11 @@ export const hasPageAccess = (userRole: UserRole | null, pagePath: string): bool
   const hasSubPathAccess = allowedPages.some(allowedPath => {
     // Handle dynamic routes like /admin/products/[id]
     if (pagePath.startsWith(allowedPath + '/')) {
-      console.log('✅ Sub-path match:', pagePath, 'starts with', allowedPath + '/');
       return true;
     }
 
     return false;
   });
-
-  if (!hasSubPathAccess) {
-    console.log('❌ No match found for path:', pagePath);
-  }
 
   return hasSubPathAccess;
 };
