@@ -82,7 +82,7 @@ export default async function middleware(request: NextRequest) {
       console.log('👤 Role from JWT:', userRole, '(Type:', typeof userRole, ')')
 
       if (!userRole) {
-        console.log('⚠️ WARNING: No role found in JWT! User needs to re-login.')
+        console.log('⚠️ WARNING: No role found in JWT! Forcing re-login...')
       }
     } catch (error) {
       console.error('❌ Error reading JWT:', error)
@@ -109,6 +109,15 @@ export default async function middleware(request: NextRequest) {
       console.log('❌ No session, redirecting to login')
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // If session exists but role is missing, force re-login to get fresh JWT
+    if (!userRole) {
+      console.log('❌ Session exists but role missing! Forcing re-login...')
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      loginUrl.searchParams.set('error', 'session_expired')
       return NextResponse.redirect(loginUrl)
     }
 
