@@ -48,23 +48,31 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Use API route instead of direct Supabase client
+      // This bypasses RLS issues with NextAuth sessions
+      const response = await fetch('/api/user/profile');
 
-      if (error) {
-        console.error('❌ Error fetching user profile:', error);
-        setError(error.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Error fetching user profile:', errorData);
+        setError(errorData.error || 'Failed to fetch profile');
         setProfile(null);
         lastFetchedUserId.current = null;
-      } else {
-        setProfile(data as UserProfile);
+        return;
+      }
+
+      const { profile } = await response.json();
+
+      if (profile) {
+        setProfile(profile as UserProfile);
         lastFetchedUserId.current = userId;
+      } else {
+        setError('Profile not found');
+        setProfile(null);
+        lastFetchedUserId.current = null;
       }
     } catch (err) {
-      console.error('Error fetching user profile:', err);
+      console.error('❌ Error fetching user profile:', err);
       setError('Failed to fetch user profile');
       setProfile(null);
       lastFetchedUserId.current = null;
