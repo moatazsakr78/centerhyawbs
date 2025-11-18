@@ -62,7 +62,12 @@ export default async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET
   })
 
-  console.log('👤 User role:', token?.role || 'Not authenticated')
+  console.log('👤 Token data:', {
+    role: token?.role,
+    userId: token?.userId,
+    email: token?.email,
+    hasToken: !!token
+  })
 
   const userRole = token?.role as UserRole | null
 
@@ -78,7 +83,7 @@ export default async function middleware(request: NextRequest) {
 
   // Block admin paths for non-admins
   if (isAdminPath) {
-    console.log('🔒 Admin-only path detected')
+    console.log('🔒 Admin-only path detected:', pathname)
 
     // If no session, redirect to login
     if (!token) {
@@ -90,14 +95,20 @@ export default async function middleware(request: NextRequest) {
 
     // Check if user has access
     const hasAccess = hasPageAccess(userRole, pathname)
-    console.log('🔍 Admin path - Role:', userRole, '→ Access:', hasAccess)
+    console.log('🔍 Authorization check:', {
+      path: pathname,
+      userRole: userRole,
+      hasAccess: hasAccess,
+      roleType: typeof userRole,
+      rolePermissions: userRole ? rolePermissions[userRole] : 'N/A'
+    })
 
     if (!hasAccess) {
-      console.log('❌ Access denied! Redirecting to home')
+      console.log('❌ Access DENIED! User role:', userRole, 'Path:', pathname)
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    console.log('✅ Access granted')
+    console.log('✅ Access GRANTED for role:', userRole, 'to path:', pathname)
   }
 
   // Block customer paths for admins (they should use customer-orders instead of my-orders)

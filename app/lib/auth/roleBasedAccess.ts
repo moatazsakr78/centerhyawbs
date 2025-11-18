@@ -76,24 +76,44 @@ export const rolePermissions: Record<UserRole, string[]> = {
 
 // Check if user has access to a specific page
 export const hasPageAccess = (userRole: UserRole | null, pagePath: string): boolean => {
-  if (!userRole) return false;
-  
+  console.log('🔍 hasPageAccess called:', { userRole, pagePath });
+
+  if (!userRole) {
+    console.log('❌ No user role provided');
+    return false;
+  }
+
   const allowedPages = rolePermissions[userRole];
-  if (!allowedPages) return false;
-  
+  if (!allowedPages) {
+    console.log('❌ No permissions found for role:', userRole);
+    console.log('Available roles:', Object.keys(rolePermissions));
+    return false;
+  }
+
+  console.log('✅ Allowed pages for role:', userRole, '→', allowedPages.length, 'pages');
+
   // Check exact match first
-  if (allowedPages.includes(pagePath)) return true;
-  
+  if (allowedPages.includes(pagePath)) {
+    console.log('✅ Exact match found:', pagePath);
+    return true;
+  }
+
   // Check if it's a dynamic route or sub-path
-  return allowedPages.some(allowedPath => {
+  const hasSubPathAccess = allowedPages.some(allowedPath => {
     // Handle dynamic routes like /admin/products/[id]
-    if (pagePath.startsWith(allowedPath + '/')) return true;
-    
-    // Handle exact dashboard routes
-    if (allowedPath === '/dashboard' && pagePath.startsWith('/dashboard')) return true;
-    
+    if (pagePath.startsWith(allowedPath + '/')) {
+      console.log('✅ Sub-path match:', pagePath, 'starts with', allowedPath + '/');
+      return true;
+    }
+
     return false;
   });
+
+  if (!hasSubPathAccess) {
+    console.log('❌ No match found for path:', pagePath);
+  }
+
+  return hasSubPathAccess;
 };
 
 // Get user role based on is_admin flag (for backwards compatibility)
