@@ -3,26 +3,16 @@ import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { hasPageAccess, getUnauthorizedRedirect, type UserRole } from '@/app/lib/auth/roleBasedAccess'
 
-// Define public paths that don't require authentication
-const publicPaths = [
-  '/',
+// Paths that don't need any authentication or authorization
+const alwaysPublicPaths = [
   '/auth/login',
   '/auth/register',
   '/auth/error',
   '/auth/logout',
-  '/api',
-  '/_next',
-  '/favicon.ico',
-  '/images',
-  '/fonts',
-  '/store',
-  '/products',
-  '/product',
-  '/my-orders',
-  '/profile'
+  '/api/auth', // NextAuth API routes
 ]
 
-// Define admin-only paths that require authentication and role check
+// Paths that require authentication and specific roles
 const adminOnlyPaths = [
   '/dashboard',
   '/pos',
@@ -34,14 +24,35 @@ const adminOnlyPaths = [
   '/permissions',
   '/admin',
   '/customer-orders',
-  '/shipping'
+  '/shipping',
+  '/products', // النظام (مش المتجر)
+  '/settings',
+]
+
+// Paths for customers only (admins should use customer-orders instead)
+const customerOnlyPaths = [
+  '/my-orders',
+  '/cart',
+  '/checkout',
 ]
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow public paths without any checks
-  if (publicPaths.some(path => pathname.startsWith(path))) {
+  console.log('🔍 Middleware checking:', pathname)
+
+  // Skip NextAuth internal routes and static files
+  if (pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/favicon') ||
+      pathname.startsWith('/images') ||
+      pathname.startsWith('/fonts')) {
+    return NextResponse.next()
+  }
+
+  // Allow always-public paths (login, register, etc.)
+  if (alwaysPublicPaths.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+    console.log('✅ Public path, allowing')
     return NextResponse.next()
   }
 
@@ -51,47 +62,75 @@ export default async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET
   })
 
-  // Check if trying to access admin-only path
-  const isAdminPath = adminOnlyPaths.some(path => pathname.startsWith(path))
+  console.log('👤 User role:', token?.role || 'Not authenticated')
 
+  const userRole = token?.role as UserRole | null
+
+  // Check if it's an admin-only path
+  const isAdminPath = adminOnlyPaths.some(path =>
+    pathname === path || pathname.startsWith(path + '/')
+  )
+
+  // Check if it's a customer-only path
+  const isCustomerPath = customerOnlyPaths.some(path =>
+    pathname === path || pathname.startsWith(path + '/')
+  )
+
+  // Block admin paths for non-admins
   if (isAdminPath) {
+    console.log('🔒 Admin-only path detected')
+
     // If no session, redirect to login
     if (!token) {
+      console.log('❌ No token, redirecting to login')
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    // Check role-based access
-    const userRole = token.role as UserRole | null
+    // Check if user has access
+    const hasAccess = hasPageAccess(userRole, pathname)
+    console.log('🔍 Admin path - Role:', userRole, '→ Access:', hasAccess)
 
-    // If user doesn't have access to this path
-    if (!hasPageAccess(userRole, pathname)) {
-      const redirectPath = getUnauthorizedRedirect(userRole)
-
-      // Prevent redirect loop - don't redirect if already on the redirect target
-      if (pathname === redirectPath || pathname.startsWith(redirectPath + '?')) {
-        // Just show access denied instead of redirecting
-        return NextResponse.redirect(new URL('/auth/error?error=AccessDenied', request.url))
-      }
-
-      const redirectUrl = new URL(redirectPath, request.url)
-      return NextResponse.redirect(redirectUrl)
+    if (!hasAccess) {
+      console.log('❌ Access denied! Redirecting to home')
+      return NextResponse.redirect(new URL('/', request.url))
     }
+
+    console.log('✅ Access granted')
   }
 
+  // Block customer paths for admins (they should use customer-orders instead of my-orders)
+  if (isCustomerPath && userRole) {
+    console.log('🔒 Customer-only path detected')
+
+    const isAdmin = userRole === 'أدمن رئيسي' || userRole === 'موظف'
+
+    if (isAdmin) {
+      console.log('❌ Admins cannot access customer pages, redirecting to customer-orders')
+      // Redirect admin to customer-orders instead of my-orders
+      if (pathname.startsWith('/my-orders')) {
+        return NextResponse.redirect(new URL('/customer-orders', request.url))
+      }
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    console.log('✅ Customer access granted')
+  }
+
+  console.log('✅ Allowing access to:', pathname)
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * Match all request paths except:
+     * - api routes (handled separately)
      * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - _next/image (image optimization)
+     * - favicon.ico
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
