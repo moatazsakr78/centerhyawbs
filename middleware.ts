@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
-import { hasPageAccess, getUnauthorizedRedirect, rolePermissions, type UserRole } from '@/app/lib/auth/roleBasedAccess'
+import { hasPageAccess, rolePermissions, type UserRole } from '@/app/lib/auth/roleBasedAccess'
 
 // Paths that don't need any authentication or authorization
 const alwaysPublicPaths = [
@@ -58,20 +57,15 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get session token
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET
-  })
+  // Check for NextAuth session cookie
+  const sessionCookie = request.cookies.get(
+    process.env.NODE_ENV === 'production'
+      ? '__Secure-next-auth.session-token'
+      : 'next-auth.session-token'
+  )
 
-  console.log('👤 Token data:', {
-    role: token?.role,
-    userId: token?.userId,
-    email: token?.email,
-    hasToken: !!token
-  })
-
-  const userRole = token?.role as UserRole | null
+  const hasSession = !!sessionCookie
+  console.log('👤 Session exists:', hasSession)
 
   // Check if it's an admin-only path
   const isAdminPath = adminOnlyPaths.some(path =>
@@ -83,52 +77,26 @@ export default async function middleware(request: NextRequest) {
     pathname === path || pathname.startsWith(path + '/')
   )
 
-  // Block admin paths for non-admins
+  // Block admin paths for non-authenticated users
   if (isAdminPath) {
     console.log('🔒 Admin-only path detected:', pathname)
 
-    // If no session, redirect to login
-    if (!token) {
-      console.log('❌ No token, redirecting to login')
+    // If no session cookie, redirect to login
+    if (!hasSession) {
+      console.log('❌ No session, redirecting to login')
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    // Check if user has access
-    const hasAccess = hasPageAccess(userRole, pathname)
-    console.log('🔍 Authorization check:', {
-      path: pathname,
-      userRole: userRole,
-      hasAccess: hasAccess,
-      roleType: typeof userRole,
-      rolePermissions: userRole ? rolePermissions[userRole] : 'N/A'
-    })
-
-    if (!hasAccess) {
-      console.log('❌ Access DENIED! User role:', userRole, 'Path:', pathname)
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-
-    console.log('✅ Access GRANTED for role:', userRole, 'to path:', pathname)
+    // If session exists, allow access
+    // Role-based authorization will be handled by individual pages using getServerSession
+    console.log('✅ Session exists, allowing access (role check in page)')
   }
 
-  // Block customer paths for admins (they should use customer-orders instead of my-orders)
-  if (isCustomerPath && userRole) {
-    console.log('🔒 Customer-only path detected')
-
-    const isAdmin = userRole === 'أدمن رئيسي' || userRole === 'موظف'
-
-    if (isAdmin) {
-      console.log('❌ Admins cannot access customer pages, redirecting to customer-orders')
-      // Redirect admin to customer-orders instead of my-orders
-      if (pathname.startsWith('/my-orders')) {
-        return NextResponse.redirect(new URL('/customer-orders', request.url))
-      }
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    console.log('✅ Customer access granted')
+  // Customer paths - just check for session
+  if (isCustomerPath && hasSession) {
+    console.log('✅ Customer path with session, allowing')
   }
 
   console.log('✅ Allowing access to:', pathname)
