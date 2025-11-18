@@ -370,10 +370,9 @@ class DatabaseSettingsService {
       database = !error;
       if (error) errors.push(`Database: ${error.message}`);
 
-      // Test user session
-      const userId = await this.getCurrentUserId();
-      user = !!userId;
-      if (!userId) errors.push('User: No active session');
+      // Skip Supabase Auth user check since we use NextAuth
+      // The user session is managed by NextAuth, not Supabase Auth
+      user = true;
 
       // Cache is always healthy if no errors
       const cacheStats = this.getCacheStats();
@@ -383,7 +382,7 @@ class DatabaseSettingsService {
       errors.push(`System: ${error}`);
     }
 
-    const isHealthy = database && cache && user && errors.length === 0;
+    const isHealthy = database && cache && errors.length === 0;
 
     return {
       isHealthy,
