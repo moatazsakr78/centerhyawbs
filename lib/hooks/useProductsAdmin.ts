@@ -13,6 +13,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/app/lib/supabase/client';
 
+// ✨ Video interface for product_videos table
+export interface ProductVideo {
+  id: string;
+  product_id: string;
+  video_url: string;
+  thumbnail_url?: string | null;
+  video_name?: string | null;
+  video_size?: number | null;
+  duration?: number | null;
+  sort_order?: number | null;
+  created_at?: string | null;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -55,6 +68,9 @@ export interface Product {
   variantsData?: Record<string, any[]>;
   productColors?: Array<{id: string; name: string; color: string}>;
   allImages?: string[];
+  // ✨ Export fields
+  additional_images?: any[] | null; // Mapped from additional_images_urls for export
+  productVideos?: ProductVideo[]; // Videos from product_videos table
   // Helper computed fields
   finalPrice?: number; // Price after discount
   isDiscounted?: boolean;
@@ -180,11 +196,23 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         console.warn('Error fetching variants:', variantsError);
       }
 
+      // ✨ Query 5: Get ALL videos for ALL products in ONE query
+      const { data: videos, error: videosError } = await (supabase as any)
+        .from('product_videos')
+        .select('id, product_id, video_url, thumbnail_url, video_name, video_size, duration, sort_order, created_at')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true });
+
+      if (videosError) {
+        console.warn('Error fetching videos:', videosError);
+      }
+
       console.timeEnd('⚡ Fetch products with inventory');
 
-      // Group inventory and variants by product ID for O(1) lookup
+      // Group inventory, variants, and videos by product ID for O(1) lookup
       const inventoryMap = new Map<string, any[]>();
       const variantsMap = new Map<string, any[]>();
+      const videosMap = new Map<string, ProductVideo[]>();
 
       (inventory || []).forEach(item => {
         const existing = inventoryMap.get(item.product_id) || [];
@@ -198,10 +226,17 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
         variantsMap.set(item.product_id, existing);
       });
 
+      (videos || []).forEach((item: any) => {
+        const existing = videosMap.get(item.product_id) || [];
+        existing.push(item as ProductVideo);
+        videosMap.set(item.product_id, existing);
+      });
+
       // Enrich products with computed data (client-side - fast!)
       const enrichedProducts: Product[] = rawProducts.map((product: any) => {
         const productInventory = inventoryMap.get(product.id) || [];
         const productVariants = variantsMap.get(product.id) || [];
+        const productVideos = videosMap.get(product.id) || [];
 
         // Calculate total stock
         let totalQuantity = 0;
@@ -284,12 +319,17 @@ export function useProductsAdmin(options?: { selectedBranches?: string[] }) {
           }
         }
 
+        // ✨ Map additional_images for export (from additional_images_urls)
+        const exportAdditionalImages = (product as any).additional_images_urls || [];
+
         return {
           ...product,
           totalQuantity,
           inventoryData,
           variantsData,
           allImages,
+          additional_images: exportAdditionalImages, // ✨ For export modal
+          productVideos: productVideos, // ✨ Videos from product_videos table
           finalPrice,
           isDiscounted: isDiscountActive,
           discountLabel,
