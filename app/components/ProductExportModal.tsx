@@ -50,6 +50,13 @@ export default function ProductExportModal({
 
   const [exportMode, setExportMode] = useState<'all' | 'selected'>('all')
 
+  // ✨ Export progress state
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportProgress, setExportProgress] = useState(0)
+  const [currentProductName, setCurrentProductName] = useState('')
+  const [processedCount, setProcessedCount] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
+
   if (!isOpen) return null
 
   // ✨ تحويل URL إلى base64 (مع دعم الفيديوهات الكبيرة)
@@ -129,11 +136,27 @@ export default function ProductExportModal({
       return
     }
 
+    // ✨ Initialize export state
+    setIsExporting(true)
+    setExportProgress(0)
+    setProcessedCount(0)
+    setTotalCount(productsToExport.length)
+    setCurrentProductName('')
+
     console.log('🚀 Starting export process...')
     console.log(`📦 Exporting ${productsToExport.length} products`)
 
-    // تصفية البيانات حسب الخيارات المحددة
-    const exportData = await Promise.all(productsToExport.map(async (product) => {
+    try {
+    // تصفية البيانات حسب الخيارات المحددة - Sequential for progress tracking
+    const exportData: any[] = []
+
+    for (let i = 0; i < productsToExport.length; i++) {
+      const product = productsToExport[i]
+
+      // ✨ Update progress
+      setCurrentProductName(product.name)
+      setProcessedCount(i + 1)
+      setExportProgress(Math.round(((i + 1) / productsToExport.length) * 100))
       // Debug log لكل منتج - مع تفاصيل أكثر
       console.log('📤 Exporting product:', product.name)
       console.log('  - main_image_url:', product.main_image_url)
@@ -255,8 +278,8 @@ export default function ProductExportModal({
       // الإعدادات
       if (exportOptions.isActive) data.is_active = product.is_active
 
-      return data
-    }))
+      exportData.push(data)
+    } // End of for loop
 
     // Debug: طباعة البيانات النهائية
     console.log('📦 Final export data:', exportData)
@@ -308,6 +331,17 @@ export default function ProductExportModal({
       `✅ جميع الملفات تم تضمينها في ملف JSON`
     )
     onClose()
+    } catch (error) {
+      console.error('❌ Export error:', error)
+      alert('حدث خطأ أثناء التصدير. يرجى المحاولة مرة أخرى.')
+    } finally {
+      // ✨ Reset export state
+      setIsExporting(false)
+      setExportProgress(0)
+      setCurrentProductName('')
+      setProcessedCount(0)
+      setTotalCount(0)
+    }
   }
 
   const toggleAllOptions = (value: boolean) => {
@@ -605,22 +639,70 @@ export default function ProductExportModal({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            إلغاء
-          </button>
-          <button
-            onClick={handleExport}
-            className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            تصدير المنتجات
-          </button>
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          {/* ✨ Progress Bar - shown during export */}
+          {isExporting && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  جاري التصدير... ({processedCount} من {totalCount})
+                </span>
+                <span className="text-sm font-bold text-blue-600">{exportProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${exportProgress}%` }}
+                />
+              </div>
+              {currentProductName && (
+                <p className="text-xs text-gray-500 mt-1 truncate">
+                  📦 {currentProductName}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <button
+              onClick={onClose}
+              disabled={isExporting}
+              className={`px-4 py-2 rounded-lg ${
+                isExporting
+                  ? 'text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed'
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                isExporting
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
+            >
+              {isExporting ? (
+                <>
+                  {/* Spinner Icon */}
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  جاري التصدير...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  تصدير المنتجات
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
