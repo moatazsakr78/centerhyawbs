@@ -134,11 +134,23 @@ export default function ProductExportModal({
 
     // تصفية البيانات حسب الخيارات المحددة
     const exportData = await Promise.all(productsToExport.map(async (product) => {
-      // Debug log لكل منتج
+      // Debug log لكل منتج - مع تفاصيل أكثر
       console.log('📤 Exporting product:', product.name)
       console.log('  - main_image_url:', product.main_image_url)
-      console.log('  - additional_images:', product.additional_images?.length || 0, 'images')
-      console.log('  - productVideos:', product.productVideos?.length || 0, 'videos')
+      console.log('  - additional_images:', product.additional_images)
+      console.log('  - additional_images type:', typeof product.additional_images)
+      console.log('  - additional_images count:', Array.isArray(product.additional_images) ? product.additional_images.length : 0)
+      console.log('  - productVideos:', product.productVideos)
+      console.log('  - productVideos type:', typeof product.productVideos)
+      console.log('  - productVideos count:', Array.isArray(product.productVideos) ? product.productVideos.length : 0)
+
+      // التحقق من وجود البيانات
+      if (!product.additional_images || !Array.isArray(product.additional_images)) {
+        console.warn('⚠️ additional_images is not an array:', product.additional_images)
+      }
+      if (!product.productVideos || !Array.isArray(product.productVideos)) {
+        console.warn('⚠️ productVideos is not an array:', product.productVideos)
+      }
 
       const data: any = {}
 
