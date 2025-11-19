@@ -14,7 +14,10 @@ import type { Database } from '@/app/lib/supabase/database.types';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+const supabase = createClient<Database, 'elfaroukgroup'>(supabaseUrl, supabaseAnonKey, {
+  db: {
+    schema: 'elfaroukgroup' // Use elfaroukgroup schema for multi-tenant architecture
+  },
   auth: {
     persistSession: false,
   },

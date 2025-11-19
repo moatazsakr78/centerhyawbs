@@ -4,7 +4,12 @@ import bcrypt from "bcryptjs"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    db: {
+      schema: 'elfaroukgroup' // Use elfaroukgroup schema for multi-tenant architecture
+    }
+  }
 )
 
 export async function POST(req: Request) {

@@ -11,7 +11,11 @@ const ESSENTIAL_BUCKET_FILES = ['products/.emptyFolderPlaceholder'];
 export async function POST(request: NextRequest) {
   try {
     // Create Supabase admin client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: {
+        schema: 'elfaroukgroup' // Use elfaroukgroup schema for multi-tenant architecture
+      }
+    });
 
     // Get authorization header
     const authHeader = request.headers.get('authorization');
