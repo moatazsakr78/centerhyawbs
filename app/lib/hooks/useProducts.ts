@@ -280,6 +280,22 @@ export function useProducts() {
             console.warn('Unable to fetch variants data (likely auth required):', err)
           }
 
+          // ✨ Fetch product videos from product_videos table
+          let productVideos: ProductVideo[] = []
+          try {
+            const { data, error } = await (supabase as any)
+              .from('product_videos')
+              .select('*')
+              .eq('product_id', product.id)
+              .order('sort_order', { ascending: true })
+
+            if (!error && data) {
+              productVideos = data as ProductVideo[]
+            }
+          } catch (err) {
+            console.warn('Unable to fetch product videos:', err)
+          }
+
           // Group inventory by branch/warehouse
           const inventoryByBranch: Record<string, { quantity: number, min_stock: number }> = {}
           let totalQuantity = 0
@@ -421,6 +437,7 @@ export function useProducts() {
 
           console.log(`🔍 Processing product: ${product.name}`)
           console.log('  - additional_images:', parsedAdditionalImages.length, 'images')
+          console.log('  - productVideos:', productVideos.length, 'videos')
           console.log('  - actualVideoUrl:', actualVideoUrl ? 'Has video' : 'No video')
 
           return {
@@ -433,6 +450,7 @@ export function useProducts() {
             colors: colorVariants, // Add formatted colors for website
             allImages: uniqueImages, // Add all product images including sub_image
             additional_images: parsedAdditionalImages, // ✨ الصور الإضافية من الحقل الجديد
+            productVideos: productVideos, // ✨ قائمة الفيديوهات من جدول product_videos
             actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو الفعلي فقط
             finalPrice: finalPrice,
             isDiscounted: isDiscountActive,
@@ -707,6 +725,22 @@ export function useProducts() {
               const parsedAdditionalImages = product.additional_images_urls || []
               const actualVideoUrl = product.video_url || null
 
+              // ✨ Fetch product videos for the new product
+              let productVideos: ProductVideo[] = []
+              try {
+                const { data: videosData } = await (supabase as any)
+                  .from('product_videos')
+                  .select('*')
+                  .eq('product_id', newProduct.id)
+                  .order('sort_order', { ascending: true })
+
+                if (videosData) {
+                  productVideos = videosData as ProductVideo[]
+                }
+              } catch (err) {
+                console.warn('Unable to fetch product videos for new product:', err)
+              }
+
               // Build allImages array with main image and sub-images
               const allImages: string[] = []
               if (newProduct.main_image_url) {
@@ -723,6 +757,7 @@ export function useProducts() {
                 description: actualDescription, // Use parsed description text only
                 productColors: productColors, // Add parsed colors
                 additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+                productVideos: productVideos, // ✨ قائمة الفيديوهات
                 actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
                 totalQuantity: 0,
                 inventoryData: {},
@@ -791,6 +826,22 @@ export function useProducts() {
               const parsedAdditionalImages = product.additional_images_urls || []
               const actualVideoUrl = product.video_url || null
 
+              // ✨ Fetch product videos for the updated product
+              let productVideos: ProductVideo[] = []
+              try {
+                const { data: videosData } = await (supabase as any)
+                  .from('product_videos')
+                  .select('*')
+                  .eq('product_id', updatedProduct.id)
+                  .order('sort_order', { ascending: true })
+
+                if (videosData) {
+                  productVideos = videosData as ProductVideo[]
+                }
+              } catch (err) {
+                console.warn('Unable to fetch product videos for updated product:', err)
+              }
+
               // Build allImages array with main image and sub-images
               const updatedAllImages: string[] = []
               if (updatedProduct.main_image_url) {
@@ -809,6 +860,7 @@ export function useProducts() {
                       description: actualDescription, // Use parsed description text only
                       productColors: productColors, // Add parsed colors from updated product
                       additional_images: parsedAdditionalImages, // ✨ من الحقل الجديد
+                      productVideos: productVideos, // ✨ قائمة الفيديوهات
                       actualVideoUrl: actualVideoUrl, // ✨ رابط الفيديو فقط
                       allImages: updatedAllImages, // ✨ Now includes sub-images
                       // Preserve existing inventory and variants data
