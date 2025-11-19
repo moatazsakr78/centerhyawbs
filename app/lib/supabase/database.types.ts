@@ -12,7 +12,7 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  public: {
+  elfaroukgroup: {
     Tables: {
       branch_stocks: {
         Row: {
@@ -685,7 +685,7 @@ export type Database = {
           customer_phone: string
           delivery_type: string | null
           id: string
-          invoice_type: Database["public"]["Enums"]["invoice_type_enum"] | null
+          invoice_type: Database["elfaroukgroup"]["Enums"]["invoice_type_enum"] | null
           notes: string | null
           order_number: string
           shipping_amount: number | null
@@ -706,7 +706,7 @@ export type Database = {
           customer_phone: string
           delivery_type?: string | null
           id?: string
-          invoice_type?: Database["public"]["Enums"]["invoice_type_enum"] | null
+          invoice_type?: Database["elfaroukgroup"]["Enums"]["invoice_type_enum"] | null
           notes?: string | null
           order_number: string
           shipping_amount?: number | null
@@ -727,7 +727,7 @@ export type Database = {
           customer_phone?: string
           delivery_type?: string | null
           id?: string
-          invoice_type?: Database["public"]["Enums"]["invoice_type_enum"] | null
+          invoice_type?: Database["elfaroukgroup"]["Enums"]["invoice_type_enum"] | null
           notes?: string | null
           order_number?: string
           shipping_amount?: number | null
@@ -1404,7 +1404,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           invoice_type:
-            | Database["public"]["Enums"]["purchase_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["purchase_invoice_type_enum"]
             | null
           is_active: boolean | null
           net_amount: number
@@ -1427,7 +1427,7 @@ export type Database = {
           invoice_date?: string
           invoice_number: string
           invoice_type?:
-            | Database["public"]["Enums"]["purchase_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["purchase_invoice_type_enum"]
             | null
           is_active?: boolean | null
           net_amount?: number
@@ -1450,7 +1450,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string
           invoice_type?:
-            | Database["public"]["Enums"]["purchase_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["purchase_invoice_type_enum"]
             | null
           is_active?: boolean | null
           net_amount?: number
@@ -1594,7 +1594,7 @@ export type Database = {
           id: string
           invoice_number: string
           invoice_type:
-            | Database["public"]["Enums"]["sales_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["sales_invoice_type_enum"]
             | null
           is_updated: boolean | null
           notes: string | null
@@ -1615,7 +1615,7 @@ export type Database = {
           id?: string
           invoice_number: string
           invoice_type?:
-            | Database["public"]["Enums"]["sales_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["sales_invoice_type_enum"]
             | null
           is_updated?: boolean | null
           notes?: string | null
@@ -1636,7 +1636,7 @@ export type Database = {
           id?: string
           invoice_number?: string
           invoice_type?:
-            | Database["public"]["Enums"]["sales_invoice_type_enum"]
+            | Database["elfaroukgroup"]["Enums"]["sales_invoice_type_enum"]
             | null
           is_updated?: boolean | null
           notes?: string | null
