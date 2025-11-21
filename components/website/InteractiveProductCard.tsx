@@ -99,17 +99,6 @@ export default function InteractiveProductCard({
 
     const finalImages = images.filter(Boolean) as string[];
 
-    // 🐛 DEBUG: Show product image data in console
-    if (finalImages.length > 0) {
-      console.log(`📸 Product "${product.name}":`, {
-        mainImage: currentProduct.image,
-        additionalImages: currentProduct.images,
-        totalImages: finalImages.length,
-        allImages: finalImages,
-        hoverEffectEnabled: finalImages.length > 1 && deviceType === 'desktop'
-      });
-    }
-
     return finalImages;
   })();
 
@@ -239,14 +228,8 @@ export default function InteractiveProductCard({
       ? [selectedColor.image_url, ...allImages.filter(img => img !== selectedColor.image_url)]
       : allImages;
 
-    // Debug: Log available images (remove after testing)
-    if (availableImages.length > 1) {
-      console.log(`🖼️ "${product.name}" has ${availableImages.length} images:`, availableImages);
-    }
-
     // Early return if no multiple images - performance optimization
     if (availableImages.length <= 1) {
-      console.log(`⚠️ "${product.name}" has only ${availableImages.length} image(s) - hover effect disabled`);
       return;
     }
 
@@ -263,11 +246,6 @@ export default function InteractiveProductCard({
 
     const clampedIndex = Math.max(0, Math.min(imageIndex, availableImages.length - 1));
 
-    // Debug log (remove after testing)
-    if (clampedIndex !== currentImageIndex) {
-      console.log(`📍 Switching to image ${clampedIndex + 1}/${availableImages.length} (position: ${(normalizedPosition * 100).toFixed(0)}%)`);
-    }
-
     // Update only when index changes - performance optimization
     if (clampedIndex !== currentImageIndex) {
       // Use requestAnimationFrame for smooth 60fps transitions
@@ -281,8 +259,6 @@ export default function InteractiveProductCard({
   const handleImageMouseLeave = () => {
     // 🖥️ DESKTOP ONLY - Disable for tablet and mobile
     if (deviceType !== 'desktop') return;
-
-    console.log('🔄 Mouse left - resetting to first image');
     setCurrentImageIndex(0);
   };
 
