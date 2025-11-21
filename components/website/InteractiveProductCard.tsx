@@ -82,6 +82,37 @@ export default function InteractiveProductCard({
 
   const currentProduct = getCurrentProductData();
 
+  // Create array of all available images (main image + additional images)
+  const allImages = (() => {
+    const images = [];
+
+    // Add main image first
+    if (currentProduct.image) {
+      images.push(currentProduct.image);
+    }
+
+    // Add all additional images from the images array
+    if (currentProduct.images && Array.isArray(currentProduct.images)) {
+      const additionalImages = currentProduct.images.filter(img => img && img !== currentProduct.image);
+      images.push(...additionalImages);
+    }
+
+    const finalImages = images.filter(Boolean) as string[];
+
+    // 🐛 DEBUG: Show product image data in console
+    if (finalImages.length > 0) {
+      console.log(`📸 Product "${product.name}":`, {
+        mainImage: currentProduct.image,
+        additionalImages: currentProduct.images,
+        totalImages: finalImages.length,
+        allImages: finalImages,
+        hoverEffectEnabled: finalImages.length > 1 && deviceType === 'desktop'
+      });
+    }
+
+    return finalImages;
+  })();
+
   // ⚡ Preload images for instant hover effect - CDN friendly
   useEffect(() => {
     if (allImages.length > 1) {
@@ -103,34 +134,6 @@ export default function InteractiveProductCard({
     }
     return currentProduct.price;
   };
-
-  // Create array of all available images (main image + additional images)
-  const allImages = (() => {
-    const images = [];
-
-    // Add main image first
-    if (currentProduct.image) {
-      images.push(currentProduct.image);
-    }
-
-    // Add all additional images from the images array
-    if (currentProduct.images && Array.isArray(currentProduct.images)) {
-      const additionalImages = currentProduct.images.filter(img => img && img !== currentProduct.image);
-      images.push(...additionalImages);
-    }
-
-    const finalImages = images.filter(Boolean) as string[];
-
-    // Debug: uncomment to check product data
-    // console.log(`📸 Product "${product.name}":`, {
-    //   mainImage: product.image,
-    //   additionalImages: product.images,
-    //   totalImages: finalImages.length,
-    //   allImages: finalImages
-    // });
-
-    return finalImages;
-  })();
 
   // Get current display image - prioritize selected shape, then color images, then regular images
   const getCurrentDisplayImage = () => {
@@ -222,10 +225,11 @@ export default function InteractiveProductCard({
     }
   };
 
-  // Handle mouse movement over the image to cycle through images (for desktop and mobile)
+  // Handle mouse movement over the image to cycle through images (DESKTOP ONLY)
   // ⚡ Optimized for performance and smooth transitions
   const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (deviceType === 'tablet') return; // Disable mousemove for tablet
+    // 🖥️ DESKTOP ONLY - Disable for tablet and mobile
+    if (deviceType !== 'desktop') return;
 
     const imageContainer = imageRef.current;
     if (!imageContainer) return;
@@ -235,8 +239,16 @@ export default function InteractiveProductCard({
       ? [selectedColor.image_url, ...allImages.filter(img => img !== selectedColor.image_url)]
       : allImages;
 
+    // Debug: Log available images (remove after testing)
+    if (availableImages.length > 1) {
+      console.log(`🖼️ "${product.name}" has ${availableImages.length} images:`, availableImages);
+    }
+
     // Early return if no multiple images - performance optimization
-    if (availableImages.length <= 1) return;
+    if (availableImages.length <= 1) {
+      console.log(`⚠️ "${product.name}" has only ${availableImages.length} image(s) - hover effect disabled`);
+      return;
+    }
 
     const rect = imageContainer.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -251,6 +263,11 @@ export default function InteractiveProductCard({
 
     const clampedIndex = Math.max(0, Math.min(imageIndex, availableImages.length - 1));
 
+    // Debug log (remove after testing)
+    if (clampedIndex !== currentImageIndex) {
+      console.log(`📍 Switching to image ${clampedIndex + 1}/${availableImages.length} (position: ${(normalizedPosition * 100).toFixed(0)}%)`);
+    }
+
     // Update only when index changes - performance optimization
     if (clampedIndex !== currentImageIndex) {
       // Use requestAnimationFrame for smooth 60fps transitions
@@ -260,9 +277,12 @@ export default function InteractiveProductCard({
     }
   };
 
-  // Reset to first image when mouse leaves (for desktop and mobile)
+  // Reset to first image when mouse leaves (DESKTOP ONLY)
   const handleImageMouseLeave = () => {
-    if (deviceType === 'tablet') return; // Disable mouseleave for tablet
+    // 🖥️ DESKTOP ONLY - Disable for tablet and mobile
+    if (deviceType !== 'desktop') return;
+
+    console.log('🔄 Mouse left - resetting to first image');
     setCurrentImageIndex(0);
   };
 
@@ -343,8 +363,10 @@ export default function InteractiveProductCard({
             e.stopPropagation();
           }
         }}
-        onMouseMove={handleImageMouseMove}
-        onMouseLeave={handleImageMouseLeave}
+        // 🖥️ Mouse events for DESKTOP ONLY - Image hover cycling
+        onMouseMove={deviceType === 'desktop' ? handleImageMouseMove : undefined}
+        onMouseLeave={deviceType === 'desktop' ? handleImageMouseLeave : undefined}
+        // 📱 Touch events for TABLET ONLY - Swipe navigation
         onTouchStart={deviceType === 'tablet' ? handleTouchStart : undefined}
         onTouchMove={deviceType === 'tablet' ? handleTouchMove : undefined}
         onTouchEnd={deviceType === 'tablet' ? handleTouchEnd : undefined}
@@ -374,6 +396,13 @@ export default function InteractiveProductCard({
           </span>
         )}
 
+        {/* 🐛 DEBUG: Show image count indicator (Desktop only) */}
+        {deviceType === 'desktop' && allImages.length > 1 && (
+          <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+            <span>🖼️</span>
+            <span>{allImages.length} صور</span>
+          </div>
+        )}
 
       </div>
       
