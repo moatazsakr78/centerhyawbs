@@ -163,26 +163,27 @@ export function useStoreThemes() {
 
   const addTheme = async (name: string, primaryColor: string, primaryHoverColor: string, interactiveColor: string, buttonColor: string, buttonHoverColor: string) => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('store_theme_colors')
-        .insert({
+      const response = await fetch('/api/store-themes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name,
-          primary_color: primaryColor,
-          primary_hover_color: primaryHoverColor,
-          interactive_color: interactiveColor,
-          button_color: buttonColor,
-          button_hover_color: buttonHoverColor,
-          is_active: false,
-          is_default: false,
-        })
-        .select()
-        .single();
+          primaryColor,
+          primaryHoverColor,
+          interactiveColor,
+          buttonColor,
+          buttonHoverColor,
+        }),
+      });
 
-      if (error) {
-        console.error('Error adding theme:', error);
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add theme');
       }
 
+      const { data } = await response.json();
       await fetchThemes();
       return data;
     } catch (err) {
@@ -193,26 +194,17 @@ export function useStoreThemes() {
 
   const activateTheme = async (themeId: string) => {
     try {
-      // First, deactivate all themes
-      const { error: deactivateError } = await (supabase as any)
-        .from('store_theme_colors')
-        .update({ is_active: false })
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Update all rows
+      const response = await fetch('/api/store-themes/activate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: themeId }),
+      });
 
-      if (deactivateError) {
-        console.error('Error deactivating themes:', deactivateError);
-        throw deactivateError;
-      }
-
-      // Then activate the selected theme
-      const { error: activateError } = await (supabase as any)
-        .from('store_theme_colors')
-        .update({ is_active: true })
-        .eq('id', themeId);
-
-      if (activateError) {
-        console.error('Error activating theme:', activateError);
-        throw activateError;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to activate theme');
       }
 
       await fetchThemes();
@@ -224,14 +216,13 @@ export function useStoreThemes() {
 
   const deleteTheme = async (themeId: string) => {
     try {
-      const { error } = await (supabase as any)
-        .from('store_theme_colors')
-        .delete()
-        .eq('id', themeId);
+      const response = await fetch(`/api/store-themes?id=${themeId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) {
-        console.error('Error deleting theme:', error);
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete theme');
       }
 
       await fetchThemes();
@@ -243,20 +234,24 @@ export function useStoreThemes() {
 
   const updateTheme = async (themeId: string, primaryColor: string, primaryHoverColor: string, interactiveColor: string, buttonColor: string, buttonHoverColor: string) => {
     try {
-      const { error } = await (supabase as any)
-        .from('store_theme_colors')
-        .update({
-          primary_color: primaryColor,
-          primary_hover_color: primaryHoverColor,
-          interactive_color: interactiveColor,
-          button_color: buttonColor,
-          button_hover_color: buttonHoverColor,
-        })
-        .eq('id', themeId);
+      const response = await fetch('/api/store-themes', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: themeId,
+          primaryColor,
+          primaryHoverColor,
+          interactiveColor,
+          buttonColor,
+          buttonHoverColor,
+        }),
+      });
 
-      if (error) {
-        console.error('Error updating theme:', error);
-        throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update theme');
       }
 
       await fetchThemes();
