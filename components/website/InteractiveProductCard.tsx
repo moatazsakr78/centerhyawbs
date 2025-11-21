@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product, ProductColor, ProductShape, ProductSize } from './shared/types';
 import { useCart } from '../../lib/contexts/CartContext';
@@ -82,12 +82,19 @@ export default function InteractiveProductCard({
 
   const currentProduct = getCurrentProductData();
 
-  // Debug logging
-  if (selectedSize) {
-    console.log('Selected size:', selectedSize);
-    console.log('Current product:', currentProduct);
-    console.log('Description:', currentProduct.description);
-  }
+  // ⚡ Preload images for instant hover effect - CDN friendly
+  useEffect(() => {
+    if (allImages.length > 1) {
+      // Preload all product images in the background
+      allImages.forEach((imageUrl) => {
+        if (imageUrl) {
+          const img = new Image();
+          img.src = imageUrl;
+          // Images are cached by browser/CDN automatically
+        }
+      });
+    }
+  }, [allImages]);
 
   // Determine which price to display based on user role
   const getDisplayPrice = () => {
@@ -216,6 +223,7 @@ export default function InteractiveProductCard({
   };
 
   // Handle mouse movement over the image to cycle through images (for desktop and mobile)
+  // ⚡ Optimized for performance and smooth transitions
   const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (deviceType === 'tablet') return; // Disable mousemove for tablet
 
@@ -227,27 +235,28 @@ export default function InteractiveProductCard({
       ? [selectedColor.image_url, ...allImages.filter(img => img !== selectedColor.image_url)]
       : allImages;
 
+    // Early return if no multiple images - performance optimization
     if (availableImages.length <= 1) return;
 
     const rect = imageContainer.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const containerWidth = rect.width;
 
-    // Make it more sensitive - divide image into equal sections based on image count
-    const normalizedPosition = Math.max(0, Math.min(1, mouseX / containerWidth)); // 0 to 1
+    // Ultra-responsive positioning - divide image into equal sections
+    const normalizedPosition = Math.max(0, Math.min(1, mouseX / containerWidth));
 
-    // Calculate exact image index with more precision
+    // Calculate exact image index with smooth interpolation
     const exactIndex = normalizedPosition * (availableImages.length - 1);
-    const imageIndex = Math.round(exactIndex); // Round to nearest image instead of floor
+    const imageIndex = Math.round(exactIndex);
 
     const clampedIndex = Math.max(0, Math.min(imageIndex, availableImages.length - 1));
 
-    // Debug: uncomment to test image cycling
-    // console.log(`🖼️ Mouse Move on "${product.name}": Available=${availableImages.length}, Index=${clampedIndex}, Position=${normalizedPosition.toFixed(2)}`);
-
-    // Update immediately for better responsiveness
+    // Update only when index changes - performance optimization
     if (clampedIndex !== currentImageIndex) {
-      setCurrentImageIndex(clampedIndex);
+      // Use requestAnimationFrame for smooth 60fps transitions
+      requestAnimationFrame(() => {
+        setCurrentImageIndex(clampedIndex);
+      });
     }
   };
 
@@ -343,7 +352,7 @@ export default function InteractiveProductCard({
         <img
           src={getCurrentDisplayImage()}
           alt={product.name}
-          className={`${classes.imageClass} transition-opacity duration-200 ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
+          className={`${classes.imageClass} ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== '/placeholder-product.svg') {
@@ -351,8 +360,12 @@ export default function InteractiveProductCard({
             }
           }}
           style={{
-            filter: 'brightness(1.02)', // Slight brightness enhancement
-            transition: 'filter 0.2s ease-in-out'
+            filter: 'brightness(1.02)',
+            // ⚡ Ultra-smooth transitions optimized for 60fps
+            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1), filter 200ms ease-in-out',
+            willChange: 'opacity', // GPU acceleration hint
+            backfaceVisibility: 'hidden', // Prevent flickering
+            transform: 'translateZ(0)' // Force GPU rendering for smooth transitions
           }}
         />
         {product.isOnSale && (
