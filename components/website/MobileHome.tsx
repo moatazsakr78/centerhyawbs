@@ -804,6 +804,7 @@ export default function MobileHome({
                           onAddToCart={handleAddToCart}
                           deviceType="mobile"
                           onProductClick={handleProductClick}
+                          displaySettings={displaySettings}
                         />
                       </div>
                     ))}
@@ -862,6 +863,7 @@ export default function MobileHome({
                 onAddToCart={handleAddToCart}
                 deviceType="mobile"
                 onProductClick={handleProductClick}
+                displaySettings={displaySettings}
               />
             ))}
           </div>

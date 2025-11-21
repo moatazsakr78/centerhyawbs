@@ -321,7 +321,8 @@
       "Bash(netstat:*)",
       "Bash(set PORT=3003)",
       "Bash(vercel logs:*)",
-      "Bash(vercel ls:*)"
+      "Bash(vercel ls:*)",
+      "Bash(start cmd /c \"echo افتح Chrome DevTools وابعتلي صورة من Console && pause\")"
     ],
     "deny": [],
     "additionalDirectories": [

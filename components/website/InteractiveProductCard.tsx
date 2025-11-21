@@ -7,7 +7,6 @@ import { useCart } from '../../lib/contexts/CartContext';
 import { useUserProfile } from '../../lib/hooks/useUserProfile';
 import { useWebsiteCurrency } from '@/lib/hooks/useCurrency';
 import { useRatingsDisplay } from '../../lib/hooks/useRatingSettings';
-import { useProductDisplaySettings } from '@/lib/hooks/useProductDisplaySettings';
 import { useProductVoting } from '@/app/lib/hooks/useProductVoting';
 import ProductVoteModal from './ProductVoteModal';
 
@@ -16,13 +15,17 @@ interface InteractiveProductCardProps {
   onAddToCart: (product: Product) => Promise<void>;
   deviceType: 'desktop' | 'tablet' | 'mobile';
   onProductClick?: (productId: string) => void;
+  displaySettings?: {
+    display_mode: 'show_all' | 'show_with_stock' | 'show_with_stock_and_vote';
+  };
 }
 
-export default function InteractiveProductCard({ 
-  product, 
+export default function InteractiveProductCard({
+  product,
   onAddToCart,
   deviceType,
-  onProductClick 
+  onProductClick,
+  displaySettings
 }: InteractiveProductCardProps) {
   const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -44,9 +47,6 @@ export default function InteractiveProductCard({
 
   // Get rating settings
   const { showRatings } = useRatingsDisplay();
-
-  // Get product display settings
-  const { settings: displaySettings } = useProductDisplaySettings();
 
   // Vote modal state
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);

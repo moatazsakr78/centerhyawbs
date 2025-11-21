@@ -740,6 +740,7 @@ export default function DesktopHome({
                 onAddToCart={handleAddToCart}
                 deviceType="desktop"
                 onProductClick={handleProductClick}
+                displaySettings={displaySettings}
               />
             ))}
           </div>

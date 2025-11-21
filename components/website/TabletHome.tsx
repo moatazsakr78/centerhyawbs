@@ -721,6 +721,7 @@ export default function TabletHome({
                           onAddToCart={handleAddToCart}
                           deviceType="tablet"
                           onProductClick={handleProductClick}
+                          displaySettings={displaySettings}
                         />
                       </div>
                     ))}
@@ -776,6 +777,7 @@ export default function TabletHome({
                 onAddToCart={handleAddToCart}
                 deviceType="tablet"
                 onProductClick={handleProductClick}
+                displaySettings={displaySettings}
               />
             ))}
           </div>
