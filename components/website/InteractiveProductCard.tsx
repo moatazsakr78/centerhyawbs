@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product, ProductColor, ProductShape, ProductSize } from './shared/types';
 import { useCart } from '../../lib/contexts/CartContext';
@@ -102,20 +102,6 @@ export default function InteractiveProductCard({
     return finalImages;
   })();
 
-  // ⚡ Preload images for instant hover effect - CDN friendly
-  useEffect(() => {
-    if (allImages.length > 1) {
-      // Preload all product images in the background
-      allImages.forEach((imageUrl) => {
-        if (imageUrl) {
-          const img = new Image();
-          img.src = imageUrl;
-          // Images are cached by browser/CDN automatically
-        }
-      });
-    }
-  }, [allImages]);
-
   // Determine which price to display based on user role
   const getDisplayPrice = () => {
     if (profile?.role === 'جملة' && currentProduct.wholesale_price) {
@@ -214,54 +200,6 @@ export default function InteractiveProductCard({
     }
   };
 
-  // Handle mouse movement over the image to cycle through images (DESKTOP ONLY)
-  // ⚡ Optimized for performance and smooth transitions
-  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // 🖥️ DESKTOP ONLY - Disable for tablet and mobile
-    if (deviceType !== 'desktop') return;
-
-    const imageContainer = imageRef.current;
-    if (!imageContainer) return;
-
-    // Get available images array - prioritize allImages for better image cycling
-    const availableImages = selectedColor && selectedColor.image_url
-      ? [selectedColor.image_url, ...allImages.filter(img => img !== selectedColor.image_url)]
-      : allImages;
-
-    // Early return if no multiple images - performance optimization
-    if (availableImages.length <= 1) {
-      return;
-    }
-
-    const rect = imageContainer.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const containerWidth = rect.width;
-
-    // Ultra-responsive positioning - divide image into equal sections
-    const normalizedPosition = Math.max(0, Math.min(1, mouseX / containerWidth));
-
-    // Calculate exact image index with smooth interpolation
-    const exactIndex = normalizedPosition * (availableImages.length - 1);
-    const imageIndex = Math.round(exactIndex);
-
-    const clampedIndex = Math.max(0, Math.min(imageIndex, availableImages.length - 1));
-
-    // Update only when index changes - performance optimization
-    if (clampedIndex !== currentImageIndex) {
-      // Use requestAnimationFrame for smooth 60fps transitions
-      requestAnimationFrame(() => {
-        setCurrentImageIndex(clampedIndex);
-      });
-    }
-  };
-
-  // Reset to first image when mouse leaves (DESKTOP ONLY)
-  const handleImageMouseLeave = () => {
-    // 🖥️ DESKTOP ONLY - Disable for tablet and mobile
-    if (deviceType !== 'desktop') return;
-    setCurrentImageIndex(0);
-  };
-
   // Handle color selection with toggle functionality
   const handleColorSelect = (color: ProductColor, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to product page
@@ -339,10 +277,6 @@ export default function InteractiveProductCard({
             e.stopPropagation();
           }
         }}
-        // 🖥️ Mouse events for DESKTOP ONLY - Image hover cycling
-        onMouseMove={deviceType === 'desktop' ? handleImageMouseMove : undefined}
-        onMouseLeave={deviceType === 'desktop' ? handleImageMouseLeave : undefined}
-        // 📱 Touch events for TABLET ONLY - Swipe navigation
         onTouchStart={deviceType === 'tablet' ? handleTouchStart : undefined}
         onTouchMove={deviceType === 'tablet' ? handleTouchMove : undefined}
         onTouchEnd={deviceType === 'tablet' ? handleTouchEnd : undefined}
@@ -350,34 +284,18 @@ export default function InteractiveProductCard({
         <img
           src={getCurrentDisplayImage()}
           alt={product.name}
-          className={`${classes.imageClass} ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
+          className={`${classes.imageClass} transition-opacity duration-200 ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== '/placeholder-product.svg') {
               target.src = '/placeholder-product.svg';
             }
           }}
-          style={{
-            filter: 'brightness(1.02)',
-            // ⚡ Ultra-smooth transitions optimized for 60fps
-            transition: 'opacity 150ms cubic-bezier(0.4, 0, 0.2, 1), filter 200ms ease-in-out',
-            willChange: 'opacity', // GPU acceleration hint
-            backfaceVisibility: 'hidden', // Prevent flickering
-            transform: 'translateZ(0)' // Force GPU rendering for smooth transitions
-          }}
         />
         {product.isOnSale && (
           <span className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
             -{product.discount}%
           </span>
-        )}
-
-        {/* 🐛 DEBUG: Show image count indicator (Desktop only) */}
-        {deviceType === 'desktop' && allImages.length > 1 && (
-          <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-            <span>🖼️</span>
-            <span>{allImages.length} صور</span>
-          </div>
         )}
 
       </div>

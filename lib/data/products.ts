@@ -25,7 +25,7 @@ const supabase = createClient<Database, 'om_elarosa'>(supabaseUrl, supabaseAnonK
  */
 export async function getWebsiteProducts() {
   try {
-    const { data: products, error } = await (supabase as any)
+    const { data: products, error } = await supabase
       .from('products')
       .select(`
         id,
@@ -33,8 +33,6 @@ export async function getWebsiteProducts() {
         description,
         price,
         main_image_url,
-        sub_image_url,
-        additional_images_urls,
         category_id,
         is_active,
         is_hidden,
@@ -60,7 +58,7 @@ export async function getWebsiteProducts() {
 
     // Get inventory totals for all products
     if (products && products.length > 0) {
-      const productIds = products.map((p: any) => p.id);
+      const productIds = products.map(p => p.id);
       const { data: inventoryData } = await supabase
         .from('inventory')
         .select('product_id, quantity')
@@ -81,31 +79,7 @@ export async function getWebsiteProducts() {
       }
     }
 
-    // 🖼️ Map database image columns to Product interface
-    const mappedProducts = products.map((product: any) => {
-      // Collect all images: main + sub + additional
-      const allImages: string[] = [];
-
-      if (product.main_image_url) {
-        allImages.push(product.main_image_url);
-      }
-
-      if (product.sub_image_url) {
-        allImages.push(product.sub_image_url);
-      }
-
-      if (product.additional_images_urls && Array.isArray(product.additional_images_urls)) {
-        allImages.push(...product.additional_images_urls.filter((url: string) => url));
-      }
-
-      return {
-        ...product,
-        image: product.main_image_url || '', // Main image
-        images: allImages.filter((url: string) => url) // All images including main
-      };
-    });
-
-    return mappedProducts || [];
+    return products || [];
   } catch (error) {
     console.error('Error fetching website products:', error);
     return [];
