@@ -33,7 +33,11 @@ export default function InteractiveProductCard({
   const [selectedShape, setSelectedShape] = useState<ProductShape | null>(null);
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const imageRef = useRef<HTMLDivElement>(null);
-  
+
+  // Desktop hover states
+  const [isHovering, setIsHovering] = useState(false);
+  const [imagesPreloaded, setImagesPreloaded] = useState(false);
+
   // Mobile-specific states
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [note, setNote] = useState('');
@@ -200,6 +204,56 @@ export default function InteractiveProductCard({
     }
   };
 
+  // Preload images when hovering on desktop
+  const preloadImages = () => {
+    if (imagesPreloaded || allImages.length <= 1) return;
+
+    allImages.forEach((imageUrl) => {
+      if (imageUrl) {
+        const img = new Image();
+        img.src = imageUrl;
+      }
+    });
+    setImagesPreloaded(true);
+  };
+
+  // Handle desktop hover - mouse enter
+  const handleMouseEnter = () => {
+    if (deviceType !== 'desktop' || allImages.length <= 1) return;
+    setIsHovering(true);
+    preloadImages();
+  };
+
+  // Handle desktop hover - mouse leave
+  const handleMouseLeave = () => {
+    if (deviceType !== 'desktop') return;
+    setIsHovering(false);
+    setCurrentImageIndex(0); // Reset to first image when mouse leaves
+  };
+
+  // Handle desktop hover - mouse move to change image based on position
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (deviceType !== 'desktop' || !isHovering || allImages.length <= 1) return;
+
+    const imageContainer = imageRef.current;
+    if (!imageContainer) return;
+
+    const rect = imageContainer.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const containerLeft = rect.left;
+    const containerWidth = rect.width;
+    const relativeX = mouseX - containerLeft;
+
+    // Divide image into sections based on number of images
+    const sectionWidth = containerWidth / allImages.length;
+    const hoveredSection = Math.floor(relativeX / sectionWidth);
+    const targetIndex = Math.max(0, Math.min(hoveredSection, allImages.length - 1));
+
+    if (targetIndex !== currentImageIndex) {
+      setCurrentImageIndex(targetIndex);
+    }
+  };
+
   // Handle color selection with toggle functionality
   const handleColorSelect = (color: ProductColor, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to product page
@@ -280,11 +334,14 @@ export default function InteractiveProductCard({
         onTouchStart={deviceType === 'tablet' ? handleTouchStart : undefined}
         onTouchMove={deviceType === 'tablet' ? handleTouchMove : undefined}
         onTouchEnd={deviceType === 'tablet' ? handleTouchEnd : undefined}
+        onMouseEnter={deviceType === 'desktop' ? handleMouseEnter : undefined}
+        onMouseMove={deviceType === 'desktop' ? handleMouseMove : undefined}
+        onMouseLeave={deviceType === 'desktop' ? handleMouseLeave : undefined}
       >
         <img
           src={getCurrentDisplayImage()}
           alt={product.name}
-          className={`${classes.imageClass} transition-opacity duration-200 ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
+          className={`${classes.imageClass} transition-all duration-300 ease-in-out ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== '/placeholder-product.svg') {
