@@ -103,6 +103,13 @@ export default function InteractiveProductCard({
 
     const finalImages = images.filter(Boolean) as string[];
 
+    // DEBUG: Log images for troubleshooting
+    if (finalImages.length > 1) {
+      console.log('🖼️ Product:', currentProduct.name);
+      console.log('📸 Total images:', finalImages.length);
+      console.log('🎨 Images:', finalImages);
+    }
+
     return finalImages;
   })();
 
@@ -219,13 +226,16 @@ export default function InteractiveProductCard({
 
   // Handle desktop hover - mouse enter
   const handleMouseEnter = () => {
+    console.log('🖱️ Mouse Enter - Device:', deviceType, 'Images:', allImages.length);
     if (deviceType !== 'desktop' || allImages.length <= 1) return;
+    console.log('✅ Hover activated!');
     setIsHovering(true);
     preloadImages();
   };
 
   // Handle desktop hover - mouse leave
   const handleMouseLeave = () => {
+    console.log('🖱️ Mouse Leave - Device:', deviceType);
     if (deviceType !== 'desktop') return;
     setIsHovering(false);
     setCurrentImageIndex(0); // Reset to first image when mouse leaves
@@ -250,6 +260,7 @@ export default function InteractiveProductCard({
     const targetIndex = Math.max(0, Math.min(hoveredSection, allImages.length - 1));
 
     if (targetIndex !== currentImageIndex) {
+      console.log('🔄 Changing image to index:', targetIndex);
       setCurrentImageIndex(targetIndex);
     }
   };
@@ -353,6 +364,22 @@ export default function InteractiveProductCard({
           <span className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
             -{product.discount}%
           </span>
+        )}
+
+        {/* Image Indicators - Show dots for multiple images on desktop */}
+        {deviceType === 'desktop' && allImages.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-black bg-opacity-50 px-2 py-1 rounded-full">
+            {allImages.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex
+                    ? 'bg-white scale-125'
+                    : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                }`}
+              />
+            ))}
+          </div>
         )}
 
       </div>
