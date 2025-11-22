@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
+import {
   UserGroupIcon,
   UserPlusIcon,
   PencilIcon,
@@ -25,6 +25,8 @@ import ResizableTable from '@/app/components/tables/ResizableTable';
 import AddPermissionModal from '@/app/components/AddPermissionModal';
 import PermissionDetails from '@/app/components/PermissionDetails';
 import { supabase } from '@/app/lib/supabase/client';
+import { useUserProfile } from '@/lib/contexts/UserProfileContext';
+import { useAuth } from '@/lib/useAuth';
 
 
 interface Permission {
@@ -66,6 +68,10 @@ interface ActionButton {
 }
 
 export default function PermissionsPage() {
+  // استخدام hooks للحصول على بيانات المستخدم الحالي
+  const { profile: currentUserProfile, isAdmin } = useUserProfile();
+  const { user: authUser, isAuthenticated } = useAuth();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState<'roles' | 'users' | 'permissions'>('roles');
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
@@ -277,41 +283,33 @@ export default function PermissionsPage() {
         return false;
       }
 
-      // التحقق من صلاحيات المستخدم الحالي - استخدام getUser() بدلاً من getSession() للتوافق مع الموبايل
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-      console.log('🔐 بيانات المستخدم الحالي:', user);
-      console.log('❌ خطأ في المصادقة:', authError);
-
-      if (authError || !user?.id) {
-        console.error('❌ خطأ في جلب بيانات المستخدم:', authError);
-        alert('⛔ حدث خطأ في التحقق من هويتك. يرجى تسجيل الدخول مرة أخرى');
+      // التحقق من تسجيل الدخول باستخدام NextAuth
+      if (!isAuthenticated || !authUser?.id) {
+        console.error('❌ المستخدم غير مسجل دخول');
+        alert('⛔ يجب تسجيل الدخول أولاً');
         setUpdatingRole(false);
         return false;
       }
 
-      // جلب بيانات المستخدم الحالي للتحقق من صلاحياته
-      const { data: currentUserData, error: currentUserError } = await supabase
-        .from('user_profiles')
-        .select('role, is_admin')
-        .eq('id', user.id)
-        .single();
+      // التحقق من صلاحيات المستخدم الحالي من UserProfileContext
+      console.log('👤 بيانات المستخدم الحالي:', {
+        id: authUser.id,
+        profile: currentUserProfile,
+        isAdmin: isAdmin
+      });
 
-      console.log('👤 بيانات المستخدم الحالي من قاعدة البيانات:', currentUserData);
-      console.log('❌ خطأ في جلب البيانات:', currentUserError);
-
-      if (currentUserError || !currentUserData) {
-        console.error('❌ فشل في جلب بيانات المستخدم:', currentUserError);
+      if (!currentUserProfile) {
+        console.error('❌ فشل في جلب بيانات المستخدم الحالي');
         alert('⛔ فشل في التحقق من صلاحياتك');
         setUpdatingRole(false);
         return false;
       }
 
       // فقط الأدمن الرئيسي الذي يملك is_admin=true يمكنه تغيير الرتب
-      if (currentUserData.role !== 'أدمن رئيسي' || !currentUserData.is_admin) {
+      if (currentUserProfile.role !== 'أدمن رئيسي' || !isAdmin) {
         console.warn('⚠️ المستخدم لا يملك صلاحيات كافية:', {
-          role: currentUserData.role,
-          is_admin: currentUserData.is_admin
+          role: currentUserProfile.role,
+          is_admin: isAdmin
         });
         alert('⛔ ليس لديك صلاحية لتغيير رتب المستخدمين - فقط الأدمن الرئيسي (is_admin=true) يمكنه ذلك');
         setUpdatingRole(false);
