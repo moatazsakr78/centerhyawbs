@@ -843,8 +843,8 @@ export default function MobileHome({
           </>
         )}
 
-        {/* Featured Categories - Hide when searching */}
-        {!searchQuery && (
+        {/* Featured Categories - Hide when searching or when no categories */}
+        {!searchQuery && categories && categories.length > 0 && (
           <section id="categories" className="mb-6">
             <h3 className="text-xl font-bold mb-4 text-black">فئات المنتجات</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">

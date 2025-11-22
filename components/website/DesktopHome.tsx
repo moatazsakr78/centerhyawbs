@@ -715,8 +715,8 @@ export default function DesktopHome({
           </>
         )}
 
-        {/* Categories Section - Hide when searching */}
-        {!searchQuery && (
+        {/* Categories Section - Hide when searching or when no categories */}
+        {!searchQuery && categories && categories.length > 0 && (
           <section id="categories" className="mb-8">
             <h3 className="text-3xl font-bold mb-6 text-black">فئات المنتجات</h3>
             <CategoryCarousel

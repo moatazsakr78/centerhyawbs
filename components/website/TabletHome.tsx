@@ -732,8 +732,8 @@ export default function TabletHome({
           </>
         )}
 
-        {/* Categories Section - Hide when searching */}
-        {!searchQuery && (
+        {/* Categories Section - Hide when searching or when no categories */}
+        {!searchQuery && categories && categories.length > 0 && (
           <section id="categories" className="mb-7">
             <h3 className="text-3xl font-bold mb-5 text-black">فئات المنتجات</h3>
             <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide">
