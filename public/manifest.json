@@ -1,6 +1,6 @@
 {
-  "name": "El Farouk Group - Store",
-  "short_name": "El Farouk Group",
+  "name": "omelarosa Store",
+  "short_name": "omelarosa",
   "description": "متجرك المتكامل للحصول على أفضل المنتجات بأسعار مميزة وجودة عالية",
   "start_url": "/",
   "display": "standalone",
@@ -12,8 +12,8 @@
   "categories": ["business", "productivity", "shopping"],
   "icons": [
     {
-      "src": "/assets/logo/El Farouk10.png",
-      "sizes": "192x192",
+      "src": "/assets/logo/omelarosa.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
     }
