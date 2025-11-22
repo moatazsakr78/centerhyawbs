@@ -1307,9 +1307,9 @@ function POSPageContent() {
             }
             
             .items-table {
-              width: calc(100% - 20px);
+              width: calc(100% - 40px);
               border-collapse: collapse;
-              margin: 3px 10px;
+              margin: 3px 20px;
               border: 1px solid #000;
               table-layout: fixed; /* Forces table to use full width */
             }
@@ -1377,9 +1377,9 @@ function POSPageContent() {
             }
             
             .payment-table {
-              width: calc(100% - 20px);
+              width: calc(100% - 40px);
               border-collapse: collapse;
-              margin: 5px 10px;
+              margin: 5px 20px;
               border: 1px solid #000;
             }
             
@@ -1489,8 +1489,10 @@ function POSPageContent() {
           </table>
 
           ${
-            // Only show payment section for customers with accounts (not default cash customer)
-            dataToUse.customer && dataToUse.customer.id !== '00000000-0000-0000-0000-000000000001'
+            // Only show payment section for customers with accounts (not default cash customer) AND if there is credit amount
+            dataToUse.customer &&
+            dataToUse.customer.id !== '00000000-0000-0000-0000-000000000001' &&
+            (dataToUse.creditAmount || 0) > 0
               ? `
           <div class="payment-section">
             ${numberToArabicWords(dataToUse.totalAmount)} جنيهاً
