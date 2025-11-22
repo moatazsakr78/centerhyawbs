@@ -69,8 +69,17 @@ export default auth((req) => {
 
   // Block admin paths for non-authenticated users
   if (isAdminPath) {
+    // Debug logging
+    console.log('🔒 Middleware - Admin path access check:', {
+      pathname,
+      hasSession: !!session,
+      userRole,
+      userAgent: req.headers.get('user-agent')?.substring(0, 100)
+    });
+
     // If no session, redirect to login
     if (!session) {
+      console.log('❌ No session - redirecting to login');
       const loginUrl = new URL('/auth/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
@@ -79,9 +88,18 @@ export default auth((req) => {
     // Check if user has access based on role
     const hasAccess = hasPageAccess(userRole, pathname)
 
+    console.log('🔍 Access check result:', {
+      userRole,
+      pathname,
+      hasAccess
+    });
+
     if (!hasAccess) {
+      console.log('❌ Access denied - redirecting to home');
       return NextResponse.redirect(new URL('/', req.url))
     }
+
+    console.log('✅ Access granted');
   }
 
   // Customer paths - just check for session
