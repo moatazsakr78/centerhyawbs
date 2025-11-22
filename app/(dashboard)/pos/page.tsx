@@ -1307,9 +1307,9 @@ function POSPageContent() {
             }
             
             .items-table {
-              width: 100%;
+              width: calc(100% - 20px);
               border-collapse: collapse;
-              margin: 3px 0;
+              margin: 3px 10px;
               border: 1px solid #000;
               table-layout: fixed; /* Forces table to use full width */
             }
@@ -1354,7 +1354,7 @@ function POSPageContent() {
 
             .item-name {
               text-align: right !important;
-              padding-right: 4px !important;
+              padding-right: 12px !important;
               padding-left: 2px !important;
               font-size: 15px;
               font-weight: bold;
@@ -1377,9 +1377,9 @@ function POSPageContent() {
             }
             
             .payment-table {
-              width: 100%;
+              width: calc(100% - 20px);
               border-collapse: collapse;
-              margin: 5px 0;
+              margin: 5px 10px;
               border: 1px solid #000;
             }
             
