@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useProducts, Product as DatabaseProduct } from '@/app/lib/hooks/useProducts';
 import { UserInfo, Product } from './shared/types';
 import AuthButtons from '@/app/components/auth/AuthButtons';
+import { useAuth } from '@/lib/useAuth';
 import { useUserProfile } from '@/lib/hooks/useUserProfile';
 import { useStoreCategoriesWithProducts } from '@/lib/hooks/useStoreCategories';
 import { useCustomSections } from '@/lib/hooks/useCustomSections';
@@ -50,6 +51,9 @@ export default function MobileHome({
   const [websiteProducts, setWebsiteProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   
+  // Get auth status
+  const { isAuthenticated } = useAuth();
+
   // Get user profile to check admin status
   const { profile, isAdmin } = useUserProfile();
 
@@ -548,11 +552,32 @@ export default function MobileHome({
                 )}
               </button>
               
-              {/* Account Icon - Far Left */}
-              <AuthButtons compact mobileIconOnly />
+              {/* Account Icon - Far Left (إظهار فقط عند تسجيل الدخول في الموبايل) */}
+              {(isAuthenticated || profile) && <AuthButtons compact mobileIconOnly />}
             </div>
           </div>
         </div>
+
+        {/* شريط أزرار تسجيل الدخول وإنشاء حساب (للموبايل فقط عندما لا يكون مسجل دخول) */}
+        {(!isAuthenticated && !profile) && (
+          <div className="absolute top-16 left-0 right-0 flex" style={{backgroundColor: 'var(--primary-color)'}}>
+            {/* زر تسجيل الدخول */}
+            <button
+              onClick={() => window.location.href = '/auth/login'}
+              className="flex-1 py-2 text-white font-medium text-sm border-l border-white/20 hover:bg-[var(--interactive-color)] transition-colors"
+            >
+              تسجيل الدخول
+            </button>
+
+            {/* زر إنشاء حساب */}
+            <button
+              onClick={() => window.location.href = '/auth/signup'}
+              className="flex-1 py-2 text-white font-medium text-sm hover:bg-[var(--interactive-color)] transition-colors"
+            >
+              إنشاء حساب
+            </button>
+          </div>
+        )}
 
         {/* Mobile Menu Overlay - Advanced Menu like Desktop/Tablet */}
         {isMenuVisible && (
@@ -785,7 +810,10 @@ export default function MobileHome({
       <main
         className="px-3 py-4 transition-all duration-300 bg-custom-gray"
         style={{
-          paddingTop: isSearchActive ? '140px' : '70px' // Adjust for header + search bar
+          // حساب المسافة العلوية بناءً على حالة البحث وتسجيل الدخول
+          paddingTop: isSearchActive
+            ? ((!isAuthenticated && !profile) ? '176px' : '140px') // مع البحث
+            : ((!isAuthenticated && !profile) ? '106px' : '70px')  // بدون بحث
         }}
       >
 
