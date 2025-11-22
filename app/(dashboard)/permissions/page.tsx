@@ -343,18 +343,18 @@ export default function PermissionsPage() {
       // تأكد من أن التحديث تم بنجاح
       if (data && data.length > 0) {
         console.log('✅ تم تحديث الدور في قاعدة البيانات:', data[0]);
-        
+
         // تحديث البيانات محلياً
-        setRealUsers(prev => prev.map(user => 
+        setRealUsers(prev => prev.map(user =>
           user.id === userId ? { ...user, role: newRole } : user
         ));
-        
+
         setEditingUserId(null);
         console.log('✅ تم تحديث دور المستخدم بنجاح إلى:', newRole);
-        
-        // رسالة نجاح للمستخدم (اختيارية)
-        // alert('تم تحديث الدور بنجاح!');
-        
+
+        // رسالة مهمة: المستخدم المُحدّث رتبته يحتاج لتسجيل الخروج والدخول
+        alert('✅ تم تحديث الدور بنجاح!\n\n⚠️ ملاحظة مهمة: المستخدم الذي تم تغيير رتبته يحتاج لتسجيل الخروج وإعادة تسجيل الدخول لتفعيل الصلاحيات الجديدة.');
+
         return true;
       } else {
         console.error('❌ فشل التحديث - لا توجد بيانات مُحدَثة');
