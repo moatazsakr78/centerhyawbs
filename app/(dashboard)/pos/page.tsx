@@ -1030,6 +1030,8 @@ function POSPageContent() {
           customer: selections.customer,
           branch: selections.branch,
           record: selections.record,
+          paymentSplitData: paymentSplitData,
+          creditAmount: creditAmount,
         });
 
         // Show print confirmation modal
@@ -1178,6 +1180,56 @@ function POSPageContent() {
     } else {
       return hasRequiredForSale();
     }
+  };
+
+  // Helper function to convert numbers to Arabic words
+  const numberToArabicWords = (num: number): string => {
+    if (num === 0) return 'صفر';
+
+    const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+    const tens = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+    const hundreds = ['', 'مائة', 'مئتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+    const teens = ['عشرة', 'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر', 'ثمانية عشر', 'تسعة عشر'];
+
+    let result = '';
+    const intNum = Math.floor(num);
+
+    // Thousands
+    const thousands = Math.floor(intNum / 1000);
+    if (thousands > 0) {
+      if (thousands === 1) result += 'ألف';
+      else if (thousands === 2) result += 'ألفان';
+      else if (thousands >= 3 && thousands <= 10) result += ones[thousands] + ' آلاف';
+      else result += numberToArabicWords(thousands) + ' ألف';
+      result += ' و';
+    }
+
+    const remainder = intNum % 1000;
+    const hundredsDigit = Math.floor(remainder / 100);
+    const tensRemainder = remainder % 100;
+    const tensDigit = Math.floor(tensRemainder / 10);
+    const onesDigit = tensRemainder % 10;
+
+    // Hundreds
+    if (hundredsDigit > 0) {
+      result += hundreds[hundredsDigit];
+      if (tensRemainder > 0) result += ' و';
+    }
+
+    // Tens and ones
+    if (tensRemainder >= 10 && tensRemainder < 20) {
+      result += teens[tensRemainder - 10];
+    } else {
+      if (tensDigit > 0) {
+        result += tens[tensDigit];
+        if (onesDigit > 0) result += ' و';
+      }
+      if (onesDigit > 0) {
+        result += ones[onesDigit];
+      }
+    }
+
+    return result.trim().replace(/\s*و$/, '');
   };
 
   // Print Receipt Function
@@ -1436,24 +1488,27 @@ function POSPageContent() {
             </tbody>
           </table>
 
+          ${
+            // Only show payment section for customers with accounts (not default cash customer)
+            dataToUse.customer && dataToUse.customer.id !== '00000000-0000-0000-0000-000000000001'
+              ? `
           <div class="payment-section">
-            ألف وأربعمائة وخمسة وثمانون جنيها
-            
+            ${numberToArabicWords(dataToUse.totalAmount)} جنيهاً
+
             <table class="payment-table">
               <tr>
-                <th>مدين</th>
-                <th>آجل</th>
-                <th>سابق</th>
                 <th>مدفوع</th>
+                <th>مدين</th>
               </tr>
               <tr>
-                <td>0</td>
-                <td>135</td>
-                <td>-135</td>
-                <td>1350</td>
+                <td>${(dataToUse.totalAmount - (dataToUse.creditAmount || 0)).toFixed(0)}</td>
+                <td>${(dataToUse.creditAmount || 0).toFixed(0)}</td>
               </tr>
             </table>
           </div>
+              `
+              : ''
+          }
 
           <div class="footer">
             ${new Date().toLocaleDateString("en-GB")} ${new Date().toLocaleTimeString("en-GB", { hour12: false })} by: ${selections.record?.name || "kassem"}

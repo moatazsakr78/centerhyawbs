@@ -34,10 +34,6 @@ export default function InteractiveProductCard({
   const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
   const imageRef = useRef<HTMLDivElement>(null);
 
-  // Desktop hover states
-  const [isHovering, setIsHovering] = useState(false);
-  const [imagesPreloaded, setImagesPreloaded] = useState(false);
-
   // Mobile-specific states
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [note, setNote] = useState('');
@@ -102,13 +98,6 @@ export default function InteractiveProductCard({
     }
 
     const finalImages = images.filter(Boolean) as string[];
-
-    // DEBUG: Log images for troubleshooting
-    if (finalImages.length > 1) {
-      console.log('🖼️ Product:', currentProduct.name);
-      console.log('📸 Total images:', finalImages.length);
-      console.log('🎨 Images:', finalImages);
-    }
 
     return finalImages;
   })();
@@ -211,60 +200,6 @@ export default function InteractiveProductCard({
     }
   };
 
-  // Preload images when hovering on desktop
-  const preloadImages = () => {
-    if (imagesPreloaded || allImages.length <= 1) return;
-
-    allImages.forEach((imageUrl) => {
-      if (imageUrl) {
-        const img = new Image();
-        img.src = imageUrl;
-      }
-    });
-    setImagesPreloaded(true);
-  };
-
-  // Handle desktop hover - mouse enter
-  const handleMouseEnter = () => {
-    console.log('🖱️ Mouse Enter - Device:', deviceType, 'Images:', allImages.length);
-    if (deviceType !== 'desktop' || allImages.length <= 1) return;
-    console.log('✅ Hover activated!');
-    setIsHovering(true);
-    preloadImages();
-  };
-
-  // Handle desktop hover - mouse leave
-  const handleMouseLeave = () => {
-    console.log('🖱️ Mouse Leave - Device:', deviceType);
-    if (deviceType !== 'desktop') return;
-    setIsHovering(false);
-    setCurrentImageIndex(0); // Reset to first image when mouse leaves
-  };
-
-  // Handle desktop hover - mouse move to change image based on position
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (deviceType !== 'desktop' || !isHovering || allImages.length <= 1) return;
-
-    const imageContainer = imageRef.current;
-    if (!imageContainer) return;
-
-    const rect = imageContainer.getBoundingClientRect();
-    const mouseX = e.clientX;
-    const containerLeft = rect.left;
-    const containerWidth = rect.width;
-    const relativeX = mouseX - containerLeft;
-
-    // Divide image into sections based on number of images
-    const sectionWidth = containerWidth / allImages.length;
-    const hoveredSection = Math.floor(relativeX / sectionWidth);
-    const targetIndex = Math.max(0, Math.min(hoveredSection, allImages.length - 1));
-
-    if (targetIndex !== currentImageIndex) {
-      console.log('🔄 Changing image to index:', targetIndex);
-      setCurrentImageIndex(targetIndex);
-    }
-  };
-
   // Handle color selection with toggle functionality
   const handleColorSelect = (color: ProductColor, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation to product page
@@ -345,14 +280,11 @@ export default function InteractiveProductCard({
         onTouchStart={deviceType === 'tablet' ? handleTouchStart : undefined}
         onTouchMove={deviceType === 'tablet' ? handleTouchMove : undefined}
         onTouchEnd={deviceType === 'tablet' ? handleTouchEnd : undefined}
-        onMouseEnter={deviceType === 'desktop' ? handleMouseEnter : undefined}
-        onMouseMove={deviceType === 'desktop' ? handleMouseMove : undefined}
-        onMouseLeave={deviceType === 'desktop' ? handleMouseLeave : undefined}
       >
         <img
           src={getCurrentDisplayImage()}
           alt={product.name}
-          className={`${classes.imageClass} transition-all duration-300 ease-in-out ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
+          className={`${classes.imageClass} transition-opacity duration-200 ${isVotingMode && isOutOfStock ? 'opacity-50' : ''}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             if (target.src !== '/placeholder-product.svg') {
@@ -364,22 +296,6 @@ export default function InteractiveProductCard({
           <span className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
             -{product.discount}%
           </span>
-        )}
-
-        {/* Image Indicators - Show dots for multiple images on desktop */}
-        {deviceType === 'desktop' && allImages.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-black bg-opacity-50 px-2 py-1 rounded-full">
-            {allImages.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex
-                    ? 'bg-white scale-125'
-                    : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                }`}
-              />
-            ))}
-          </div>
         )}
 
       </div>
