@@ -277,10 +277,15 @@ export default function PermissionsPage() {
         return false;
       }
 
-      // التحقق من صلاحيات المستخدم الحالي
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) {
-        alert('⛔ يجب تسجيل الدخول أولاً');
+      // التحقق من صلاحيات المستخدم الحالي - استخدام getUser() بدلاً من getSession() للتوافق مع الموبايل
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+      console.log('🔐 بيانات المستخدم الحالي:', user);
+      console.log('❌ خطأ في المصادقة:', authError);
+
+      if (authError || !user?.id) {
+        console.error('❌ خطأ في جلب بيانات المستخدم:', authError);
+        alert('⛔ حدث خطأ في التحقق من هويتك. يرجى تسجيل الدخول مرة أخرى');
         setUpdatingRole(false);
         return false;
       }
@@ -289,10 +294,14 @@ export default function PermissionsPage() {
       const { data: currentUserData, error: currentUserError } = await supabase
         .from('user_profiles')
         .select('role, is_admin')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
+      console.log('👤 بيانات المستخدم الحالي من قاعدة البيانات:', currentUserData);
+      console.log('❌ خطأ في جلب البيانات:', currentUserError);
+
       if (currentUserError || !currentUserData) {
+        console.error('❌ فشل في جلب بيانات المستخدم:', currentUserError);
         alert('⛔ فشل في التحقق من صلاحياتك');
         setUpdatingRole(false);
         return false;
@@ -300,6 +309,10 @@ export default function PermissionsPage() {
 
       // فقط الأدمن الرئيسي الذي يملك is_admin=true يمكنه تغيير الرتب
       if (currentUserData.role !== 'أدمن رئيسي' || !currentUserData.is_admin) {
+        console.warn('⚠️ المستخدم لا يملك صلاحيات كافية:', {
+          role: currentUserData.role,
+          is_admin: currentUserData.is_admin
+        });
         alert('⛔ ليس لديك صلاحية لتغيير رتب المستخدمين - فقط الأدمن الرئيسي (is_admin=true) يمكنه ذلك');
         setUpdatingRole(false);
         return false;
