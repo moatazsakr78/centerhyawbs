@@ -2495,6 +2495,7 @@ function POSPageContent() {
                                 <div className="absolute top-2 right-2 z-50">
                                   <button
                                     onClick={(e) => {
+                                      if (isSidebarOpen) return; // لا تعمل إذا القائمة مفتوحة
                                       e.stopPropagation();
                                       setModalProduct(product);
                                       const firstImage =
@@ -2504,7 +2505,7 @@ function POSPageContent() {
                                       setSelectedImage(firstImage);
                                       setShowProductModal(true);
                                     }}
-                                    className={`bg-black/50 hover:bg-black/90 text-white p-2 rounded-full opacity-0 ${!isSidebarOpen ? 'group-hover:opacity-100' : ''} transition-all duration-200 shadow-lg`}
+                                    className={`bg-black/50 hover:bg-black/90 text-white p-2 rounded-full opacity-0 ${!isSidebarOpen ? 'group-hover:opacity-100' : 'pointer-events-none'} transition-all duration-200 shadow-lg`}
                                   >
                                     <EyeIcon className="h-4 w-4" />
                                   </button>
