@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     // Create Supabase admin client
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       db: {
-        schema: 'om_elarosa' // Use om_elarosa schema for multi-tenant architecture
+        schema: 'elfaroukgroup' // Use om_elarosa schema for multi-tenant architecture
       }
     });
 
