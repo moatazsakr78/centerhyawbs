@@ -64,6 +64,40 @@ export default function InteractiveProductCard({
   // Check if user has already voted
   const hasUserVoted = voteStats.userVote !== null;
 
+  // Helper function to parse description safely
+  const parseDescription = (desc: any): string => {
+    if (!desc) return 'لا يوجد وصف متاح';
+
+    // If it's already a string, check if it's a JSON string
+    if (typeof desc === 'string') {
+      try {
+        // Try to parse as JSON
+        const parsed = JSON.parse(desc);
+        // If parsed successfully and has a text property, use it
+        if (parsed && typeof parsed === 'object' && parsed.text) {
+          return parsed.text;
+        }
+        // Otherwise return the original string
+        return desc;
+      } catch {
+        // Not JSON, return as is
+        return desc;
+      }
+    }
+
+    // If it's an object with text property
+    if (typeof desc === 'object' && desc.text) {
+      return desc.text;
+    }
+
+    // If it's an object without text, stringify it (shouldn't happen but just in case)
+    if (typeof desc === 'object') {
+      return JSON.stringify(desc);
+    }
+
+    return String(desc);
+  };
+
   // Get current product data based on selected size
   const getCurrentProductData = () => {
     if (selectedSize && selectedSize.product) {
@@ -71,13 +105,16 @@ export default function InteractiveProductCard({
         ...product,
         id: selectedSize.product.id,
         name: selectedSize.product.name,
-        description: selectedSize.product.description || product.description || 'لا يوجد وصف متاح',
+        description: parseDescription(selectedSize.product.description || product.description),
         price: selectedSize.product.price,
         image: selectedSize.product.main_image_url || product.image,
         selectedSize: selectedSize
       };
     }
-    return product;
+    return {
+      ...product,
+      description: parseDescription(product.description)
+    };
   };
 
   const currentProduct = getCurrentProductData();
@@ -324,7 +361,7 @@ export default function InteractiveProductCard({
               wordWrap: 'break-word'
             }}
           >
-            {currentProduct.description || 'لا يوجد وصف متاح'}
+            {currentProduct.description}
           </div>
         </div>
         
