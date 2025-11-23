@@ -134,8 +134,17 @@ export default function OrderManagement({ className = "" }: OrderManagementProps
         setOrderItems([])
         return
       }
-      
-      setOrderItems(data || [])
+
+      // Transform the data to match the OrderItem type
+      const transformedData = (data || []).map((item: any) => ({
+        ...item,
+        product: Array.isArray(item.product) ? {
+          ...item.product[0],
+          category: Array.isArray(item.product[0]?.category) ? item.product[0].category[0] : item.product[0]?.category
+        } : item.product
+      }))
+
+      setOrderItems(transformedData)
       
     } catch (error) {
       console.error('Error fetching order items:', error)

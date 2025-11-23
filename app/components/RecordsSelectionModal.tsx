@@ -56,8 +56,14 @@ export default function RecordsSelectionModal({
         setError('فشل في تحميل السجلات')
         return
       }
-      
-      setRecords(data || [])
+
+      // Transform the data to match the Record type
+      const transformedData = (data || []).map((record: any) => ({
+        ...record,
+        branch: Array.isArray(record.branch) ? record.branch[0] : record.branch
+      }))
+
+      setRecords(transformedData)
     } catch (error) {
       console.error('Error fetching records:', error)
       setError('حدث خطأ أثناء تحميل السجلات')

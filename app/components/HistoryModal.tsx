@@ -89,8 +89,15 @@ export default function HistoryModal({
         setError('فشل في تحميل تاريخ المبيعات')
         return
       }
-      
-      setSales(data || [])
+
+      // Transform the data to match the Sale type
+      const transformedData = (data || []).map((sale: any) => ({
+        ...sale,
+        customer: Array.isArray(sale.customer) ? sale.customer[0] : sale.customer,
+        branch: Array.isArray(sale.branch) ? sale.branch[0] : sale.branch
+      }))
+
+      setSales(transformedData)
       
     } catch (error) {
       console.error('Error fetching sales history:', error)

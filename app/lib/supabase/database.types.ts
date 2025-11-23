@@ -2435,6 +2435,7 @@ export type Database = {
       [_ in never]: never
     }
   }
+  elfaroukgroup: Database['om_elarosa']
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">

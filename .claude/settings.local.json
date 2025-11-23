@@ -322,7 +322,8 @@
       "Bash(set PORT=3003)",
       "Bash(vercel logs:*)",
       "Bash(vercel ls:*)",
-      "Bash(start cmd /c \"echo افتح Chrome DevTools وابعتلي صورة من Console && pause\")"
+      "Bash(start cmd /c \"echo افتح Chrome DevTools وابعتلي صورة من Console && pause\")",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "additionalDirectories": [
